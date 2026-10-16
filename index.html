@@ -42,11 +42,7 @@ button{font:inherit}
         <span style="font-weight: 700; font-size: 17px; letter-spacing: -0.01em;">Blue Horseshoe</span>
       </div>
       <nav aria-label="Pages" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;">
-        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6B7280;">NFL</span>
-        <sc-for list="{{nflTabs}}" as="tb" hint-placeholder-count="4">
-          <button type="button" onClick="{{tb.pick}}" aria-current="{{tb.current}}" style="{{tb.style}}">{{tb.label}}</button>
-        </sc-for>
-        <span aria-hidden="true" style="width: 1px; height: 18px; background: #E3E6EB;"></span>
+        <button type="button" onClick="{{nflTop.pick}}" aria-current="{{nflTop.current}}" style="{{nflTop.style}}">NFL</button>
         <button type="button" onClick="{{collegeTab.pick}}" aria-current="{{collegeTab.current}}" style="{{collegeTab.style}}">College</button>
       </nav>
       <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; padding: 6px 0;">
@@ -58,99 +54,80 @@ button{font:inherit}
 
   <main style="max-width: 1400px; margin: 0 auto; padding: 20px 20px 40px; display: flex; flex-direction: column; gap: 16px;">
 
-    <sc-if value="{{isBuilder}}" hint-placeholder-val="{{ true }}">
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px;">
-          <h1 style="margin: 0; font-size: 20px; font-weight: 700;">The Horseshoe's ticket</h1>
-          <span style="font-size: 13px; color: #5B6472;">Every leg passes 2 of 3 checks: price strength (S), home spot (H), market move (M).</span>
+    <sc-if value="{{isNfl}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <h1 style="margin: 0; font-size: 20px; font-weight: 700;">NFL · the Horseshoe has spoken</h1>
+            <span style="font-size: 13px; color: #5B6472;">Game lines and player props, built from live lines.</span>
+          </div>
         </div>
+        <nav aria-label="NFL pages" style="display: flex; gap: 4px; background: #EEF0F3; padding: 3px; border-radius: 8px;">
+          <sc-for list="{{nflTabs}}" as="nt" hint-placeholder-count="4">
+            <button type="button" onClick="{{nt.pick}}" aria-current="{{nt.current}}" style="{{nt.style}}">{{nt.label}}</button>
+          </sc-for>
+        </nav>
+      </div>
+    </sc-if>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
-          <aside aria-label="Ticket settings" style="flex: 1 1 260px; max-width: 100%; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 16px;">
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Target odds</span>
-              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;">
-                <sc-for list="{{targets}}" as="t" hint-placeholder-count="6">
+    <sc-if value="{{isBuilder}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <section aria-label="The Horseshoe's ticket" style="background: #1D5FD6; color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;" title="Every leg passes 2 of 3 checks: price strength (S), home spot (H), market move (M).">
+              <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="37" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle></svg>
+              <div style="display: flex; flex-direction: column; min-width: 0;">
+                <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">The Horseshoe's Ticket</h2>
+                <span style="font-size: 11px; color: #DCE7FB;">{{statusLabel}} · {{legCount}} legs · {{flagStr}} injury flags</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">{{ticketTitle}}</span><span style="{{nPriceStyle}}">{{priceStr}}</span></span>
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">{{stakeLabel}} pays</span><span style="{{nPayStyle}}">{{payoutStr}}</span></span>
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{hitStr}}</span></span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.12); border-radius: 8px; padding: 8px 10px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;">
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Target odds">
+                <sc-for list="{{nTargets}}" as="t" hint-placeholder-count="6">
                   <button type="button" onClick="{{t.pick}}" aria-pressed="{{t.on}}" style="{{t.style}}">{{t.label}}</button>
                 </sc-for>
               </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Legs</span>
-                <span style="font-size: 12px; color: #5B6472;">{{legsHint}}</span>
+              <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Number of legs" title="{{legsHint}}">
+                <button type="button" onClick="{{legsAuto}}" aria-pressed="{{legsIsAuto}}" style="{{nLegsAutoStyle}}">Auto</button>
+                <button type="button" onClick="{{legsDown}}" aria-label="Fewer legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
+                <span aria-live="polite" style="min-width: 34px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{faderLabel}}</span>
+                <button type="button" onClick="{{legsUp}}" aria-label="More legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
               </div>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <button type="button" onClick="{{legsAuto}}" aria-pressed="{{legsIsAuto}}" style="{{legsAutoStyle}}">Auto</button>
-                <button type="button" onClick="{{legsDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">−</button>
-                <span aria-live="polite" style="min-width: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600;">{{faderLabel}}</span>
-                <button type="button" onClick="{{legsUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">+</button>
+              <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
+                <sc-for list="{{nStakes}}" as="s" hint-placeholder-count="4">
+                  <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.on}}" style="{{s.style}}">{{s.label}}</button>
+                </sc-for>
               </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Markets</span>
-              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;">
-                <sc-for list="{{markets}}" as="m" hint-placeholder-count="3">
+              <div style="display: flex; gap: 4px;" role="group" aria-label="Markets">
+                <sc-for list="{{nMarkets}}" as="m" hint-placeholder-count="3">
                   <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="{{m.style}}">{{m.label}}</button>
                 </sc-for>
               </div>
               <sc-if value="{{showPropFilter}}" hint-placeholder-val="{{ true }}">
-                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;">
-                  <sc-for list="{{propTypes}}" as="p" hint-placeholder-count="6">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Prop types">
+                  <sc-for list="{{nPropTypes}}" as="p" hint-placeholder-count="6">
                     <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="{{p.style}}">{{p.label}}</button>
                   </sc-for>
                 </div>
               </sc-if>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Games</span>
-                <button type="button" onClick="{{clearGames}}" style="background: none; border: none; padding: 4px 0; color: #1D5FD6; font-size: 12px; font-weight: 600; cursor: pointer;">All games</button>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 4px;">
-                <sc-for list="{{games}}" as="g" hint-placeholder-count="10">
-                  <button type="button" onClick="{{g.pick}}" aria-pressed="{{g.on}}" title="{{g.title}}" style="{{g.style}}">{{g.short}}</button>
-                </sc-for>
-              </div>
-              <span style="font-size: 12px; color: #6B7280;">{{gamesHint}}</span>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px;" role="group" aria-label="Games">
+              <button type="button" onClick="{{clearGames}}" aria-pressed="{{allGamesOn}}" style="{{allGamesStyle}}">All games</button>
+              <sc-for list="{{nGames}}" as="g" hint-placeholder-count="10">
+                <button type="button" onClick="{{g.pick}}" aria-pressed="{{g.on}}" title="{{g.title}}" style="{{g.style}}">{{g.short}}</button>
+              </sc-for>
+              <span style="font-size: 11px; color: #CFDDF8; margin-left: 4px;">{{gamesHint}}</span>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Stake</span>
-              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
-                <sc-for list="{{stakes}}" as="s" hint-placeholder-count="4">
-                  <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.on}}" style="{{s.style}}">{{s.label}}</button>
-                </sc-for>
-              </div>
-            </div>
-          </aside>
-
-          <section aria-label="Your ticket" style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: #E3E6EB; border: 1px solid #E3E6EB; border-radius: 8px; overflow: hidden;">
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">{{ticketTitle}}</span>
-                <span style="{{priceStyle}}">{{priceStr}}</span>
-              </div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">{{stakeLabel}} pays</span>
-                <span style="{{payoutStyle}}">{{payoutStr}}</span>
-              </div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Profit</span>
-                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; overflow-wrap: anywhere;">{{profitStr}}</span>
-              </div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit chance</span>
-                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{hitStr}}</span>
-              </div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Legs · flags</span>
-                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{legCount}} · {{flagStr}}</span>
-              </div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; justify-content: center;">
-                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Status</span>
-                <span style="{{statusStyle}}">{{statusLabel}}</span>
-              </div>
-            </div>
+          </div>
+        </section>
 
             <sc-if value="{{showWarn}}" hint-placeholder-val="{{ false }}">
               <div role="status" style="display: flex; gap: 8px; align-items: flex-start; border: 1px solid #F0D9A8; background: #FFF8E8; color: #7A4A00; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{warnText}}</div>
@@ -249,15 +226,13 @@ button{font:inherit}
                 </sc-for>
               </div>
             </div>
-          </section>
-        </div>
       </div>
     </sc-if>
 
     <sc-if value="{{isSpin}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px;">
-          <h1 style="margin: 0; font-size: 20px; font-weight: 700;">Spin it</h1>
+          <h2 style="margin: 0; font-size: 16px; font-weight: 700;">Spin it</h2>
           <span style="font-size: 13px; color: #5B6472;">The Horseshoe draws a random parlay from legs that pass its checks and your Builder filters.</span>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
@@ -304,7 +279,7 @@ button{font:inherit}
     <sc-if value="{{isOdds}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; flex-direction: column; gap: 2px;">
-          <h1 style="margin: 0; font-size: 20px; font-weight: 700;">Line check</h1>
+          <h2 style="margin: 0; font-size: 16px; font-weight: 700;">Line check</h2>
           <span style="font-size: 13px; color: #5B6472;">What the market thinks the line should be. We take the other books' numbers, adjust for juice, and compare them to your book. If the books lean -4.6 and you can lay -4.5, you're getting a fair-or-better price.</span>
         </div>
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;">
@@ -861,9 +836,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016114819';</script>
-<script src="runtime.js?v=20261016114819"></script>
-<script src="lines.js?v=20261016114819"></script>
+<script>window.BH_VERSION='20261016115228';</script>
+<script src="runtime.js?v=20261016115228"></script>
+<script src="lines.js?v=20261016115228"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1556,9 +1531,10 @@ class Component extends DCLogic {
       return 'min-height: 44px; padding: 0 2px; background: none; border: none; border-bottom: 2px solid ' + (on ? B : 'transparent') + '; cursor: pointer; font-size: 14px; font-weight: ' + (on ? '600' : '500') + '; color: ' + (on ? TXT : MUTED) + ';';
     };
     var go = function (id) { return function () { self.setState({ page: id }); try { window.scrollTo(0, 0); } catch (e) {} }; };
-    var nflTabs = [{ id: 'builder', label: 'Builder' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
+    var subTabStyle = function (on) { return 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #FFFFFF; color: ' + TXT + '; box-shadow: 0 1px 2px rgba(17,24,39,0.12);' : 'background: transparent; color: ' + MUTED + ';'); };
+    var nflTabs = [{ id: 'builder', label: 'Horseshoe Ticket' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
       var on = st.page === t.id;
-      return { label: t.label, current: on ? 'page' : 'false', style: tabStyle(on), pick: go(t.id) };
+      return { label: t.label, current: on ? 'page' : 'false', style: subTabStyle(on), pick: function () { self.setState({ page: t.id, nflLast: t.id }); } };
     });
     var isCollege = st.page === 'college';
 
@@ -1569,6 +1545,16 @@ class Component extends DCLogic {
     return {
       nflTabs: nflTabs,
       collegeTab: { current: isCollege ? 'page' : 'false', style: tabStyle(isCollege), pick: go('college') },
+      nflTop: { current: !isCollege ? 'page' : 'false', style: tabStyle(!isCollege), pick: go(st.nflLast || 'builder') },
+      isNfl: !isCollege,
+      nTargets: targets.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
+      nStakes: stakes.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
+      nMarkets: markets.map(function (t) { return Object.assign({}, t, { style: chipW(t.on) }); }),
+      nPropTypes: propTypes.map(function (t) { return Object.assign({}, t, { style: chipW(t.on) }); }),
+      nGames: gamesUi.map(function (g) { return Object.assign({}, g, { style: 'min-height: 26px; padding: 0 8px; border-radius: 999px; cursor: pointer; font-family: IBM Plex Mono, monospace; font-size: 11px; white-space: nowrap; box-sizing: border-box; ' + (g.on ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF; font-weight: 700;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);') }); }),
+      allGamesOn: !st.games.length, allGamesStyle: 'min-height: 26px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; box-sizing: border-box; ' + (!st.games.length ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);'),
+      nLegsAutoStyle: chipW(isAuto),
+      nPriceStyle: mono(this.fitSize(priceVal, 22, 15), '#FFFFFF'), nPayStyle: mono(this.fitSize(payoutVal, 17, 13), '#FFFFFF'),
       isOvers: st.page === 'overs', cfIsOvers: st.cfTab === 'overs',
       ovMkts: ovMkts, ovEmpty: !nflOvTop.length, cfOvEmpty: !cfOvTop.length,
       ovList: nflOvTop.map(ovShow), ovSlip: nflOvSlip.map(ovShow), ovNStr: String(ovN),
@@ -1590,7 +1576,7 @@ class Component extends DCLogic {
       targets: targets, markets: markets, propTypes: propTypes, showPropFilter: st.market !== 'line',
       games: gamesUi, stakes: stakes,
       clearGames: function () { self.setState({ games: [] }); },
-      gamesHint: st.games.length ? st.games.length + ' picked · every leg in play' : 'All games · tap to pick',
+      gamesHint: st.games.length ? st.games.length + ' picked · every leg in play' : 'Pick games to open up every leg in them',
       legsAuto: function () { self.setState({ legs: isAuto ? (st.lastLegs || 6) : 'auto', lastLegs: isAuto ? st.lastLegs : st.legs }); },
       legsIsAuto: isAuto, legsAutoStyle: chip(isAuto),
       faderLabel: isAuto ? 'Auto' : String(st.legs),
