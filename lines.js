@@ -369,7 +369,7 @@
   }
   function buildCollege(json, extra) {
     var events = (g(json, 'events') || []).map(readEvent).filter(Boolean);
-    var slate = [], legs = [];
+    var slate = [], legs = [], byId = {};
     var firstDate = null, lastDate = null;
     events.forEach(function (e) {
       if (e.state !== 'pre' || !e.odds || e.odds.aNow == null) return;
@@ -384,6 +384,8 @@
         est = true;
       }
       var s = { id: e.id, a: away, h: home, n: e.neutral, cf: confOf(e), hs: -o.aNow, tot: o.tot, aml: aml, hml: hml, date: e.date };
+      s.est = est;
+      byId[s.id] = e;
       slate.push(s);
       var iA = imp(aml), iH = imp(hml);
       var pA = iA / (iA + iH), pH = 1 - pA;
@@ -427,6 +429,26 @@
             s: [moved ? 1 : 0, juiceSide === dir ? 1 : 0, moved && Math.abs(tMove) >= 3 ? 1 : 0],
             note: (moved ? 'Total moved ' + o.tOpen + ' → ' + o.tot : 'Total steady') + (juiceSide === dir ? ', books shading the ' + dir + ' (' + signed(dir === 'Over' ? o.oOdds : o.uOdds) + ')' : '') });
         }
+      }
+    });
+    // Every other underdog and every over on the board, with no Horseshoe signals. They never make the Horseshoe Parlay,
+    // but they let the Upset Special and Horseshoe Overs fill bigger slips.
+    var haveL = {};
+    legs.forEach(function (l) { haveL[l.g + '|' + l.label] = 1; });
+    slate.forEach(function (s) {
+      var ev = byId[s.id];
+      if (!ev) return;
+      var o = ev.odds;
+      var dogA = s.aml > 0, dogName = dogA ? s.a : s.h, dogMl = dogA ? s.aml : s.hml;
+      var iA = imp(s.aml), iH = imp(s.hml), pDog = (dogA ? iA : iH) / (iA + iH);
+      if (dogMl >= 100 && dogMl <= 600 && !s.est && !haveL[s.id + '|' + dogName + ' ML'])
+        legs.push({ g: s.id, k: 'ml', label: dogName + ' ML', odds: dogMl, p: pDog, conf: Math.round(pDog * 100), s: [0, 0, 0], dog: true, note: 'Underdog on the board, no Horseshoe signal' });
+      var dl = dogA ? o.aNow : -o.aNow;
+      if (dl > 0 && !haveL[s.id + '|' + dogName + ' ' + signed(dl)])
+        legs.push({ g: s.id, k: 'spread', label: dogName + ' ' + signed(dl), odds: dogA ? o.aSpOdds : o.hSpOdds, p: 0.5, conf: 50, s: [0, 0, 0], dog: true, note: 'Getting the points, no Horseshoe signal' });
+      if (o.tot != null && !haveL[s.id + '|Over ' + o.tot]) {
+        var iO = imp(o.oOdds), iU = imp(o.uOdds);
+        legs.push({ g: s.id, k: 'total', label: 'Over ' + o.tot, odds: o.oOdds, p: iO / (iO + iU), conf: Math.round(iO / (iO + iU) * 100), s: [0, 0, 0], note: 'Over on the board, no Horseshoe signal' });
       }
     });
     slate.sort(function (x, y) { return x.date < y.date ? -1 : x.date > y.date ? 1 : 0; });

@@ -836,9 +836,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016115228';</script>
-<script src="runtime.js?v=20261016115228"></script>
-<script src="lines.js?v=20261016115228"></script>
+<script>window.BH_VERSION='20261016121304';</script>
+<script src="runtime.js?v=20261016121304"></script>
+<script src="lines.js?v=20261016121304"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1264,7 +1264,7 @@ class Component extends DCLogic {
     var ticketDec = function () { var d = 1; cfTicket.forEach(function (t) { d *= self.dec(t.c.odds); }); return d; };
     var cfTDec = st.cfTarget === 'safe' ? 0 : this.dec(st.cfTarget);
     var cfN = st.cfLegs === 'auto' ? 0 : st.cfLegs;
-    var wantN = cfN ? cfN : (st.cfTarget === 'safe' ? 3 : 10);
+    var wantN = cfN ? cfN : (st.cfTarget === 'safe' ? 3 : 20);
     var prodOf = function (arr) { var d = 1; arr.forEach(function (c) { d *= self.dec(c.odds); }); return d; };
     pickMixed(rankedAll, wantN, function (sofar) { return !cfN && st.cfTarget !== 'safe' && prodOf(sofar) >= cfTDec; })
       .forEach(function (c, ri) { cfTicket.push({ c: c, pillar: primaryOf(c), rank: ri + 1 }); });
@@ -1370,7 +1370,12 @@ class Component extends DCLogic {
     var upMode = st.upMode || 'all';
     var upN = st.upN || 3;
     var liveCut = function (c) { return c.p >= (c.k === 'ml' ? 0.45 : 0.53); };
-    var upPool = candList.filter(function (c) { return c.dog && (upMode === 'all' || c.k === 'ml'); });
+    // Horseshoe-backed dogs first; every other underdog on the board can fill bigger slips.
+    var upExtra = CF.legs.filter(function (l) { return l.dog && !candMap[l.g + '|' + l.label]; }).map(function (l) {
+      var im = 1 / self.dec(l.odds);
+      return { g: l.g, k: l.k, label: l.label, odds: l.odds, p: l.p, conf: l.conf, note: l.note, dog: true, fade: false, fadeWhy: '', imp: im, edge: l.p - im, board: true };
+    });
+    var upPool = candList.concat(upExtra).filter(function (c) { return c.dog && (upMode === 'all' || c.k === 'ml'); });
     var upScore = function (c, pil) {
       var bonus = ((c.fade ? 1 : 0) + (c.edge >= 0 ? 1 : 0) + (liveCut(c) ? 1 : 0)) * 0.03;
       if (pil === 'fade') return c.fade ? 0.5 + c.edge * 2 + bonus : -1;
@@ -1378,7 +1383,7 @@ class Component extends DCLogic {
       return c.p + bonus;
     };
     // Best upsets by value against the price (Horseshoe chance x payout), one per game, moneylines and dog spreads mixed.
-    var upValue = function (c) { return evOf(c) * 3 + c.edge * 2 + (c.fade ? 0.04 : 0); };
+    var upValue = function (c) { return evOf(c) * 3 + c.edge * 2 + (c.fade ? 0.04 : 0) - (c.board ? 0.5 : 0); };
     var upSeen = {}, upRanked = [];
     upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }).forEach(function (c) { if (upSeen[c.g]) return; upSeen[c.g] = 1; upRanked.push(c); });
     var upT = pickMixed(upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }), upN).map(function (c) { return { c: c, pillar: c.fade ? 'fade' : c.edge >= 0 ? 'value' : 'live' }; });
@@ -1500,7 +1505,7 @@ class Component extends DCLogic {
     var nflOvList = nflOvAll.filter(function (r) { return ovMkt === 'all' || (ovMkt === 'game' ? r.l.k !== 'prop' : r.l.k === 'prop'); });
     // One over per player stat (best value line), one game total per game
     var ovKey = function (l) { return l.k === 'prop' ? (l.pk || l.label) : l.g + '|total'; };
-    var nflOvTop = ovBuild(nflOvList, 15, ovKey);
+    var nflOvTop = ovBuild(nflOvList, 20, ovKey);
     var ovN = st.ovN || 3;
     var nflOvSlip = ovBuild(nflOvList, ovN, ovKey);
     var slipDec = function (rows) { var dd = 1; rows.forEach(function (r) { dd *= self.dec(r.l.odds); }); return dd; };
@@ -1513,7 +1518,7 @@ class Component extends DCLogic {
     // College: game-total overs
     var cfOvAll = CF.legs.filter(function (l) { return l.k === 'total' && /^Over /.test(l.label); })
       .map(function (l) { return ovRow(l, true, cfGameMap); }).sort(function (a, b) { return b.score - a.score; });
-    var cfOvTop = ovBuild(cfOvAll, 15, function (l) { return l.g; });
+    var cfOvTop = ovBuild(cfOvAll, 20, function (l) { return l.g; });
     var cfOvN = st.cfOvN || 3;
     var cfOvSlip = ovBuild(cfOvAll, cfOvN, function (l) { return l.g; });
     var cfOvDec = slipDec(cfOvSlip);
@@ -1560,11 +1565,11 @@ class Component extends DCLogic {
       ovList: nflOvTop.map(ovShow), ovSlip: nflOvSlip.map(ovShow), ovNStr: String(ovN),
       ovPrice: nflOvSlip.length ? this.amer(nflOvDec) : '—', ovPay: nflOvSlip.length ? this.money(st.stake * nflOvDec) : '$0.00',
       ovHit: nflOvSlip.length ? (slipHit(nflOvSlip) * 100).toFixed(1) + '%' : '—',
-      ovDown: function () { self.setState({ ovN: Math.max(2, ovN - 1) }); }, ovUp: function () { self.setState({ ovN: Math.min(8, ovN + 1) }); },
+      ovDown: function () { self.setState({ ovN: Math.max(2, ovN - 1) }); }, ovUp: function () { self.setState({ ovN: Math.min(20, ovN + 1) }); },
       cfOvList: cfOvTop.map(ovShow), cfOvSlip: cfOvSlip.map(ovShow), cfOvNStr: String(cfOvN),
       cfOvPrice: cfOvSlip.length ? this.amer(cfOvDec) : '—', cfOvPay: cfOvSlip.length ? this.money(st.stake * cfOvDec) : '$0.00',
       cfOvHit: cfOvSlip.length ? (slipHit(cfOvSlip) * 100).toFixed(1) + '%' : '—',
-      cfOvDown: function () { self.setState({ cfOvN: Math.max(2, cfOvN - 1) }); }, cfOvUp: function () { self.setState({ cfOvN: Math.min(8, cfOvN + 1) }); },
+      cfOvDown: function () { self.setState({ cfOvN: Math.max(2, cfOvN - 1) }); }, cfOvUp: function () { self.setState({ cfOvN: Math.min(20, cfOvN + 1) }); },
       ovStakes: [5, 10, 25, 50].map(function (v) { var on = st.stake === v; return { label: '$' + v, on: on, style: chipW(on), pick: function () { self.setState({ stake: v }); } }; }),
       isBuilder: st.page === 'builder', isSpin: st.page === 'spin', isOdds: st.page === 'odds', isFade: st.page === 'fade', isCollege: isCollege,
       chipText: isCollege ? CF.chip : D.chip,
@@ -1640,7 +1645,7 @@ class Component extends DCLogic {
       }),
       cfFaderVal: cfIsAuto ? (st.cfLastLegs || 4) : cfN, cfFaderClass: cfIsAuto ? 'fader onblue off' : 'fader onblue', cfFaderLabel: cfIsAuto ? 'Auto' : String(cfN),
       cfDown: function () { var v = Math.max(2, (cfIsAuto ? (st.cfLastLegs || 4) : cfN) - 1); self.setState({ cfLegs: v, cfLastLegs: v }); },
-      cfUp: function () { var v = Math.min(10, (cfIsAuto ? (st.cfLastLegs || 4) : cfN) + 1); self.setState({ cfLegs: v, cfLastLegs: v }); },
+      cfUp: function () { var v = Math.min(20, (cfIsAuto ? (st.cfLastLegs || 4) : cfN) + 1); self.setState({ cfLegs: v, cfLastLegs: v }); },
       cfOnFader: function (e) { var v = parseInt(e.target.value, 10); if (!isNaN(v)) self.setState({ cfLegs: v, cfLastLegs: v }); },
       cfSizeHint: cfIsAuto ? 'Horseshoe decides' : cfN + ' legs, one per game',
       cfTicket: cfRows, cfBench: cfBench, cfLegCount: cfTicket.length,
@@ -1659,7 +1664,7 @@ class Component extends DCLogic {
       upPayStyle: mono(this.fitSize(upPayVal, 17, 13), '#FFFFFF'),
       upPillars: upPillars, upModes: upModes, upNStr: String(upN),
       upDown: function () { self.setState({ upN: Math.max(2, upN - 1) }); },
-      upUp: function () { self.setState({ upN: Math.min(5, upN + 1) }); },
+      upUp: function () { self.setState({ upN: Math.min(20, upN + 1) }); },
       upTeaser: upRows.map(function (r) { return r.label; }).join(' + '),
       cfGoDogs: function () { self.setState({ cfTab: 'dogs' }); try { window.scrollTo(0, 0); } catch (e) {} },
       cfFadeCards: cfFade.shown, cfFadeMkts: cfFadeMkts, cfFadeOnly: st.cfFadeOnly,
