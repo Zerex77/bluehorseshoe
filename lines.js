@@ -187,7 +187,7 @@
           legs.push({ g: e.id, k: 'line', mk: 'total', label: tl, odds: dir === 'Over' ? o.oOdds : o.uOdds,
             conf: clamp(55 + (moved ? Math.round(Math.abs(tMove) * 3) : 0) + (juice === dir ? 4 : 0), 50, 72),
             s: [moved ? 1 : 0, juice === dir ? 1 : 0, moved && Math.abs(tMove) >= 2 ? 1 : 0],
-            note: (moved ? 'Total moved ' + o.tOpen + ' → ' + o.tot : 'Total steady at ' + o.tot) + (juice ? ', books shading the ' + juice + ' (' + signed(dir === 'Over' ? o.oOdds : o.uOdds) + ')' : '') });
+            note: (moved ? 'Total moved ' + o.tOpen + ' → ' + o.tot : 'Total steady at ' + o.tot) + (juice === dir ? ', books shading the ' + dir + ' (' + signed(dir === 'Over' ? o.oOdds : o.uOdds) + ')' : '') });
           var both = (inj.byTeam[e.a.displayName] || []).concat(inj.byTeam[e.h.displayName] || []);
           both.sort(function (x, y) { return (KEYPOS[y.pos] * 10 + STATUS_RANK[y.status]) - (KEYPOS[x.pos] * 10 + STATUS_RANK[x.status]); });
           injMap[tl] = injEntry(both[0], '');
