@@ -352,6 +352,77 @@ button{font:inherit}
       </div>
     </sc-if>
 
+    <sc-if value="{{isOvers}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <section aria-label="Horseshoe Overs" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #0B6E4F 0%, #0F8A63 55%, #13A06F 100%); color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+          <span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-family: 'IBM Plex Mono', monospace; font-size: 86px; font-weight: 700; color: rgba(255,255,255,0.07); letter-spacing: -0.04em; pointer-events: none;">OVER</span>
+          <div style="position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 14 v14 a16 16 0 0 0 32 0 v-14" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="44" r="3.2" fill="#0F8A63"></circle><circle cx="37" cy="44" r="3.2" fill="#0F8A63"></circle><circle cx="27.6" cy="44.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="44.6" r="1.5" fill="#FFFFFF"></circle><path d="M32 1 l7 8 h-4.5 v6 h-5 v-6 H25 z" fill="#FFD166"></path></svg>
+              <div style="display: flex; flex-direction: column; min-width: 0;">
+                <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">Horseshoe Overs</h2>
+                <span style="font-size: 12px; color: #D8F5E8;">Game totals, yards, catches and TDs the Horseshoe expects to clear.</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Overs slip</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #FFD166; line-height: 1.2;">{{ovPrice}}</span></span>
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">{{stakeLabel}} pays</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; line-height: 1.25;">{{ovPay}}</span></span>
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; line-height: 1.25;">{{ovHit}}</span></span>
+            </div>
+          </div>
+          <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(0,0,0,0.14); border-radius: 8px; padding: 8px 10px;">
+            <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Overs on the slip">
+              <button type="button" onClick="{{ovDown}}" aria-label="Fewer overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
+              <span aria-live="polite" style="min-width: 54px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ovNStr}} overs</span>
+              <button type="button" onClick="{{ovUp}}" aria-label="More overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
+            </div>
+            <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
+              <sc-for list="{{ovStakes}}" as="os" hint-placeholder-count="4">
+                <button type="button" onClick="{{os.pick}}" aria-pressed="{{os.on}}" style="{{os.style}}">{{os.label}}</button>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Which overs">
+              <sc-for list="{{ovMkts}}" as="om" hint-placeholder-count="3">
+                <button type="button" onClick="{{om.pick}}" aria-pressed="{{om.on}}" style="{{om.style}}">{{om.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{ovSlip}}" as="sl" hint-placeholder-count="3">
+              <span style="display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.14); font-size: 13px;"><b>{{sl.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; color: #FFD166;">{{sl.oddsStr}}</span></span>
+            </sc-for>
+          </div>
+        </section>
+        <sc-if value="{{ovEmpty}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No overs on the board right now. Check back when lines post.</div>
+        </sc-if>
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+          <sc-for list="{{ovList}}" as="ov" hint-placeholder-count="8">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+              <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; background: #E6F6EF; color: #0B6E4F; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ov.num}}</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
+                  <span style="font-size: 14px; font-weight: 700;">{{ov.label}}</span>
+                  <span style="font-size: 12px; color: #6B7280;">{{ov.game}}</span>
+                  <span style="{{ov.heatStyle}}">{{ov.heat}}</span>
+                  <span style="font-size: 11px; font-weight: 600; color: #0B6E4F;">↑ {{ov.vibe}}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #5B6472;">
+                  <span style="position: relative; width: 120px; height: 6px; background: #EEF0F3; border-radius: 3px; flex-shrink: 0;" role="img" aria-label="Horseshoe {{ov.pStr}}, book {{ov.impStr}}"><span style="display: block; {{ov.meterH}}"></span><span style="{{ov.meterB}}"></span></span>
+                  <span>Horseshoe <b style="color: #0B6E4F;">{{ov.pStr}}</b> · book {{ov.impStr}}</span>
+                </div>
+              </div>
+              <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ov.oddsStr}}</span>
+                <span style="font-size: 11px; color: #6B7280;">value <span style="{{ov.evStyle}}">{{ov.evStr}}</span></span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #6B7280;">Value is the Horseshoe's chance times the payout, minus your stake. The black tick on each bar is what the book's price implies; green past the tick means the Horseshoe likes it more than the book does.</span>
+      </div>
+    </sc-if>
+
     <sc-if value="{{isFade}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;">
@@ -678,6 +749,73 @@ button{font:inherit}
           </div>
         </sc-if>
 
+        <sc-if value="{{cfIsOvers}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <section aria-label="Horseshoe Overs" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #0B6E4F 0%, #0F8A63 55%, #13A06F 100%); color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+          <span aria-hidden="true" style="position: absolute; right: -6px; top: -14px; font-family: 'IBM Plex Mono', monospace; font-size: 86px; font-weight: 700; color: rgba(255,255,255,0.07); letter-spacing: -0.04em; pointer-events: none;">OVER</span>
+          <div style="position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 14 v14 a16 16 0 0 0 32 0 v-14" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="44" r="3.2" fill="#0F8A63"></circle><circle cx="37" cy="44" r="3.2" fill="#0F8A63"></circle><circle cx="27.6" cy="44.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="44.6" r="1.5" fill="#FFFFFF"></circle><path d="M32 1 l7 8 h-4.5 v6 h-5 v-6 H25 z" fill="#FFD166"></path></svg>
+              <div style="display: flex; flex-direction: column; min-width: 0;">
+                <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">Horseshoe Overs</h2>
+                <span style="font-size: 12px; color: #D8F5E8;">College totals the Horseshoe expects to go over.</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Overs slip</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #FFD166; line-height: 1.2;">{{cfOvPrice}}</span></span>
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">{{stakeLabel}} pays</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; line-height: 1.25;">{{cfOvPay}}</span></span>
+              <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; line-height: 1.25;">{{cfOvHit}}</span></span>
+            </div>
+          </div>
+          <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(0,0,0,0.14); border-radius: 8px; padding: 8px 10px;">
+            <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Overs on the slip">
+              <button type="button" onClick="{{cfOvDown}}" aria-label="Fewer overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
+              <span aria-live="polite" style="min-width: 54px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{cfOvNStr}} overs</span>
+              <button type="button" onClick="{{cfOvUp}}" aria-label="More overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
+            </div>
+            <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
+              <sc-for list="{{ovStakes}}" as="os" hint-placeholder-count="4">
+                <button type="button" onClick="{{os.pick}}" aria-pressed="{{os.on}}" style="{{os.style}}">{{os.label}}</button>
+              </sc-for>
+            </div>
+            
+          </div>
+          <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{cfOvSlip}}" as="sl" hint-placeholder-count="3">
+              <span style="display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.14); font-size: 13px;"><b>{{sl.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; color: #FFD166;">{{sl.oddsStr}}</span></span>
+            </sc-for>
+          </div>
+        </section>
+        <sc-if value="{{cfOvEmpty}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No overs on the board right now. Check back when lines post.</div>
+        </sc-if>
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+          <sc-for list="{{cfOvList}}" as="ov" hint-placeholder-count="8">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+              <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; background: #E6F6EF; color: #0B6E4F; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ov.num}}</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
+                  <span style="font-size: 14px; font-weight: 700;">{{ov.label}}</span>
+                  <span style="font-size: 12px; color: #6B7280;">{{ov.game}}</span>
+                  <span style="{{ov.heatStyle}}">{{ov.heat}}</span>
+                  <span style="font-size: 11px; font-weight: 600; color: #0B6E4F;">↑ {{ov.vibe}}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #5B6472;">
+                  <span style="position: relative; width: 120px; height: 6px; background: #EEF0F3; border-radius: 3px; flex-shrink: 0;" role="img" aria-label="Horseshoe {{ov.pStr}}, book {{ov.impStr}}"><span style="display: block; {{ov.meterH}}"></span><span style="{{ov.meterB}}"></span></span>
+                  <span>Horseshoe <b style="color: #0B6E4F;">{{ov.pStr}}</b> · book {{ov.impStr}}</span>
+                </div>
+              </div>
+              <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ov.oddsStr}}</span>
+                <span style="font-size: 11px; color: #6B7280;">value <span style="{{ov.evStyle}}">{{ov.evStr}}</span></span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #6B7280;">Value is the Horseshoe's chance times the payout, minus your stake. The black tick on each bar is what the book's price implies; green past the tick means the Horseshoe likes it more than the book does.</span>
+      </div>
+        </sc-if>
+
         <sc-if value="{{cfIsFade}}" hint-placeholder-val="{{ false }}">
           <div style="display: flex; flex-direction: column; gap: 12px;">
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
@@ -723,9 +861,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016114120';</script>
-<script src="runtime.js?v=20261016114120"></script>
-<script src="lines.js?v=20261016114120"></script>
+<script>window.BH_VERSION='20261016114819';</script>
+<script src="runtime.js?v=20261016114819"></script>
+<script src="lines.js?v=20261016114819"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1339,7 +1477,72 @@ class Component extends DCLogic {
     var leanArrow = cfSort === 'desc' ? ' ↓' : cfSort === 'asc' ? ' ↑' : '';
     var leanAria = cfSort === 'desc' ? 'descending' : cfSort === 'asc' ? 'ascending' : 'none';
     var cycleSort = function () { self.setState({ cfSort: cfSort === 'desc' ? 'asc' : cfSort === 'asc' ? 'slate' : 'desc' }); };
-    var cfTabs = [{ id: 'picks', label: 'Horseshoe Parlay' }, { id: 'slate', label: 'Full slate' }, { id: 'dogs', label: 'Upset Special' }, { id: 'fade', label: 'Fade the public' }].map(function (t) {
+
+    // ---- Horseshoe Overs: the overs the Horseshoe likes, ranked by value against the price
+    var OV = '#0B6E4F', OV2 = '#13A06F', GOLD = '#FFD166';
+    var vibeOf = function (l, college) {
+      var lab = l.label;
+      var t = /^Over ([\d.]+)/.exec(lab);
+      if (t) { var v = Number(t[1]); if (college) return v >= 62 ? 'Track meet' : v >= 54 ? 'Points party' : 'Sneaky over'; return v >= 50 ? 'Shootout watch' : v >= 45 ? 'Points party' : 'Sneaky over'; }
+      if (/anytime TD/.test(lab)) return 'Paydirt';
+      if (/pass yds|completions|pass attempts|pass TDs/.test(lab)) return 'Air raid';
+      if (/rush/.test(lab)) return 'Ground and pound';
+      if (/receptions/.test(lab)) return 'Volume king';
+      if (/rec yds|longest reception/.test(lab)) return 'Deep ball';
+      if (/sack|tackle/.test(lab)) return 'Defense shows up';
+      return 'Over the moon';
+    };
+    var ovRow = function (l, college, gmap) {
+      var p = l.p != null ? l.p : l.conf / 100;
+      var d = self.dec(l.odds), imp = 1 / d, ev = p * d - 1;
+      var bar = l.s && l.s[0] + l.s[1] + l.s[2] >= 2;
+      return { l: l, p: p, imp: imp, ev: ev, bar: bar, score: ev * 1.5 + (p - 0.5) + (bar ? 0.15 : 0), vibe: vibeOf(l, college), game: gmap[l.g] ? gmap[l.g].label : '' };
+    };
+    var ovShow = function (r, ix) {
+      var ev = Math.round(r.ev * 1000) / 10;
+      var hot = r.bar;
+      return {
+        num: String(ix + 1), label: r.l.label, game: r.game, vibe: r.vibe, note: r.l.note || '',
+        oddsStr: self.fmtOdds(r.l.odds), pStr: pct(r.p), impStr: pct(r.imp), evStr: (ev >= 0 ? '+' : '') + ev + '%',
+        evStyle: 'font-family: IBM Plex Mono, monospace; font-weight: 700; color: ' + (ev >= 0 ? OV : RED) + ';',
+        heat: hot ? 'Horseshoe pick' : 'On the board', heatStyle: 'display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; ' + (hot ? 'background: ' + GOLD + '; color: #3D2B00;' : 'background: #EEF0F3; color: #5B6472;'),
+        meterH: 'height: 100%; width: ' + Math.round(r.p * 100) + '%; background: linear-gradient(90deg, ' + OV2 + ', ' + OV + '); border-radius: 3px;',
+        meterB: 'position: absolute; top: -2px; bottom: -2px; width: 2px; background: #111827; left: ' + Math.round(r.imp * 100) + '%;'
+      };
+    };
+    var ovBuild = function (rows, n, keyOf) {
+      var out = [], seen = {};
+      rows.forEach(function (r) { if (out.length >= n) return; var k = keyOf(r.l); if (seen[k]) return; seen[k] = 1; out.push(r); });
+      return out;
+    };
+    // NFL: game-total overs plus player-prop overs and anytime TDs
+    var nflOvAll = D.legs.filter(function (l) {
+      if (/\(alt\)/.test(l.label)) return false;
+      if (l.odds < -400 || l.odds > 500) return false; // overs worth playing, not lottery tickets
+      return /^Over /.test(l.label) || (l.k === 'prop' && (/ over /.test(l.label) || /anytime TD/.test(l.label)));
+    }).map(function (l) { return ovRow(l, false, gameMap); }).sort(function (a, b) { return b.score - a.score; });
+    var ovMkt = st.ovMkt || 'all';
+    var nflOvList = nflOvAll.filter(function (r) { return ovMkt === 'all' || (ovMkt === 'game' ? r.l.k !== 'prop' : r.l.k === 'prop'); });
+    // One over per player stat (best value line), one game total per game
+    var ovKey = function (l) { return l.k === 'prop' ? (l.pk || l.label) : l.g + '|total'; };
+    var nflOvTop = ovBuild(nflOvList, 15, ovKey);
+    var ovN = st.ovN || 3;
+    var nflOvSlip = ovBuild(nflOvList, ovN, ovKey);
+    var slipDec = function (rows) { var dd = 1; rows.forEach(function (r) { dd *= self.dec(r.l.odds); }); return dd; };
+    var slipHit = function (rows) { var hh = 1; rows.forEach(function (r) { hh *= r.p; }); return hh; };
+    var nflOvDec = slipDec(nflOvSlip);
+    var ovMkts = [{ v: 'all', label: 'Everything' }, { v: 'game', label: 'Game totals' }, { v: 'prop', label: 'Player overs' }].map(function (m) {
+      var on = ovMkt === m.v;
+      return { label: m.label, on: on, style: chipW(on), pick: function () { self.setState({ ovMkt: m.v }); } };
+    });
+    // College: game-total overs
+    var cfOvAll = CF.legs.filter(function (l) { return l.k === 'total' && /^Over /.test(l.label); })
+      .map(function (l) { return ovRow(l, true, cfGameMap); }).sort(function (a, b) { return b.score - a.score; });
+    var cfOvTop = ovBuild(cfOvAll, 15, function (l) { return l.g; });
+    var cfOvN = st.cfOvN || 3;
+    var cfOvSlip = ovBuild(cfOvAll, cfOvN, function (l) { return l.g; });
+    var cfOvDec = slipDec(cfOvSlip);
+    var cfTabs = [{ id: 'picks', label: 'Horseshoe Parlay' }, { id: 'slate', label: 'Full slate' }, { id: 'dogs', label: 'Upset Special' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
       var on = st.cfTab === t.id;
       return {
         label: t.label, current: on ? 'page' : 'false',
@@ -1353,7 +1556,7 @@ class Component extends DCLogic {
       return 'min-height: 44px; padding: 0 2px; background: none; border: none; border-bottom: 2px solid ' + (on ? B : 'transparent') + '; cursor: pointer; font-size: 14px; font-weight: ' + (on ? '600' : '500') + '; color: ' + (on ? TXT : MUTED) + ';';
     };
     var go = function (id) { return function () { self.setState({ page: id }); try { window.scrollTo(0, 0); } catch (e) {} }; };
-    var nflTabs = [{ id: 'builder', label: 'Builder' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'fade', label: 'Fade the public' }].map(function (t) {
+    var nflTabs = [{ id: 'builder', label: 'Builder' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
       var on = st.page === t.id;
       return { label: t.label, current: on ? 'page' : 'false', style: tabStyle(on), pick: go(t.id) };
     });
@@ -1366,6 +1569,17 @@ class Component extends DCLogic {
     return {
       nflTabs: nflTabs,
       collegeTab: { current: isCollege ? 'page' : 'false', style: tabStyle(isCollege), pick: go('college') },
+      isOvers: st.page === 'overs', cfIsOvers: st.cfTab === 'overs',
+      ovMkts: ovMkts, ovEmpty: !nflOvTop.length, cfOvEmpty: !cfOvTop.length,
+      ovList: nflOvTop.map(ovShow), ovSlip: nflOvSlip.map(ovShow), ovNStr: String(ovN),
+      ovPrice: nflOvSlip.length ? this.amer(nflOvDec) : '—', ovPay: nflOvSlip.length ? this.money(st.stake * nflOvDec) : '$0.00',
+      ovHit: nflOvSlip.length ? (slipHit(nflOvSlip) * 100).toFixed(1) + '%' : '—',
+      ovDown: function () { self.setState({ ovN: Math.max(2, ovN - 1) }); }, ovUp: function () { self.setState({ ovN: Math.min(8, ovN + 1) }); },
+      cfOvList: cfOvTop.map(ovShow), cfOvSlip: cfOvSlip.map(ovShow), cfOvNStr: String(cfOvN),
+      cfOvPrice: cfOvSlip.length ? this.amer(cfOvDec) : '—', cfOvPay: cfOvSlip.length ? this.money(st.stake * cfOvDec) : '$0.00',
+      cfOvHit: cfOvSlip.length ? (slipHit(cfOvSlip) * 100).toFixed(1) + '%' : '—',
+      cfOvDown: function () { self.setState({ cfOvN: Math.max(2, cfOvN - 1) }); }, cfOvUp: function () { self.setState({ cfOvN: Math.min(8, cfOvN + 1) }); },
+      ovStakes: [5, 10, 25, 50].map(function (v) { var on = st.stake === v; return { label: '$' + v, on: on, style: chipW(on), pick: function () { self.setState({ stake: v }); } }; }),
       isBuilder: st.page === 'builder', isSpin: st.page === 'spin', isOdds: st.page === 'odds', isFade: st.page === 'fade', isCollege: isCollege,
       chipText: isCollege ? CF.chip : D.chip,
       liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#AEB5C0') + ';',

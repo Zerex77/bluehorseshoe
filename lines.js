@@ -247,7 +247,7 @@
     // Use the vig-free consensus only when it belongs to the same line we're showing; otherwise strip a typical cut from the price.
     var fairP = function (fair, odds) {
       var base = imp(odds) * 0.955;
-      if (fair != null && isFinite(fair) && fair !== 0 && Math.abs(imp(fair) - imp(odds)) < 0.08) return imp(fair);
+      if (fair != null && isFinite(fair) && fair !== 0 && Math.abs(imp(fair) - imp(odds)) < 0.03) return imp(fair);
       return base;
     };
     // Horseshoe prop leans from props.json carry over onto the live prop lines (same player, stat and side).
@@ -274,7 +274,7 @@
         var lean = leanMap[pr.player + '|' + pr.what + '|' + pr.side];
         if (lean && Math.abs(lean.line - pr.line) > Math.max(1.5, lean.line * 0.1)) lean = null; // line moved too far from the lean
         var qd = who && who.status === 'Questionable' ? -6 : 0;
-        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds,
+        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds, p: Math.min(0.97, p + (lean ? 0.03 : 0)),
           conf: clamp((lean ? Math.max(lean.conf, Math.round(p * 100)) : Math.round(p * 100)) + qd, 5, 90),
           s: lean ? lean.s : [p >= 0.58 ? 1 : 0, 0, 0],
           note: (lean ? lean.note + '; ' : '') + 'books give it ' + pct(p) + ' (vig removed)' + sgoStamp });
@@ -313,6 +313,12 @@
         legs.push({ g: gid, k: 'prop', c: p.c, pk: gid + '|' + p.player + '|' + p.label.replace(/^.* (over|under) [\d.]+ /, ''), label: p.alt.label, odds: p.alt.odds, conf: Math.max(30, 100 - p.conf - 8), s: [0, 0, 0], note: 'Other side of the Horseshoe lean' + asOf });
         injMap[gid + '|' + p.alt.label] = whoRow;
       }
+    });
+    // Horseshoe chance for every leg: the price with the book's cut removed, plus a small nudge for each signal it passes.
+    legs.forEach(function (l) {
+      if (l.p != null) return;
+      var sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
+      l.p = clamp(imp(l.odds) * 0.955 + sig * 0.012, 0.01, 0.97);
     });
     // Public splits (if posted) for live games only.
     var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
