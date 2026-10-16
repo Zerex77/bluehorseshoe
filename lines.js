@@ -238,21 +238,66 @@
         });
       }
     });
-    // Player props from the snapshot file, only for games that haven't kicked off.
+    // Full prop and alternate-line menu from SportsGameOdds (refreshed every 6 hours by the GitHub Action).
+    var sgoGames = {};
+    var byTeams = {};
+    events.forEach(function (e) { if (liveIds[e.id]) byTeams[e.a.displayName + '|' + e.h.displayName] = e; });
+    var sgoAsOf = extra.sgo && extra.sgo.updated ? new Date(extra.sgo.updated) : null;
+    var sgoStamp = sgoAsOf ? ' · line as of ' + etTime(sgoAsOf) + ' ET' : '';
+    var fairP = function (fair, odds) { var f = fair != null ? fair : null; if (f != null && isFinite(f) && f !== 0) return imp(f); return imp(odds) * 0.955; };
+    // Horseshoe prop leans from props.json carry over onto the live prop lines (same player, stat and side).
+    var leanMap = {};
+    ((extra.props || {}).legs || []).forEach(function (p) {
+      var m = /^(.*) (over|under) ([\d.]+) (.*)$/.exec(p.label);
+      if (m && p.s && p.s[0] + p.s[1] + p.s[2] >= 2) leanMap[m[1] + '|' + m[4] + '|' + m[2]] = { s: p.s, conf: p.conf, note: p.note, line: Number(m[3]) };
+    });
+    ((extra.sgo || {}).events || []).forEach(function (ev) {
+      var e = byTeams[ev.away + '|' + ev.home];
+      if (!e) return;
+      sgoGames[e.id] = 1;
+      var A = e.a.shortDisplayName, H = e.h.shortDisplayName;
+      (ev.props || []).forEach(function (pr) {
+        var who = inj.byName[pr.player];
+        if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
+        var label = pr.side === 'yes' ? pr.player + ' anytime TD' : pr.player + ' ' + pr.side + ' ' + pr.line + ' ' + pr.what;
+        var p = fairP(pr.fair, pr.odds);
+        var lean = leanMap[pr.player + '|' + pr.what + '|' + pr.side];
+        if (lean && Math.abs(lean.line - pr.line) > Math.max(1.5, lean.line * 0.1)) lean = null; // line moved too far from the lean
+        var qd = who && who.status === 'Questionable' ? -6 : 0;
+        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds,
+          conf: clamp((lean ? Math.max(lean.conf, Math.round(p * 100)) : Math.round(p * 100)) + qd, 5, 90),
+          s: lean ? lean.s : [p >= 0.58 ? 1 : 0, 0, 0],
+          note: (lean ? lean.note + '; ' : '') + 'books give it ' + pct(p) + ' (vig removed)' + sgoStamp });
+        injMap[e.id + '|' + label] = who ? [who.name, who.status, who.pos + (who.note ? ' · ' + who.note : '')] : [pr.player, 'No designation', ''];
+      });
+      var seenAlt = {};
+      legs.forEach(function (l) { if (l.g === e.id) seenAlt[l.label] = 1; });
+      (ev.alts || []).forEach(function (al) {
+        var label, mk;
+        if (al.type === 'sp') { var T = al.side === 'away' ? A : H; label = T + ' ' + signed(al.line); mk = 'spread'; }
+        else { label = (al.side === 'over' ? 'Over ' : 'Under ') + al.line; mk = 'total'; }
+        if (seenAlt[label]) return;
+        seenAlt[label] = 1;
+        var p = imp(al.odds) * 0.955;
+        legs.push({ g: e.id, k: 'line', mk: mk, alt: true, label: label + ' (alt)', odds: al.odds, conf: clamp(Math.round(p * 100), 3, 95),
+          s: [0, 0, 0], note: 'Alternate line, ' + (al.book === 'draftkings' ? 'DraftKings' : al.book === 'fanduel' ? 'FanDuel' : al.book) + ' price' + sgoStamp });
+      });
+    });
+    // Player props from the snapshot file, only for games that haven't kicked off and have no fresh prop feed.
     var props = extra.props || {};
     (props.legs || []).forEach(function (p) {
       var gid = shortToId[p.game];
-      if (!gid) return;
+      if (!gid || sgoGames[gid]) return;
       var who = inj.byName[p.player];
       if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
       var asOf = props.asOf ? ' · prop line as of ' + props.asOf : '';
       var whoRow = who ? [who.name, who.status, who.pos + (who.note ? ' · ' + who.note : '')] : [p.player, 'No designation', ''];
       var qDrop = who && who.status === 'Questionable' ? 6 : 0;
-      legs.push({ g: gid, k: 'prop', c: p.c, label: p.label, odds: p.odds, conf: p.conf - qDrop, s: p.s, note: p.note + asOf });
+      legs.push({ g: gid, k: 'prop', c: p.c, pk: gid + '|' + p.player + '|' + p.label.replace(/^.* (over|under) [\d.]+ /, ''), label: p.label, odds: p.odds, conf: p.conf - qDrop, s: p.s, note: p.note + asOf });
       injMap[gid + '|' + p.label] = whoRow;
       // The other side of the prop, when its price is known.
       if (p.alt && p.alt.label && p.alt.odds != null) {
-        legs.push({ g: gid, k: 'prop', c: p.c, label: p.alt.label, odds: p.alt.odds, conf: Math.max(30, 100 - p.conf - 8), s: [0, 0, 0], note: 'Other side of the Horseshoe lean' + asOf });
+        legs.push({ g: gid, k: 'prop', c: p.c, pk: gid + '|' + p.player + '|' + p.label.replace(/^.* (over|under) [\d.]+ /, ''), label: p.alt.label, odds: p.alt.odds, conf: Math.max(30, 100 - p.conf - 8), s: [0, 0, 0], note: 'Other side of the Horseshoe lean' + asOf });
         injMap[gid + '|' + p.alt.label] = whoRow;
       }
     });
@@ -434,9 +479,10 @@
     var extras = Promise.all([
       soft(getJSON('data/books.json' + bust)),
       soft(getJSON('data/props.json' + bust)),
+      soft(getJSON('data/sgo-nfl.json' + bust)),
       soft(getJSON('data/splits.json' + bust)),
       soft(getJSON('data/meta.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], splits: r[2], meta: r[3] }; });
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], splits: r[3], meta: r[4] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {
@@ -445,7 +491,7 @@
         status: 'ok', source: feed.source,
         updated: feed.source === 'snapshot' && ex.meta && ex.meta.espn ? new Date(ex.meta.espn) : new Date(),
         booksAsOf: ex.books && ex.books.updated ? new Date(ex.books.updated) : null,
-        propsAsOf: ex.props ? ex.props.asOf : null
+        propsAsOf: ex.sgo && ex.sgo.updated && ex.sgo.events && ex.sgo.events.length ? 'sgo:' + ex.sgo.updated : ex.props ? ex.props.asOf : null
       };
       root.BH = next;
       return next;

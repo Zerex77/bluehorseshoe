@@ -860,7 +860,7 @@ class Component extends DCLogic {
     var conflictKey = function (l) {
       if (l.mk === 'ml' || l.mk === 'spread') return l.g + '|side';
       if (l.mk === 'total') return l.g + '|total';
-      if (l.k === 'prop') return l.g + '|' + l.label.replace(/ (over|under) /, ' ~ ');
+      if (l.k === 'prop') return l.pk || (l.g + '|' + l.label.replace(/ (over|under) /, ' ~ '));
       return l.g + '|' + l.label;
     };
     var dedupe = function (arr) { var seen = {}; return arr.filter(function (l) { var k = conflictKey(l); if (seen[k]) return false; seen[k] = 1; return true; }); };
@@ -1418,7 +1418,7 @@ class Component extends DCLogic {
       chipText: isCollege ? CF.chip : D.chip,
       liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#AEB5C0') + ';',
       lineEmpty: !D.lineCheck.length, booksStamp: window.BH.booksAsOf ? 'Book prices from The Odds API, updated ' + window.BHLines.etTime(window.BH.booksAsOf) + ' ET ' + window.BH.booksAsOf.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '. They refresh every 4 hours.' : '',
-      footText: 'Game lines: ' + (window.BH.source === 'snapshot' ? 'DraftKings via ESPN (backup snapshot, refreshed every 15 min)' : 'DraftKings via ESPN, refreshed every minute') + '. NFL moneylines and college prices marked est. are converted from the spread.' + (window.BH.propsAsOf ? ' Player props as of ' + window.BH.propsAsOf + '.' : '') + ' Lines move, so confirm the price at your sportsbook. Horseshoe ratings are analysis, not advice. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.',
+      footText: 'Game lines: ' + (window.BH.source === 'snapshot' ? 'DraftKings via ESPN (backup snapshot, refreshed every 15 min)' : 'DraftKings via ESPN, refreshed every minute') + '. NFL moneylines and college prices marked est. are converted from the spread.' + (window.BH.propsAsOf ? (String(window.BH.propsAsOf).indexOf('sgo:') === 0 ? ' Player props and alternate lines: SportsGameOdds (DraftKings/FanDuel prices), updated ' + window.BHLines.etTime(new Date(String(window.BH.propsAsOf).slice(4))) + ' ET, refreshed every 6 hours.' : ' Player props as of ' + window.BH.propsAsOf + '.') : '') + ' Lines move, so confirm the price at your sportsbook. Horseshoe ratings are analysis, not advice. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.',
       fadeEmpty: D.publicBoard.length === 0, cfFadeEmpty: CF.publicBoard.length === 0,
 
       targets: targets, markets: markets, propTypes: propTypes, showPropFilter: st.market !== 'line',

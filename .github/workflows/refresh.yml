@@ -26,6 +26,7 @@ jobs:
       - name: Pull lines
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
         run: node scripts/refresh.mjs
       - name: Save changes
         run: |

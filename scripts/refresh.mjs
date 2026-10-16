@@ -106,8 +106,97 @@ async function oddsApi(meta) {
   console.log(`Odds API: ${games.length} NFL games, ${meta.oddsRemaining} credits left this month`);
 }
 
+// ---------- SportsGameOdds (free plan: 2,500 events a month). NFL player props + alternate lines, every 6 hours.
+const SGO_EVERY_MIN = 355;
+const SGO_MONTHLY_CAP = 2300; // stay under the 2,500 free events
+const PREF_BOOKS = ['draftkings', 'fanduel', 'espnbet', 'betmgm', 'caesars', 'williamhill'];
+const STAT = {
+  passing_yards: ['pass', 'pass yds'], rushing_yards: ['rush', 'rush yds'], receiving_yards: ['rec', 'rec yds'],
+  receptions: ['recp', 'receptions'], passing_touchdowns: ['td', 'pass TDs'], passing_completions: ['pass', 'completions'],
+  passing_attempts: ['pass', 'pass attempts'], rushing_attempts: ['rush', 'rush attempts'], passing_interceptions: ['pass', 'interceptions thrown'],
+  passing_longestCompletion: ['pass', 'longest completion'], rushing_longestRush: ['rush', 'longest rush'], receiving_longestReception: ['rec', 'longest reception'],
+  rushing_receiving_yards: ['rush', 'rush + rec yds'], passing_rushing_yards: ['pass', 'pass + rush yds'], touchdowns: ['td', 'TDs'],
+  defense_sacks: ['def', 'sacks'], defense_combinedTackles: ['def', 'tackles + assists'], kicking_totalPoints: ['kick', 'kicking points'],
+  fieldGoals_made: ['kick', 'field goals made']
+};
+const num = (x) => (x == null || x === '' ? null : Number(String(x).replace('+', '')));
+function bestBook(odd) {
+  const bb = odd.byBookmaker || {};
+  for (const k of PREF_BOOKS) if (bb[k] && bb[k].available !== false && bb[k].odds != null) return [k, bb[k]];
+  return null;
+}
+function slimSgoEvent(ev) {
+  const players = ev.players || {};
+  const out = {
+    home: ev.teams?.home?.names?.long, away: ev.teams?.away?.names?.long, startsAt: ev.status?.startsAt,
+    props: [], alts: []
+  };
+  for (const odd of Object.values(ev.odds || {})) {
+    if (odd.periodID !== 'game' || odd.cancelled) continue;
+    const b = bestBook(odd);
+    // Player props: over/under, plus anytime TD (yes side only)
+    if (odd.playerID && (odd.betTypeID === 'ou' || (odd.betTypeID === 'yn' && odd.sideID === 'yes'))) {
+      const st = STAT[odd.statID];
+      if (!st) continue;
+      const pl = players[odd.playerID] || {};
+      const name = pl.name || [pl.firstName, pl.lastName].filter(Boolean).join(' ') || odd.playerID;
+      const line = num(b ? b[1].overUnder : null) ?? num(odd.bookOverUnder);
+      const price = num(b ? b[1].odds : null) ?? num(odd.bookOdds);
+      if (price == null || (odd.betTypeID === 'ou' && line == null)) continue;
+      out.props.push({
+        player: name, team: pl.teamID || null, stat: odd.statID, c: st[0], what: st[1],
+        side: odd.betTypeID === 'yn' ? 'yes' : odd.sideID, line, odds: price,
+        fair: num(odd.fairOdds), book: b ? b[0] : 'consensus'
+      });
+      continue;
+    }
+    // Alternate game lines (spreads + totals) from the preferred book
+    if (odd.statID === 'points' && !odd.playerID && (odd.betTypeID === 'sp' || odd.betTypeID === 'ou') && b && Array.isArray(b[1].altLines)) {
+      for (const a of b[1].altLines) {
+        if (a.available === false || a.odds == null) continue;
+        const line = odd.betTypeID === 'sp' ? num(a.spread) : num(a.overUnder);
+        if (line == null) continue;
+        out.alts.push({ type: odd.betTypeID, side: odd.sideID, entity: odd.statEntityID, line, odds: num(a.odds), book: b[0] });
+      }
+    }
+  }
+  return out;
+}
+async function sgo(meta) {
+  const key = process.env.SGO_API_KEY;
+  if (!key) { console.log('No SGO_API_KEY secret set; skipping props and alt lines.'); return; }
+  const month = new Date().toISOString().slice(0, 7);
+  if (meta.sgoMonth !== month) { meta.sgoMonth = month; meta.sgoUsed = 0; }
+  const cur = await readJSON('data/sgo-nfl.json', { updated: null, events: [] });
+  const age = cur.updated ? (Date.now() - Date.parse(cur.updated)) / 60000 : Infinity;
+  if (age < SGO_EVERY_MIN) { console.log(`Props are ${Math.round(age)} min old; next pull after ${SGO_EVERY_MIN}.`); return; }
+  if (meta.sgoUsed >= SGO_MONTHLY_CAP) { console.log(`SportsGameOdds: ${meta.sgoUsed} events used this month; holding until next month.`); return; }
+  const now = new Date();
+  const before = new Date(now.getTime() + 6.5 * 864e5).toISOString();
+  const events = [];
+  let cursor = null;
+  for (let page = 0; page < 5; page++) {
+    const q = new URLSearchParams({ leagueID: 'NFL', oddsAvailable: 'true', includeAltLines: 'true', startsAfter: now.toISOString(), startsBefore: before, limit: '30' });
+    if (cursor) q.set('cursor', cursor);
+    const r = await fetch('https://api.sportsgameodds.com/v2/events?' + q, { headers: { 'x-api-key': key } });
+    if (!r.ok) throw new Error(`SportsGameOdds ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    const j = await r.json();
+    const data = j.data || [];
+    meta.sgoUsed += data.length;
+    for (const ev of data) {
+      const t = Date.parse(ev.status?.startsAt);
+      if (!isNaN(t) && t > Date.parse(before)) continue; // in case the date filter isn't applied server-side
+      events.push(slimSgoEvent(ev));
+    }
+    cursor = j.nextCursor;
+    if (!cursor || !data.length) break;
+  }
+  await writeFile('data/sgo-nfl.json', JSON.stringify({ updated: now.toISOString(), events }));
+  console.log(`SportsGameOdds: ${events.length} NFL games, ${events.reduce((a, e) => a + e.props.length, 0)} props, ${events.reduce((a, e) => a + e.alts.length, 0)} alt lines; ${meta.sgoUsed} events used this month`);
+}
+
 const meta = await readJSON('data/meta.json', {});
-const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta)]);
+const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta), sgo(meta)]);
 results.forEach((r) => { if (r.status === 'rejected') { console.error(r.reason); meta.lastError = String(r.reason?.stack || r.reason).slice(0, 500); } });
 await writeFile('data/meta.json', JSON.stringify(meta));
 if (results.every((r) => r.status === 'rejected')) process.exit(1);
