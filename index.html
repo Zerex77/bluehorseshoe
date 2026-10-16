@@ -125,6 +125,12 @@ button{font:inherit}
                 </select>
               </label>
               </sc-if>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Time slot</span>
+                <select onChange="{{onSlot}}" value="{{slotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{slotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
               <div style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Games</span>
                 <button type="button" onClick="{{toggleGames}}" aria-expanded="{{gamesOpen}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none; text-align: left; min-width: 150px;">{{gamesSummary}}</button>
@@ -362,22 +368,33 @@ button{font:inherit}
               <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; line-height: 1.25;">{{ovHit}}</span></span>
             </div>
           </div>
-          <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(0,0,0,0.14); border-radius: 8px; padding: 8px 10px;">
-            <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Overs on the slip">
-              <button type="button" onClick="{{ovDown}}" aria-label="Fewer overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
-              <span aria-live="polite" style="min-width: 54px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ovNStr}} overs</span>
-              <button type="button" onClick="{{ovUp}}" aria-label="More overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
-            </div>
-            <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
-              <sc-for list="{{ovStakes}}" as="os" hint-placeholder-count="4">
-                <button type="button" onClick="{{os.pick}}" aria-pressed="{{os.on}}" style="{{os.style}}">{{os.label}}</button>
-              </sc-for>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Which overs">
-              <sc-for list="{{ovMkts}}" as="om" hint-placeholder-count="3">
-                <button type="button" onClick="{{om.pick}}" aria-pressed="{{om.on}}" style="{{om.style}}">{{om.label}}</button>
-              </sc-for>
-            </div>
+          <div style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Overs</span>
+                <div role="group" aria-label="Overs on the slip" style="display: inline-flex; align-items: center; height: 32px; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; background: rgba(255,255,255,0.12);">
+                  <button type="button" onClick="{{ovDown}}" aria-label="Fewer" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                  <span aria-live="polite" style="min-width: 42px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ovNStr}}</span>
+                  <button type="button" onClick="{{ovUp}}" aria-label="More" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
+                </div>
+              </div>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Stake</span>
+                <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Show</span>
+                <select onChange="{{onOvMkt}}" value="{{ovMktVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{ovMktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Time slot</span>
+                <select onChange="{{onSlot}}" value="{{slotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{slotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
           </div>
           <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px;">
             <sc-for list="{{ovSlip}}" as="sl" hint-placeholder-count="3">
@@ -575,37 +592,52 @@ button{font:inherit}
                   <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{cfHitStr}} <span style="font-size: 11px; font-weight: 400; color: #CFDDF8;">book {{cfBookStr}}</span></span></span>
                 </div>
               </div>
-              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(0,0,0,0.12); border-radius: 8px; padding: 8px 10px;">
-                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Target">
-                  <sc-for list="{{cfTargets}}" as="ctg" hint-placeholder-count="6">
-                    <button type="button" onClick="{{ctg.pick}}" aria-pressed="{{ctg.on}}" style="{{ctg.style}}">{{ctg.label}}</button>
-                  </sc-for>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px;">
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Target</span>
+                <select onChange="{{onCfTarget}}" value="{{cfTargetVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{cfTargetOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Legs</span>
+                <div role="group" aria-label="Number of legs" style="display: inline-flex; align-items: center; height: 32px; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; background: rgba(255,255,255,0.12);">
+                  <button type="button" onClick="{{cfDown}}" aria-label="Fewer" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                  <span aria-live="polite" style="min-width: 42px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{cfFaderLabel}}</span>
+                  <button type="button" onClick="{{cfUp}}" aria-label="More" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
                 </div>
-                <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Number of legs" title="{{cfSizeHint}}">
-                  <button type="button" onClick="{{cfSizeAuto}}" aria-pressed="{{cfSizeIsAuto}}" style="{{cfSizeAutoStyle}}">Auto</button>
-                  <button type="button" onClick="{{cfDown}}" aria-label="Fewer legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
-                  <span aria-live="polite" style="min-width: 34px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{cfFaderLabel}}</span>
-                  <button type="button" onClick="{{cfUp}}" aria-label="More legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
-                </div>
-                <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
-                  <sc-for list="{{cfStakes}}" as="s3" hint-placeholder-count="4">
-                    <button type="button" onClick="{{s3.pick}}" aria-pressed="{{s3.on}}" style="{{s3.style}}">{{s3.label}}</button>
-                  </sc-for>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Lines">
-                  <sc-for list="{{cfMktPills}}" as="cm" hint-placeholder-count="4">
-                    <button type="button" onClick="{{cm.pick}}" aria-pressed="{{cm.on}}" style="{{cm.style}}">{{cm.label}}</button>
-                  </sc-for>
-                </div>
-                <button type="button" onClick="{{cfFeatherBtn.pick}}" aria-pressed="{{cfFeatherBtn.on}}" title="When the parlay beats your target, swap in safer alternate lines while staying at or above it." style="{{cfFeatherBtn.style}}">{{cfFeatherBtn.label}}</button>
-                <sc-if value="{{cfShowOU}}" hint-placeholder-val="{{ true }}">
-                  <div role="group" aria-label="Totals direction" style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    <sc-for list="{{cfOUOpts}}" as="ou" hint-placeholder-count="3">
-                      <button type="button" onClick="{{ou.pick}}" aria-pressed="{{ou.on}}" style="{{ou.style}}">{{ou.label}}</button>
-                    </sc-for>
-                  </div>
-                </sc-if>
               </div>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Stake</span>
+                <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Lines</span>
+                <select onChange="{{onCfMkt}}" value="{{cfMktVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{cfMktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <sc-if value="{{cfShowOU}}" hint-placeholder-val="{{ true }}">
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Totals</span>
+                <select onChange="{{onCfOU}}" value="{{cfOUVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{cfOUSel}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              </sc-if>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Time slot</span>
+                <select onChange="{{onCfSlot}}" value="{{cfSlotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <button type="button" role="switch" onClick="{{cfFeatherBtn.pick}}" aria-checked="{{cfFeatherBtn.on}}" title="When the parlay beats your target, swap in safer alternate lines while staying at or above it." style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0; background: none; border: none; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <span aria-hidden="true" style="{{cfFeatherTrack}}"><span style="{{cfFeatherKnob}}"></span></span>Feather to target
+              </button>
+              <button type="button" onClick="{{cfSizeAuto}}" style="height: 32px; padding: 0; background: none; border: none; color: #CFDDF8; font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer;">Reset legs to auto</button>
+          </div>
             </section>
 
             <sc-if value="{{cfHasUpset}}" hint-placeholder-val="{{ true }}">
@@ -698,23 +730,34 @@ button{font:inherit}
                   <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{cfUpsetHit}} <span style="font-size: 11px; font-weight: 400; color: #C9D3E8;">book {{cfUpsetBook}}</span></span></span>
                 </div>
               </div>
-              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px;">
-                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Type">
-                  <sc-for list="{{upModes}}" as="um" hint-placeholder-count="2">
-                    <button type="button" onClick="{{um.pick}}" aria-pressed="{{um.on}}" style="{{um.style}}">{{um.label}}</button>
-                  </sc-for>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Number of upsets">
-                  <button type="button" onClick="{{upDown}}" aria-label="Fewer upsets" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
-                  <span style="min-width: 24px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{upNStr}}</span>
-                  <button type="button" onClick="{{upUp}}" aria-label="More upsets" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
-                </div>
-                <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
-                  <sc-for list="{{cfStakes}}" as="us" hint-placeholder-count="4">
-                    <button type="button" onClick="{{us.pick}}" aria-pressed="{{us.on}}" style="{{us.style}}">{{us.label}}</button>
-                  </sc-for>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px;">
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Type</span>
+                <select onChange="{{onUpMode}}" value="{{upModeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{upModeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Upsets</span>
+                <div role="group" aria-label="Number of upsets" style="display: inline-flex; align-items: center; height: 32px; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; background: rgba(255,255,255,0.12);">
+                  <button type="button" onClick="{{upDown}}" aria-label="Fewer" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                  <span aria-live="polite" style="min-width: 42px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{upNStr}}</span>
+                  <button type="button" onClick="{{upUp}}" aria-label="More" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
                 </div>
               </div>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Stake</span>
+                <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Time slot</span>
+                <select onChange="{{onCfSlot}}" value="{{cfSlotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+          </div>
               <div style="display: flex; flex-direction: column; gap: 4px;">
                 <sc-for list="{{cfUpsetLegs}}" as="ul" hint-placeholder-count="3">
                   <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.07);">
@@ -785,18 +828,27 @@ button{font:inherit}
               <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; line-height: 1.25;">{{cfOvHit}}</span></span>
             </div>
           </div>
-          <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(0,0,0,0.14); border-radius: 8px; padding: 8px 10px;">
-            <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Overs on the slip">
-              <button type="button" onClick="{{cfOvDown}}" aria-label="Fewer overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
-              <span aria-live="polite" style="min-width: 54px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{cfOvNStr}} overs</span>
-              <button type="button" onClick="{{cfOvUp}}" aria-label="More overs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
-            </div>
-            <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
-              <sc-for list="{{ovStakes}}" as="os" hint-placeholder-count="4">
-                <button type="button" onClick="{{os.pick}}" aria-pressed="{{os.on}}" style="{{os.style}}">{{os.label}}</button>
-              </sc-for>
-            </div>
-            
+          <div style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Overs</span>
+                <div role="group" aria-label="Overs on the slip" style="display: inline-flex; align-items: center; height: 32px; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; background: rgba(255,255,255,0.12);">
+                  <button type="button" onClick="{{cfOvDown}}" aria-label="Fewer" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                  <span aria-live="polite" style="min-width: 42px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{cfOvNStr}}</span>
+                  <button type="button" onClick="{{cfOvUp}}" aria-label="More" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
+                </div>
+              </div>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Stake</span>
+                <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Time slot</span>
+                <select onChange="{{onCfSlot}}" value="{{cfSlotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
           </div>
           <div style="position: relative; display: flex; flex-wrap: wrap; gap: 6px;">
             <sc-for list="{{cfOvSlip}}" as="sl" hint-placeholder-count="3">
@@ -879,9 +931,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016125741';</script>
-<script src="runtime.js?v=20261016125741"></script>
-<script src="lines.js?v=20261016125741"></script>
+<script>window.BH_VERSION='20261016130221';</script>
+<script src="runtime.js?v=20261016130221"></script>
+<script src="lines.js?v=20261016130221"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -913,6 +965,27 @@ class Component extends DCLogic {
     var st = this.state;
     var D = this.data();
 
+    // ---- Time slots (Eastern)
+    var etParts = function (iso) {
+      try { var d = new Date(iso); return { day: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' }), hr: Number(d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/New_York' })) % 24 }; }
+      catch (e) { return { day: '', hr: 12 }; }
+    };
+    var nflSlot = function (iso) { var t = etParts(iso); if (t.day === 'Sun') return t.hr < 12 ? 'sunam' : t.hr < 16 ? 'sunearly' : t.hr < 19 ? 'sunlate' : 'sunnight'; if (t.day === 'Mon') return 'mon'; if (t.day === 'Thu') return 'thu'; return 'other'; };
+    var cfSlot = function (iso) { var t = etParts(iso); if (t.day !== 'Sat') return t.day === 'Fri' ? 'fri' : 'week'; return t.hr < 15 ? 'satnoon' : t.hr < 19 ? 'satafternoon' : 'satnight'; };
+    var slotOptsFor = function (names, order, games, slotOf) {
+      var cnt = {};
+      games.forEach(function (g) { var k = slotOf(g.date); cnt[k] = (cnt[k] || 0) + 1; });
+      return [{ v: 'all', label: 'All games · ' + games.length }].concat(order.filter(function (k) { return cnt[k]; }).map(function (k) { return { v: k, label: names[k] + ' · ' + cnt[k] }; }));
+    };
+    var nflSlotNames = { thu: 'Thursday night', sunam: 'Sunday morning', sunearly: 'Sunday 1 PM', sunlate: 'Sunday 4 PM', sunnight: 'Sunday night', mon: 'Monday night', other: 'Other days' };
+    var slotSel = st.slot || 'all';
+    var nflSlotOpts = slotOptsFor(nflSlotNames, ['thu', 'sunam', 'sunearly', 'sunlate', 'sunnight', 'mon', 'other'], D.games, nflSlot);
+    if (slotSel !== 'all') {
+      var okG = {};
+      D.games.forEach(function (g) { if (nflSlot(g.date) === slotSel) okG[g.id] = 1; });
+      D = Object.assign({}, D, { games: D.games.filter(function (g) { return okG[g.id]; }), legs: D.legs.filter(function (l) { return okG[l.g]; }) });
+    }
+
     // ---- Feathering: once a parlay clears its target price, spend the extra payout on safer alternate lines
     // (buy points on spreads, lower totals and prop lines), taking the swap that adds the most hit chance per bit of price.
     var famOf = function (l) {
@@ -937,7 +1010,7 @@ class Component extends DCLogic {
           var orig = c.from || c.l;
           var bump = Math.max(0, (orig.p != null ? orig.p : noVig(orig.odds)) - noVig(orig.odds));
           idx[f.key].forEach(function (a) {
-            if (a.safe <= f.safe || a.l === c.l || self.dec(a.l.odds) < 1.1) return;
+            if (a.safe <= f.safe || a.l === c.l || self.dec(a.l.odds) < 1.25) return; // never feather past -400
             var nd = d0 / self.dec(c.l.odds) * self.dec(a.l.odds);
             if (nd < targetDec) return;
             var pa = Math.min(0.97, noVig(a.l.odds) + bump);
@@ -1274,6 +1347,14 @@ class Component extends DCLogic {
 
     // ---- college: Blue Horseshoe
     var CF = this.cfData();
+    var cfSlotNames = { week: 'Before Friday', fri: 'Friday', satnoon: 'Saturday noon', satafternoon: 'Saturday afternoon', satnight: 'Saturday night' };
+    var cfSlotSel = st.cfSlot || 'all';
+    var cfSlotOpts = slotOptsFor(cfSlotNames, ['week', 'fri', 'satnoon', 'satafternoon', 'satnight'], CF.slate, cfSlot);
+    if (cfSlotSel !== 'all') {
+      var okC = {};
+      CF.slate.forEach(function (g) { if (cfSlot(g.date) === cfSlotSel) okC[g.id] = 1; });
+      CF = Object.assign({}, CF, { slate: CF.slate.filter(function (g) { return okC[g.id]; }), games: CF.games.filter(function (g) { return okC[g.id]; }), legs: CF.legs.filter(function (l) { return okC[l.g]; }) });
+    }
     var cfGameMap = {};
     CF.games.forEach(function (g) { cfGameMap[g.id] = g; });
     var cfMk = st.cfMkts;
@@ -1680,6 +1761,20 @@ class Component extends DCLogic {
       cfFeatherNote: cfFeatherN ? 'Feathered ' + cfFeatherN + ' leg' + (cfFeatherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (cfHitBefore * 100).toFixed(1) + '% → ' + (function () { var h = 1; cfTicket.forEach(function (t) { h *= t.c.p; }); return (h * 100).toFixed(1); })() + '%' : '',
       nflTop: { current: !isCollege ? 'page' : 'false', style: tabStyle(!isCollege), pick: go(st.nflLast || 'builder') },
       isNfl: !isCollege,
+      slotVal: slotSel, slotOpts: nflSlotOpts, onSlot: function (ev) { self.setState({ slot: ev.target.value, games: [] }); },
+      cfSlotVal: cfSlotSel, cfSlotOpts: cfSlotOpts, onCfSlot: function (ev) { self.setState({ cfSlot: ev.target.value }); },
+      cfTargetVal: String(st.cfTarget), cfTargetOpts: [{ v: 'safe', label: 'Safest' }, { v: '200', label: '+200' }, { v: '400', label: '+400' }, { v: '800', label: '+800' }, { v: '1500', label: '+1500' }, { v: '3000', label: '+3000' }, { v: '5000', label: '+5000' }],
+      onCfTarget: function (ev) { var v = ev.target.value; self.setState({ cfTarget: v === 'safe' ? 'safe' : Number(v) }); },
+      cfMktVal: cfMk.length === 1 ? cfMk[0] : 'all', cfMktOpts: [{ v: 'all', label: 'All lines' }, { v: 'ml', label: 'Moneylines' }, { v: 'spread', label: 'Spreads' }, { v: 'total', label: 'Totals' }],
+      onCfMkt: function (ev) { var v = ev.target.value; self.setState({ cfMkts: v === 'all' ? [] : [v] }); },
+      cfOUVal: cfOU, cfOUSel: [{ v: 'either', label: 'Overs + unders' }, { v: 'over', label: 'Overs only' }, { v: 'under', label: 'Unders only' }],
+      onCfOU: function (ev) { self.setState({ cfOU: ev.target.value }); },
+      cfFeatherTrack: 'position: relative; width: 34px; height: 20px; border-radius: 999px; background: ' + (cfFeatherOn ? '#FFD166' : 'rgba(255,255,255,0.3)') + ';',
+      cfFeatherKnob: 'position: absolute; top: 2px; left: ' + (cfFeatherOn ? '16px' : '2px') + '; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.25);',
+      upModeVal: upMode, upModeOpts: [{ v: 'all', label: 'Dogs + points' }, { v: 'ml', label: 'Moneyline upsets' }],
+      onUpMode: function (ev) { self.setState({ upMode: ev.target.value }); },
+      ovMktVal: ovMkt, ovMktOpts: [{ v: 'all', label: 'Everything' }, { v: 'game', label: 'Game totals' }, { v: 'prop', label: 'Player overs' }],
+      onOvMkt: function (ev) { self.setState({ ovMkt: ev.target.value }); },
       targetVal: String(st.target), targetOpts: [{ v: 'fav', label: 'Horseshoe faves' }, { v: '300', label: '+300' }, { v: '600', label: '+600' }, { v: '1000', label: '+1000' }, { v: '2000', label: '+2000' }, { v: '5000', label: '+5000' }, { v: '10000', label: '+10000' }],
       onTarget: function (ev) { var v = ev.target.value; self.setState({ target: v === 'fav' ? 'fav' : Number(v) }); },
       stakeVal: String(st.stake), stakeOpts: [5, 10, 25, 50, 100].map(function (v) { return { v: String(v), label: '$' + v }; }),
