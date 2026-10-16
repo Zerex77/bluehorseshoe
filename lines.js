@@ -244,7 +244,12 @@
     events.forEach(function (e) { if (liveIds[e.id]) byTeams[e.a.displayName + '|' + e.h.displayName] = e; });
     var sgoAsOf = extra.sgo && extra.sgo.updated ? new Date(extra.sgo.updated) : null;
     var sgoStamp = sgoAsOf ? ' · line as of ' + etTime(sgoAsOf) + ' ET' : '';
-    var fairP = function (fair, odds) { var f = fair != null ? fair : null; if (f != null && isFinite(f) && f !== 0) return imp(f); return imp(odds) * 0.955; };
+    // Use the vig-free consensus only when it belongs to the same line we're showing; otherwise strip a typical cut from the price.
+    var fairP = function (fair, odds) {
+      var base = imp(odds) * 0.955;
+      if (fair != null && isFinite(fair) && fair !== 0 && Math.abs(imp(fair) - imp(odds)) < 0.08) return imp(fair);
+      return base;
+    };
     // Horseshoe prop leans from props.json carry over onto the live prop lines (same player, stat and side).
     var leanMap = {};
     ((extra.props || {}).legs || []).forEach(function (p) {
@@ -257,9 +262,13 @@
       sgoGames[e.id] = 1;
       var A = e.a.shortDisplayName, H = e.h.shortDisplayName;
       (ev.props || []).forEach(function (pr) {
+        // Skip lines no one would parlay: near-locks shorter than -400 and lottery tickets longer than +2500.
+        if (pr.odds < -400 || pr.odds > 2500) return;
         var who = inj.byName[pr.player];
         if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
-        var label = pr.side === 'yes' ? pr.player + ' anytime TD' : pr.player + ' ' + pr.side + ' ' + pr.line + ' ' + pr.what;
+        var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
+        if (pr.side === 'yes' && !YES[pr.stat]) return;
+        var label = pr.side === 'yes' ? pr.player + ' ' + YES[pr.stat] : pr.player + ' ' + pr.side + ' ' + pr.line + ' ' + pr.what;
         var p = fairP(pr.fair, pr.odds);
         var lean = leanMap[pr.player + '|' + pr.what + '|' + pr.side];
         if (lean && Math.abs(lean.line - pr.line) > Math.max(1.5, lean.line * 0.1)) lean = null; // line moved too far from the lean
@@ -273,13 +282,15 @@
       var seenAlt = {};
       legs.forEach(function (l) { if (l.g === e.id) seenAlt[l.label] = 1; });
       (ev.alts || []).forEach(function (al) {
+        if (al.odds == null || al.odds < -400 || al.odds > 600) return;
         var label, mk;
         if (al.type === 'sp') { var T = al.side === 'away' ? A : H; label = T + ' ' + signed(al.line); mk = 'spread'; }
         else { label = (al.side === 'over' ? 'Over ' : 'Under ') + al.line; mk = 'total'; }
         if (seenAlt[label]) return;
         seenAlt[label] = 1;
         var p = imp(al.odds) * 0.955;
-        legs.push({ g: e.id, k: 'line', mk: mk, alt: true, label: label + ' (alt)', odds: al.odds, conf: clamp(Math.round(p * 100), 3, 95),
+        // Alternate lines rank below main lines so they only fill a game's spread/total slot when nothing better is there.
+        legs.push({ g: e.id, k: 'line', mk: mk, alt: true, label: label + ' (alt)', odds: al.odds, conf: clamp(Math.round(p * 100) - 20, 3, 80),
           s: [0, 0, 0], note: 'Alternate line, ' + (al.book === 'draftkings' ? 'DraftKings' : al.book === 'fanduel' ? 'FanDuel' : al.book) + ' price' + sgoStamp });
       });
     });
