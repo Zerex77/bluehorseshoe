@@ -331,9 +331,25 @@
   }
   function soft(p) { return p.then(function (x) { return x; }, function () { return null; }); }
 
-  function cfbUrl() {
-    var now = new Date(), end = new Date(now.getTime() + 6 * 864e5);
-    return ESPN + 'college-football/scoreboard?groups=80&limit=400&dates=' + ymd(now) + '-' + ymd(end);
+  // ESPN rejects date ranges on the college scoreboard, so ask for each of the next 7 days and merge.
+  function cfbDays() {
+    var out = [];
+    for (var i = 0; i < 7; i++) out.push(ymd(new Date(Date.now() + i * 864e5)));
+    return out;
+  }
+  function getCfbLive() {
+    return Promise.all(cfbDays().map(function (d) {
+      return soft(getJSON(ESPN + 'college-football/scoreboard?groups=80&limit=300&dates=' + d));
+    })).then(function (days) {
+      var seen = {}, events = [], ok = 0;
+      days.forEach(function (j) {
+        if (!j) return;
+        ok++;
+        (j.events || []).forEach(function (e) { if (!seen[e.id]) { seen[e.id] = 1; events.push(e); } });
+      });
+      if (!ok) throw new Error('college scoreboard unavailable');
+      return { events: events };
+    });
   }
 
   var empty = function () {
@@ -347,15 +363,22 @@
 
   function load() {
     var bust = '?t=' + Math.floor(Date.now() / 60000);
-    var live = Promise.all([
-      getJSON(ESPN + 'nfl/scoreboard'),
-      getJSON(cfbUrl()),
-      soft(getJSON(ESPN + 'nfl/injuries'))
-    ]).then(function (r) { return { nfl: r[0], cfb: r[1], inj: r[2], source: 'live' }; });
-    var fallback = function () {
-      return Promise.all([getJSON('data/espn-nfl.json' + bust), getJSON('data/espn-cfb.json' + bust), soft(getJSON('data/espn-injuries.json' + bust))])
-        .then(function (r) { return { nfl: r[0], cfb: r[1], inj: r[2], source: 'snapshot' }; });
+    // Each feed tries ESPN live first, then the 15-minute backup copy, independently.
+    var pick = function (livePromise, backupPath) {
+      return livePromise.then(function (j) { return { json: j, live: true }; }, function () {
+        return getJSON(backupPath + bust).then(function (j) { return { json: j, live: false }; }, function () { return null; });
+      });
     };
+    var live = Promise.all([
+      pick(getJSON(ESPN + 'nfl/scoreboard'), 'data/espn-nfl.json'),
+      pick(getCfbLive(), 'data/espn-cfb.json'),
+      pick(getJSON(ESPN + 'nfl/injuries'), 'data/espn-injuries.json')
+    ]).then(function (r) {
+      if (!r[0] && !r[1]) throw new Error('no lines from ESPN or backup');
+      var allLive = (!r[0] || r[0].live) && (!r[1] || r[1].live);
+      return { nfl: r[0] ? r[0].json : {}, cfb: r[1] ? r[1].json : {}, inj: r[2] ? r[2].json : null, source: allLive ? 'live' : 'snapshot' };
+    });
+    var fallback = function (e) { throw e; };
     var extras = Promise.all([
       soft(getJSON('data/books.json' + bust)),
       soft(getJSON('data/props.json' + bust)),

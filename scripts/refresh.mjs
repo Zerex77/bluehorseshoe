@@ -54,10 +54,17 @@ function slimInjuries(j) {
 
 async function espnBackup(meta) {
   const now = new Date();
-  const end = new Date(now.getTime() + 6 * 864e5);
   const [nfl, cfb, inj] = await Promise.allSettled([
     getJSON(ESPN + 'nfl/scoreboard'),
-    getJSON(`${ESPN}college-football/scoreboard?groups=80&limit=400&dates=${ymd(now)}-${ymd(end)}`),
+    (async () => {
+      // ESPN rejects date ranges here, so pull each of the next 7 days.
+      const days = await Promise.allSettled([...Array(7)].map((_, i) => getJSON(`${ESPN}college-football/scoreboard?groups=80&limit=300&dates=${ymd(new Date(now.getTime() + i * 864e5))}`)));
+      const ok = days.filter((d) => d.status === 'fulfilled');
+      if (!ok.length) throw days[0].reason;
+      const seen = new Set(), events = [];
+      for (const d of ok) for (const e of d.value.json.events || []) if (!seen.has(e.id)) { seen.add(e.id); events.push(e); }
+      return { json: { events } };
+    })(),
     getJSON(ESPN + 'nfl/injuries')
   ]);
   const errs = [];
