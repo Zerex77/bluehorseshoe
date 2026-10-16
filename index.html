@@ -477,39 +477,63 @@ button{font:inherit}
                 <button type="button" onClick="{{cfLeansToggle}}" aria-pressed="{{cfLeansOnly}}" style="{{cfLeansStyle}}">Horseshoe leans only</button>
               </div>
             </div>
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead>
-                  <tr style="background: #FAFBFC;">
-                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Game</th>
-                    <th scope="col" aria-sort="{{leanAria}}" style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #E3E6EB;"><button type="button" onClick="{{cycleSort}}" style="background: none; border: none; padding: 4px 0; cursor: pointer; font-size: 11px; font-weight: 600; color: #1D5FD6;">Horseshoe lean{{leanArrow}}</button></th>
-                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Spread</th>
-                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Total</th>
-                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Moneyline</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <sc-for list="{{slateRows}}" as="sr" hint-placeholder-count="12">
-                    <tr>
-                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{sr.game}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{sr.conf}}</span></th>
-                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;">
-                        <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                          <span style="{{sr.leanStyle}}">{{sr.lean}}</span>
-                          <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.shoeAria}}">
-                            <sc-for list="{{sr.shoes}}" as="sh" hint-placeholder-count="5">
-                              <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
-                            </sc-for>
-                          </span>
-                        </span>
-                        <span style="display: block; font-size: 12px; color: #6B7280;">{{sr.leanSub}}</span>
-                      </td>
-                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px; white-space: nowrap;">{{sr.spread}}</td>
-                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{sr.total}}</td>
-                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{sr.ml}}</td>
-                    </tr>
-                  </sc-for>
-                </tbody>
-              </table>
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #E3E6EB; background: #FAFBFC;">
+                <button type="button" onClick="{{cycleSort}}" aria-label="Sort by Horseshoe lean" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; font-weight: 600; color: #1D5FD6;">Game · sort by lean{{leanArrow}}</button>
+                <span style="font-size: 11px; color: #6B7280;">Spread · Over/Under · Moneyline</span>
+              </div>
+              <sc-for list="{{slateRows}}" as="sr" hint-placeholder-count="12">
+                <div style="display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-bottom: 1px solid #EEF0F3;">
+                  <div style="flex: 1 1 170px; min-width: 0;">
+                    <span style="display: block; font-weight: 600; font-size: 14px;">{{sr.game}}</span>
+                    <span style="display: block; font-size: 12px; color: #6B7280;">{{sr.conf}}</span>
+                  </div>
+                  <div style="flex: 4 1 520px; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+                    <div style="min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Spread</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280; overflow-wrap: anywhere;">{{sr.spreadLine}}</span>
+                      <span style="display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; font-size: 13px;">
+                        <span style="{{sr.sp.labelStyle}}; display: inline;">{{sr.sp.label}}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #374151;">{{sr.sp.oddsStr}}</span>
+                      </span>
+                      <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.sp.shoeAria}}">
+                        <sc-for list="{{sr.sp.shoes}}" as="sh" hint-placeholder-count="5">
+                          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
+                        </sc-for>
+                      </span>
+                      <span style="font-size: 11px; color: #6B7280;">{{sr.sp.sub}}</span>
+                    </div>
+                    <div style="min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Over/Under</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280; overflow-wrap: anywhere;">{{sr.totalLine}}</span>
+                      <span style="display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; font-size: 13px;">
+                        <span style="{{sr.tt.labelStyle}}; display: inline;">{{sr.tt.label}}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #374151;">{{sr.tt.oddsStr}}</span>
+                      </span>
+                      <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.tt.shoeAria}}">
+                        <sc-for list="{{sr.tt.shoes}}" as="sh" hint-placeholder-count="5">
+                          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
+                        </sc-for>
+                      </span>
+                      <span style="font-size: 11px; color: #6B7280;">{{sr.tt.sub}}</span>
+                    </div>
+                    <div style="min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Moneyline</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280; overflow-wrap: anywhere;">{{sr.mlLine}}</span>
+                      <span style="display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; font-size: 13px;">
+                        <span style="{{sr.ml.labelStyle}}; display: inline;">{{sr.ml.label}}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #374151;">{{sr.ml.oddsStr}}</span>
+                      </span>
+                      <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.ml.shoeAria}}">
+                        <sc-for list="{{sr.ml.shoes}}" as="sh" hint-placeholder-count="5">
+                          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
+                        </sc-for>
+                      </span>
+                      <span style="font-size: 11px; color: #6B7280;">{{sr.ml.sub}}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
             </div>
           </div>
         </sc-if>
@@ -840,9 +864,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016122451';</script>
-<script src="runtime.js?v=20261016122451"></script>
-<script src="lines.js?v=20261016122451"></script>
+<script>window.BH_VERSION='20261016123634';</script>
+<script src="runtime.js?v=20261016123634"></script>
+<script src="lines.js?v=20261016123634"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1498,20 +1522,37 @@ class Component extends DCLogic {
       var n = c === 'All' ? CF.slate.length : CF.slate.filter(function (s) { return s.cf === c; }).length;
       return { label: c + ' · ' + n, on: on, style: chip(on), pick: function () { self.setState({ cfConf: c }); } };
     });
+    // Full slate: the Horseshoe's lean in every market (spread, total, moneyline) for each game.
+    var mkLean = function (g, k) {
+      var best = null, bs = -9;
+      CF.legs.forEach(function (l) {
+        if (l.g !== g || l.k !== k || l.alt) return;
+        var sig = l.s[0] + l.s[1] + l.s[2];
+        var ev = l.p * self.dec(l.odds) - 1;
+        var sc = sig * 0.1 + ev * 3 + (l.p - 0.5) * 0.6;
+        if (sc > bs) { bs = sc; best = { l: l, sig: sig, ev: ev, sc: sc }; }
+      });
+      if (!best) return { has: false, strong: false, sc: -9, label: 'Pass', labelStyle: 'display: block; color: ' + FAINT + ';', sub: 'Price too lopsided to play', shoes: [], shoeAria: 'No rating', oddsStr: '' };
+      var l = best.l, ev = Math.round(best.ev * 1000) / 10;
+      var strong = l.k === 'ml' ? best.sig >= 2 : best.sig >= 1;
+      return {
+        has: true, strong: strong, sc: best.sc,
+        label: l.label, oddsStr: self.fmtOdds(l.odds),
+        labelStyle: 'display: block; font-weight: ' + (strong ? '700' : '500') + '; color: ' + (strong ? B : MUTED) + ';',
+        sub: strong ? 'Hits ' + pct(l.p) + ' · value ' + (ev >= 0 ? '+' : '') + ev + '%' : 'No signal',
+        shoes: strong ? shoes(l.conf) : [], shoeAria: strong ? 'Horseshoe rating ' + shoeCount(l.conf) + ' of 5' : 'No rating'
+      };
+    };
     var slateRows = CF.slate.filter(function (s) { return confF === 'All' || s.cf === confF; }).map(function (s) {
       var fav = s.hs < 0 ? s.h + ' ' + s.hs : s.hs > 0 ? s.a + ' -' + s.hs : 'Pick’em';
-      var best = CF.legs.filter(function (l) { return l.g === s.id && l.s[0] + l.s[1] + l.s[2] >= 2; }).sort(function (x, y) { return y.conf - x.conf; })[0];
+      var sp = mkLean(s.id, 'spread'), tt = mkLean(s.id, 'total'), ml = mkLean(s.id, 'ml');
+      var strongs = [sp, tt, ml].filter(function (x) { return x.strong; });
       return {
         game: s.a + (s.n ? ' vs ' : ' @ ') + s.h, conf: s.cf,
-        spread: fav, total: String(s.tot),
-        ml: s.a + ' ' + self.fmtOdds(s.aml) + ' · ' + s.h + ' ' + self.fmtOdds(s.hml),
-        hasLean: !!best,
-        sortKey: best ? best.conf + best.p : -1,
-        lean: best ? best.label : 'No lean',
-        leanStyle: best ? 'display: block; font-weight: 600; color: ' + B + ';' : 'display: block; color: ' + FAINT + ';',
-        leanSub: best ? 'Horseshoe ' + pct(best.p) + ' · ' + best.note : 'Nothing passes the checks',
-        shoes: best ? shoes(best.conf) : [],
-        shoeAria: best ? 'Horseshoe rating ' + shoeCount(best.conf) + ' of 5' : 'No rating'
+        spreadLine: fav, totalLine: 'O/U ' + s.tot, mlLine: self.fmtOdds(s.aml) + ' / ' + self.fmtOdds(s.hml),
+        sp: sp, tt: tt, ml: ml,
+        hasLean: strongs.length > 0,
+        sortKey: strongs.length ? Math.max.apply(null, strongs.map(function (x) { return x.sc; })) : -9
       };
     });
     if (st.cfLeansOnly) slateRows = slateRows.filter(function (r) { return r.hasLean; });
