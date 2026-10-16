@@ -89,45 +89,60 @@ button{font:inherit}
               <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{hitStr}}</span></span>
             </div>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.12); border-radius: 8px; padding: 8px 10px;">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;">
-              <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Target odds">
-                <sc-for list="{{nTargets}}" as="t" hint-placeholder-count="6">
-                  <button type="button" onClick="{{t.pick}}" aria-pressed="{{t.on}}" style="{{t.style}}">{{t.label}}</button>
-                </sc-for>
-              </div>
-              <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Number of legs" title="{{legsHint}}">
-                <button type="button" onClick="{{legsAuto}}" aria-pressed="{{legsIsAuto}}" style="{{nLegsAutoStyle}}">Auto</button>
-                <button type="button" onClick="{{legsDown}}" aria-label="Fewer legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
-                <span aria-live="polite" style="min-width: 34px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{faderLabel}}</span>
-                <button type="button" onClick="{{legsUp}}" aria-label="More legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
-              </div>
-              <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
-                <sc-for list="{{nStakes}}" as="s" hint-placeholder-count="4">
-                  <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.on}}" style="{{s.style}}">{{s.label}}</button>
-                </sc-for>
-              </div>
-              <div style="display: flex; gap: 4px;" role="group" aria-label="Markets">
-                <sc-for list="{{nMarkets}}" as="m" hint-placeholder-count="3">
-                  <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="{{m.style}}">{{m.label}}</button>
-                </sc-for>
-              </div>
-              <button type="button" onClick="{{featherBtn.pick}}" aria-pressed="{{featherBtn.on}}" title="When the ticket beats your target, swap in safer alternate lines while staying at or above it." style="{{featherBtn.style}}">{{featherBtn.label}}</button>
-              <sc-if value="{{showPropFilter}}" hint-placeholder-val="{{ true }}">
-                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Prop types">
-                  <sc-for list="{{nPropTypes}}" as="p" hint-placeholder-count="6">
-                    <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="{{p.style}}">{{p.label}}</button>
-                  </sc-for>
+          <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px;">
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Target</span>
+                <select onChange="{{onTarget}}" value="{{targetVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{targetOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Legs</span>
+                <div role="group" aria-label="Number of legs" title="{{legsHint}}" style="display: inline-flex; align-items: center; height: 32px; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; background: rgba(255,255,255,0.12);">
+                  <button type="button" onClick="{{legsDown}}" aria-label="Fewer legs" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                  <span aria-live="polite" style="min-width: 42px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{faderLabel}}</span>
+                  <button type="button" onClick="{{legsUp}}" aria-label="More legs" style="width: 30px; height: 32px; border: none; background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
                 </div>
+              </div>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Stake</span>
+                <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Markets</span>
+                <select onChange="{{onMkt}}" value="{{mktVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{mktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
+              <sc-if value="{{showPropFilter}}" hint-placeholder-val="{{ true }}">
+              <label style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Prop type</span>
+                <select onChange="{{onProp}}" value="{{propVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                  <sc-for list="{{propOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                </select>
+              </label>
               </sc-if>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Games</span>
+                <button type="button" onClick="{{toggleGames}}" aria-expanded="{{gamesOpen}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none; text-align: left; min-width: 150px;">{{gamesSummary}}</button>
+              </div>
+              <button type="button" role="switch" onClick="{{featherBtn.pick}}" aria-checked="{{featherBtn.on}}" title="When the ticket beats your target, swap in safer alternate lines while staying at or above it." style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0; background: none; border: none; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <span aria-hidden="true" style="{{featherTrack}}"><span style="{{featherKnob}}"></span></span>Feather to target
+              </button>
+              <button type="button" onClick="{{legsAuto}}" style="height: 32px; padding: 0; background: none; border: none; color: #CFDDF8; font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer;">Reset legs to auto</button>
             </div>
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px;" role="group" aria-label="Games">
-              <button type="button" onClick="{{clearGames}}" aria-pressed="{{allGamesOn}}" style="{{allGamesStyle}}">All games</button>
-              <sc-for list="{{nGames}}" as="g" hint-placeholder-count="10">
-                <button type="button" onClick="{{g.pick}}" aria-pressed="{{g.on}}" title="{{g.title}}" style="{{g.style}}">{{g.short}}</button>
-              </sc-for>
-              <span style="font-size: 11px; color: #CFDDF8; margin-left: 4px;">{{gamesHint}}</span>
-            </div>
+            <sc-if value="{{gamesOpen}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px;" role="group" aria-label="Games">
+                <button type="button" onClick="{{clearGames}}" aria-pressed="{{allGamesOn}}" style="{{allGamesStyle}}">All games</button>
+                <sc-for list="{{nGames}}" as="g" hint-placeholder-count="10">
+                  <button type="button" onClick="{{g.pick}}" aria-pressed="{{g.on}}" title="{{g.title}}" style="{{g.style}}">{{g.short}}</button>
+                </sc-for>
+                <span style="font-size: 11px; color: #CFDDF8; margin-left: 4px;">{{gamesHint}}</span>
+              </div>
+            </sc-if>
           </div>
         </section>
 
@@ -864,9 +879,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016123634';</script>
-<script src="runtime.js?v=20261016123634"></script>
-<script src="lines.js?v=20261016123634"></script>
+<script>window.BH_VERSION='20261016125741';</script>
+<script src="runtime.js?v=20261016125741"></script>
+<script src="lines.js?v=20261016125741"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1665,6 +1680,18 @@ class Component extends DCLogic {
       cfFeatherNote: cfFeatherN ? 'Feathered ' + cfFeatherN + ' leg' + (cfFeatherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (cfHitBefore * 100).toFixed(1) + '% → ' + (function () { var h = 1; cfTicket.forEach(function (t) { h *= t.c.p; }); return (h * 100).toFixed(1); })() + '%' : '',
       nflTop: { current: !isCollege ? 'page' : 'false', style: tabStyle(!isCollege), pick: go(st.nflLast || 'builder') },
       isNfl: !isCollege,
+      targetVal: String(st.target), targetOpts: [{ v: 'fav', label: 'Horseshoe faves' }, { v: '300', label: '+300' }, { v: '600', label: '+600' }, { v: '1000', label: '+1000' }, { v: '2000', label: '+2000' }, { v: '5000', label: '+5000' }, { v: '10000', label: '+10000' }],
+      onTarget: function (ev) { var v = ev.target.value; self.setState({ target: v === 'fav' ? 'fav' : Number(v) }); },
+      stakeVal: String(st.stake), stakeOpts: [5, 10, 25, 50, 100].map(function (v) { return { v: String(v), label: '$' + v }; }),
+      onStake: function (ev) { self.setState({ stake: Number(ev.target.value) }); },
+      mktVal: st.market, mktOpts: [{ v: 'both', label: 'Lines + props' }, { v: 'line', label: 'Game lines' }, { v: 'prop', label: 'Player props' }],
+      onMkt: function (ev) { self.setState({ market: ev.target.value }); },
+      propVal: st.props.length === 1 ? st.props[0] : 'all', propOpts: [{ v: 'all', label: 'All props' }, { v: 'rush', label: 'Rushing' }, { v: 'rec', label: 'Receiving' }, { v: 'recp', label: 'Receptions' }, { v: 'pass', label: 'Passing' }, { v: 'td', label: 'Touchdowns' }],
+      onProp: function (ev) { var v = ev.target.value; self.setState({ props: v === 'all' ? [] : [v] }); },
+      gamesOpen: !!st.gamesOpen, toggleGames: function () { self.setState({ gamesOpen: !st.gamesOpen }); },
+      gamesSummary: (st.games.length ? st.games.length + ' game' + (st.games.length === 1 ? '' : 's') + ' picked' : 'All games') + (st.gamesOpen ? '  ▴' : ''),
+      featherTrack: 'position: relative; width: 34px; height: 20px; border-radius: 999px; background: ' + (featherOn ? '#FFD166' : 'rgba(255,255,255,0.3)') + '; transition: background 0.15s;',
+      featherKnob: 'position: absolute; top: 2px; left: ' + (featherOn ? '16px' : '2px') + '; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: left 0.15s;',
       nTargets: targets.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
       nStakes: stakes.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
       nMarkets: markets.map(function (t) { return Object.assign({}, t, { style: chipW(t.on) }); }),

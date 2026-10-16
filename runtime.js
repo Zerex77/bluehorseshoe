@@ -115,6 +115,7 @@
     Object.keys(v.attrs).forEach(function (k) { el.setAttribute(k, v.attrs[k]); });
     el.__on = v.on;
     v.kids.forEach(function (k) { el.appendChild(create(k)); });
+    if (v.tag === 'select' && v.attrs.value != null) el.value = v.attrs.value;
     return el;
   }
   function same(el, v) {
@@ -133,6 +134,7 @@
       Object.keys(v.attrs).forEach(function (k) { if (el.getAttribute(k) !== v.attrs[k]) el.setAttribute(k, v.attrs[k]); });
       el.__on = v.on;
       patchKids(el, v.kids);
+      if (v.tag === 'select' && v.attrs.value != null && el.value !== v.attrs.value) el.value = v.attrs.value;
     }
     while (cur.length > kids.length) parent.removeChild(parent.lastChild);
   }
