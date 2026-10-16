@@ -265,7 +265,7 @@
         // Skip lines no one would parlay: near-locks shorter than -400 and lottery tickets longer than +2500.
         if (pr.odds < -400 || pr.odds > 2500) return;
         if (pr.side === 'under') return; // player props: overs (and yes props like anytime TD) only
-        if (pr.c === 'kick') return; // no kicking props (field goals, kicking points)
+        if (pr.c === 'kick' || pr.c === 'def') return; // no kicking or defense props (field goals, sacks, tackles)
         var who = inj.byName[pr.player];
         if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
         var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
