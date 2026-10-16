@@ -468,85 +468,52 @@ button{font:inherit}
 
         <sc-if value="{{cfIsPicks}}" hint-placeholder-val="{{ true }}">
           <div style="display: flex; flex-direction: column; gap: 14px;">
-            <section aria-label="The Horseshoe Parlay" style="background: #1D5FD6; color: #FFFFFF; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px;">
-              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 18px 32px;">
-                <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 340px;">
-                  <svg width="56" height="56" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="37" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle></svg>
-                  <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #CFDDF8;">THE MAIN EVENT · SATURDAY</span>
-                    <h2 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em;">The Horseshoe Parlay</h2>
-                    <span style="font-size: 13px; line-height: 1.5; color: #DCE7FB;">Every moneyline, spread and total ranked by how much the Horseshoe likes it. Each leg you add is the next best line on the board, one per game.</span>
+            <section aria-label="The Horseshoe Parlay" style="background: #1D5FD6; color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;" title="Every moneyline, spread and total ranked by how much the Horseshoe likes it. Each leg you add is the next best line on the board, one per game.">
+                  <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="37" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle></svg>
+                  <div style="display: flex; flex-direction: column; min-width: 0;">
+                    <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">The Horseshoe Parlay</h2>
+                    <span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11px; color: #DCE7FB;">
+                      <sc-for list="{{cfPillars}}" as="pl" hint-placeholder-count="3">
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span aria-hidden="true" style="{{pl.dotStyle}}"></span>{{pl.label}} <b style="font-family: 'IBM Plex Mono', monospace;">{{pl.count}}</b></span>
+                      </sc-for>
+                    </span>
                   </div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 14px 28px;">
-                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Price</span>
-                    <span style="{{cfPriceStyle}}">{{cfPrice}}</span>
-                  </div>
-                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">{{stakeLabel}} pays</span>
-                    <span style="{{cfPayoutStyle}}">{{cfPayout}}</span>
-                  </div>
-                  <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Horseshoe says</span>
-                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; line-height: 1.2;">{{cfHitStr}}</span>
-                    <span style="font-size: 11px; color: #CFDDF8;">Book says {{cfBookStr}}</span>
-                  </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
+                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Price</span><span style="{{cfPriceStyle}}">{{cfPrice}}</span></span>
+                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">{{stakeLabel}} pays</span><span style="{{cfPayoutStyle}}">{{cfPayout}}</span></span>
+                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{cfHitStr}} <span style="font-size: 11px; font-weight: 400; color: #CFDDF8;">book {{cfBookStr}}</span></span></span>
                 </div>
               </div>
-
-              <div style="display: flex; flex-wrap: wrap; gap: 8px;" aria-label="Ticket mix">
-                <sc-for list="{{cfPillars}}" as="pl" hint-placeholder-count="3">
-                  <span style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.14); font-size: 13px;">
-                    <span aria-hidden="true" style="{{pl.dotStyle}}"></span>
-                    <span>{{pl.label}}</span>
-                    <b style="font-family: 'IBM Plex Mono', monospace;">{{pl.count}}</b>
-                  </span>
-                </sc-for>
-              </div>
-
-              <div style="display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; background: rgba(0,0,0,0.12); border-radius: 8px; padding: 12px 14px;">
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Target</span>
-                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    <sc-for list="{{cfTargets}}" as="ctg" hint-placeholder-count="6">
-                      <button type="button" onClick="{{ctg.pick}}" aria-pressed="{{ctg.on}}" style="{{ctg.style}}">{{ctg.label}}</button>
-                    </sc-for>
-                  </div>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(0,0,0,0.12); border-radius: 8px; padding: 8px 10px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Target">
+                  <sc-for list="{{cfTargets}}" as="ctg" hint-placeholder-count="6">
+                    <button type="button" onClick="{{ctg.pick}}" aria-pressed="{{ctg.on}}" style="{{ctg.style}}">{{ctg.label}}</button>
+                  </sc-for>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Size · {{cfSizeHint}}</span>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <button type="button" onClick="{{cfSizeAuto}}" aria-pressed="{{cfSizeIsAuto}}" style="{{cfSizeAutoStyle}}">Auto</button>
-                    <button type="button" onClick="{{cfDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
-                    <span aria-live="polite" style="min-width: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{cfFaderLabel}}</span>
-                    <button type="button" onClick="{{cfUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
-                  </div>
+                <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Number of legs" title="{{cfSizeHint}}">
+                  <button type="button" onClick="{{cfSizeAuto}}" aria-pressed="{{cfSizeIsAuto}}" style="{{cfSizeAutoStyle}}">Auto</button>
+                  <button type="button" onClick="{{cfDown}}" aria-label="Fewer legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
+                  <span aria-live="polite" style="min-width: 34px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{cfFaderLabel}}</span>
+                  <button type="button" onClick="{{cfUp}}" aria-label="More legs" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Stake</span>
-                  <div style="display: flex; gap: 4px;">
-                    <sc-for list="{{cfStakes}}" as="s3" hint-placeholder-count="4">
-                      <button type="button" onClick="{{s3.pick}}" aria-pressed="{{s3.on}}" style="{{s3.style}}">{{s3.label}}</button>
-                    </sc-for>
-                  </div>
+                <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
+                  <sc-for list="{{cfStakes}}" as="s3" hint-placeholder-count="4">
+                    <button type="button" onClick="{{s3.pick}}" aria-pressed="{{s3.on}}" style="{{s3.style}}">{{s3.label}}</button>
+                  </sc-for>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Lines</span>
-                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    <sc-for list="{{cfMktPills}}" as="cm" hint-placeholder-count="4">
-                      <button type="button" onClick="{{cm.pick}}" aria-pressed="{{cm.on}}" style="{{cm.style}}">{{cm.label}}</button>
-                    </sc-for>
-                  </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Lines">
+                  <sc-for list="{{cfMktPills}}" as="cm" hint-placeholder-count="4">
+                    <button type="button" onClick="{{cm.pick}}" aria-pressed="{{cm.on}}" style="{{cm.style}}">{{cm.label}}</button>
+                  </sc-for>
                 </div>
                 <sc-if value="{{cfShowOU}}" hint-placeholder-val="{{ true }}">
-                  <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Totals</span>
-                    <div role="group" aria-label="Totals direction" style="display: flex; flex-wrap: wrap; gap: 4px;">
-                      <sc-for list="{{cfOUOpts}}" as="ou" hint-placeholder-count="3">
-                        <button type="button" onClick="{{ou.pick}}" aria-pressed="{{ou.on}}" style="{{ou.style}}">{{ou.label}}</button>
-                      </sc-for>
-                    </div>
+                  <div role="group" aria-label="Totals direction" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <sc-for list="{{cfOUOpts}}" as="ou" hint-placeholder-count="3">
+                      <button type="button" onClick="{{ou.pick}}" aria-pressed="{{ou.on}}" style="{{ou.style}}">{{ou.label}}</button>
+                    </sc-for>
                   </div>
                 </sc-if>
               </div>
@@ -571,11 +538,11 @@ button{font:inherit}
 
             <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
               <sc-for list="{{cfTicket}}" as="cr" hint-placeholder-count="3">
-                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #EEF0F3;">
-                  <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: #1D5FD6; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;">{{cr.num}}</span>
-                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+                  <span style="width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: #1D5FD6; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;">{{cr.num}}</span>
+                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
                     <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
-                      <span style="font-size: 15px; font-weight: 700;">{{cr.label}}</span>
+                      <span style="font-size: 14px; font-weight: 700;">{{cr.label}}</span>
                       <span style="font-size: 12px; color: #6B7280;">{{cr.game}}</span>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px;">
@@ -623,89 +590,59 @@ button{font:inherit}
 
         <sc-if value="{{cfIsDogs}}" hint-placeholder-val="{{ false }}">
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <section aria-label="The Horseshoe Upset Special" style="background: #0F1B3D; color: #FFFFFF; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px;">
-              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 18px 32px;">
-                <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 340px;">
-                  <svg width="56" height="56" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="37" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><path d="M52 4 l2.2 4.4 l4.8 0.7 l-3.5 3.4 l0.8 4.8 l-4.3 -2.3 l-4.3 2.3 l0.8 -4.8 l-3.5 -3.4 l4.8 -0.7 z" fill="#FFC24D"></path></svg>
-                  <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #FFC24D;">UPSET SPECIAL · SATURDAY</span>
-                    <h2 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em;">The Horseshoe Upset Special</h2>
-                    <span style="font-size: 13px; line-height: 1.5; color: #C9D3E8;">Dogs only, balanced the same way: one public fade, one value play over the book and one live dog at a time.</span>
+            <section aria-label="The Horseshoe Upset Special" style="background: #0F1B3D; color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;" title="Dogs only, balanced the same way: one public fade, one value play over the book and one live dog at a time.">
+                  <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="37" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><path d="M52 4 l2.2 4.4 l4.8 0.7 l-3.5 3.4 l0.8 4.8 l-4.3 -2.3 l-4.3 2.3 l0.8 -4.8 l-3.5 -3.4 l4.8 -0.7 z" fill="#FFC24D"></path></svg>
+                  <div style="display: flex; flex-direction: column; min-width: 0;">
+                    <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">The Upset Special</h2>
+                    <span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11px; color: #C9D3E8;">
+                      <sc-for list="{{upPillars}}" as="upl" hint-placeholder-count="3">
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span aria-hidden="true" style="{{upl.dotStyle}}"></span>{{upl.label}} <b style="font-family: 'IBM Plex Mono', monospace;">{{upl.count}}</b></span>
+                      </sc-for>
+                    </span>
                   </div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 14px 28px;">
-                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Price</span>
-                    <span style="{{upPriceStyle}}">{{cfUpsetPrice}}</span>
-                  </div>
-                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                    <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">{{stakeLabel}} pays</span>
-                    <span style="{{upPayStyle}}">{{cfUpsetPay}}</span>
-                  </div>
-                  <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Horseshoe says</span>
-                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; line-height: 1.2;">{{cfUpsetHit}}</span>
-                    <span style="font-size: 11px; color: #C9D3E8;">Book says {{cfUpsetBook}}</span>
-                  </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
+                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Price</span><span style="{{upPriceStyle}}">{{cfUpsetPrice}}</span></span>
+                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">{{stakeLabel}} pays</span><span style="{{upPayStyle}}">{{cfUpsetPay}}</span></span>
+                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{cfUpsetHit}} <span style="font-size: 11px; font-weight: 400; color: #C9D3E8;">book {{cfUpsetBook}}</span></span></span>
                 </div>
               </div>
-
-              <div style="display: flex; flex-wrap: wrap; gap: 8px;" aria-label="Upset balance">
-                <sc-for list="{{upPillars}}" as="upl" hint-placeholder-count="3">
-                  <span style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.1); font-size: 13px;">
-                    <span aria-hidden="true" style="{{upl.dotStyle}}"></span>
-                    <span>{{upl.label}}</span>
-                    <b style="font-family: 'IBM Plex Mono', monospace;">{{upl.count}}</b>
-                  </span>
-                </sc-for>
-              </div>
-
-              <div style="display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 12px 14px;">
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Type</span>
-                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    <sc-for list="{{upModes}}" as="um" hint-placeholder-count="2">
-                      <button type="button" onClick="{{um.pick}}" aria-pressed="{{um.on}}" style="{{um.style}}">{{um.label}}</button>
-                    </sc-for>
-                  </div>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Type">
+                  <sc-for list="{{upModes}}" as="um" hint-placeholder-count="2">
+                    <button type="button" onClick="{{um.pick}}" aria-pressed="{{um.on}}" style="{{um.style}}">{{um.label}}</button>
+                  </sc-for>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Size</span>
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <button type="button" onClick="{{upDown}}" aria-label="Fewer upsets" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
-                    <span style="min-width: 28px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{upNStr}}</span>
-                    <button type="button" onClick="{{upUp}}" aria-label="More upsets" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
-                  </div>
+                <div style="display: flex; align-items: center; gap: 6px;" role="group" aria-label="Number of upsets">
+                  <button type="button" onClick="{{upDown}}" aria-label="Fewer upsets" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">−</button>
+                  <span style="min-width: 24px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{upNStr}}</span>
+                  <button type="button" onClick="{{upUp}}" aria-label="More upsets" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 15px; cursor: pointer;">+</button>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Stake</span>
-                  <div style="display: flex; gap: 4px;">
-                    <sc-for list="{{cfStakes}}" as="us" hint-placeholder-count="4">
-                      <button type="button" onClick="{{us.pick}}" aria-pressed="{{us.on}}" style="{{us.style}}">{{us.label}}</button>
-                    </sc-for>
-                  </div>
+                <div style="display: flex; gap: 4px;" role="group" aria-label="Stake">
+                  <sc-for list="{{cfStakes}}" as="us" hint-placeholder-count="4">
+                    <button type="button" onClick="{{us.pick}}" aria-pressed="{{us.on}}" style="{{us.style}}">{{us.label}}</button>
+                  </sc-for>
                 </div>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
                 <sc-for list="{{cfUpsetLegs}}" as="ul" hint-placeholder-count="3">
-                  <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,0.07);">
-                    <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: #FFC24D; color: #0F1B3D; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700;">{{ul.num}}</span>
-                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+                  <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.07);">
+                    <span style="width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: #FFC24D; color: #0F1B3D; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ul.num}}</span>
+                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
                       <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
-                        <span style="font-size: 15px; font-weight: 700;">{{ul.label}}</span>
+                        <span style="font-size: 14px; font-weight: 700;">{{ul.label}}</span>
                         <span style="font-size: 12px; color: #C9D3E8;">{{ul.game}}</span>
-                      </div>
-                      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px;">
                         <sc-for list="{{ul.badges}}" as="ub" hint-placeholder-count="2">
                           <span style="{{ub.style}}">{{ub.label}}</span>
                         </sc-for>
-                        <span style="color: #C9D3E8;">{{ul.why}}</span>
                       </div>
+                      <span style="font-size: 12px; color: #C9D3E8;">{{ul.why}}</span>
                     </div>
-                    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; color: #FFC24D;">{{ul.oddsStr}}</span>
-                      <span style="font-size: 11px; color: #C9D3E8;">Horseshoe <b style="font-family: 'IBM Plex Mono', monospace; color: #FFFFFF;">{{ul.pStr}}</b> · Book {{ul.impStr}}</span>
+                    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: #FFC24D;">{{ul.oddsStr}}</span>
+                      <span style="font-size: 11px; color: #C9D3E8;"><b style="font-family: 'IBM Plex Mono', monospace; color: #FFFFFF;">{{ul.pStr}}</b> · book {{ul.impStr}}</span>
                     </div>
                   </div>
                 </sc-for>
@@ -786,9 +723,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016113241';</script>
-<script src="runtime.js?v=20261016113241"></script>
-<script src="lines.js?v=20261016113241"></script>
+<script>window.BH_VERSION='20261016113733';</script>
+<script src="runtime.js?v=20261016113733"></script>
+<script src="lines.js?v=20261016113733"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1492,8 +1429,8 @@ class Component extends DCLogic {
       cfSizeHint: cfIsAuto ? 'Horseshoe decides' : cfN + ' legs, one per game',
       cfTicket: cfRows, cfBench: cfBench, cfLegCount: cfTicket.length,
       cfTicketTitle: st.cfTarget === 'safe' ? 'Safest price' : 'Path to ' + (st.cfTarget > 0 ? '+' + st.cfTarget : st.cfTarget),
-      cfPrice: cfPriceVal, cfPriceStyle: mono(this.fitSize(cfPriceVal, 34, 20), '#FFFFFF'),
-      cfPayout: cfPayVal, cfPayoutStyle: mono(this.fitSize(cfPayVal, 22, 15), '#FFFFFF'),
+      cfPrice: cfPriceVal, cfPriceStyle: mono(this.fitSize(cfPriceVal, 22, 15), '#FFFFFF'),
+      cfPayout: cfPayVal, cfPayoutStyle: mono(this.fitSize(cfPayVal, 17, 13), '#FFFFFF'),
       cfHitStr: cfTicket.length ? (cfHit * 100).toFixed(1) + '%' : '—',
       cfBookStr: cfTicket.length ? (cfBook * 100).toFixed(1) + '%' : '—',
       cfWarn: !cfTicket.length || cfShort || !cfReached,
@@ -1502,8 +1439,8 @@ class Component extends DCLogic {
       cfUpsetPrice: upPriceVal, cfUpsetHit: upT.length ? (upHit * 100).toFixed(1) + '%' : '—',
       cfUpsetBook: upT.length ? (upBook * 100).toFixed(1) + '%' : '—',
       cfUpsetPay: upPayVal,
-      upPriceStyle: mono(this.fitSize(upPriceVal, 34, 20), '#FFC24D'),
-      upPayStyle: mono(this.fitSize(upPayVal, 22, 15), '#FFFFFF'),
+      upPriceStyle: mono(this.fitSize(upPriceVal, 22, 15), '#FFC24D'),
+      upPayStyle: mono(this.fitSize(upPayVal, 17, 13), '#FFFFFF'),
       upPillars: upPillars, upModes: upModes, upNStr: String(upN),
       upDown: function () { self.setState({ upN: Math.max(2, upN - 1) }); },
       upUp: function () { self.setState({ upN: Math.min(5, upN + 1) }); },
