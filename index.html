@@ -723,9 +723,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016113733';</script>
-<script src="runtime.js?v=20261016113733"></script>
-<script src="lines.js?v=20261016113733"></script>
+<script>window.BH_VERSION='20261016114120';</script>
+<script src="runtime.js?v=20261016114120"></script>
+<script src="lines.js?v=20261016114120"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1081,7 +1081,9 @@ class Component extends DCLogic {
       candMap[key] = o; candList.push(o);
     };
     CF.legs.forEach(function (l) {
-      if (l.s[0] + l.s[1] + l.s[2] < 2) return;
+      // Moneylines need 2 of 3 checks; spreads and totals get in on 1, then compete on value.
+      var sig = l.s[0] + l.s[1] + l.s[2];
+      if (sig < (l.k === 'ml' ? 2 : 1)) return;
       addCand({ g: l.g, k: l.k, label: l.label, odds: l.odds, p: l.p, conf: l.conf, note: l.note, dog: !!l.dog || l.odds > 0, fade: false, fadeWhy: '' });
     });
     var slateByName = {};
@@ -1118,20 +1120,41 @@ class Component extends DCLogic {
     var ouOk = function (c) { return c.k !== 'total' || cfOU === 'either' || c.label.toLowerCase().indexOf(cfOU) === 0; };
     var cfPool = candList.filter(function (c) { return mkOk(c.k) && ouOk(c); });
     // Rank every line by how much the Horseshoe likes it; the parlay grows by adding the next best one (one line per game).
-    var favScore = function (c) { return c.p + c.edge * 2 + c.tagN * 0.02; };
+    // Best bet = value against the actual price: expected return per dollar (Horseshoe chance x payout),
+    // plus a little credit for likelihood so the ticket still cashes. Heavy favorites pay too little to rank high.
+    var evOf = function (c) { return c.p * self.dec(c.odds) - 1; };
+    var favScore = function (c) { return evOf(c) * 3 + (c.p - 0.5) * 0.6 + c.tagN * 0.02; };
     var primaryOf = function (c) { return c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean'; };
     var rankedAll = cfPool.slice().sort(function (x, y) { return favScore(y) - favScore(x); });
     var seenG = {}, rankedUnique = [];
     rankedAll.forEach(function (c) { if (seenG[c.g]) return; seenG[c.g] = 1; rankedUnique.push(c); });
+    // Keep the slip mixed: no market takes more than half the legs while other markets still have good lines.
+    // Each next leg is the best-value line whose market still has room on the slip; if nothing fits, the best line left is used.
+    var pickMixed = function (list, n, stop) {
+      var out = [], cnt = {}, used = {}, rest = list.slice();
+      while (out.length < n) {
+        if (stop && stop(out)) break;
+        rest = rest.filter(function (c) { return !used[c.g]; }); // one line per game
+        if (!rest.length) break;
+        // Spreads and totals can each fill up to half the slip; moneylines only every third leg.
+        var capOf = function (k) { return k === 'ml' ? Math.floor((out.length + 1) / 3) : Math.ceil((out.length + 1) / 2); }, ix = -1;
+        for (var i = 0; i < rest.length; i++) { if ((cnt[rest[i].k] || 0) < capOf(rest[i].k)) { ix = i; break; } }
+        if (ix === -1) ix = 0;
+        var c = rest.splice(ix, 1)[0];
+        cnt[c.k] = (cnt[c.k] || 0) + 1;
+        used[c.g] = 1;
+        out.push(c);
+      }
+      return out;
+    };
     var cfTicket = [];
     var ticketDec = function () { var d = 1; cfTicket.forEach(function (t) { d *= self.dec(t.c.odds); }); return d; };
     var cfTDec = st.cfTarget === 'safe' ? 0 : this.dec(st.cfTarget);
     var cfN = st.cfLegs === 'auto' ? 0 : st.cfLegs;
     var wantN = cfN ? cfN : (st.cfTarget === 'safe' ? 3 : 10);
-    for (var ri = 0; ri < rankedUnique.length && cfTicket.length < wantN; ri++) {
-      if (!cfN && st.cfTarget !== 'safe' && ticketDec() >= cfTDec) break;
-      cfTicket.push({ c: rankedUnique[ri], pillar: primaryOf(rankedUnique[ri]), rank: ri + 1 });
-    }
+    var prodOf = function (arr) { var d = 1; arr.forEach(function (c) { d *= self.dec(c.odds); }); return d; };
+    pickMixed(rankedAll, wantN, function (sofar) { return !cfN && st.cfTarget !== 'safe' && prodOf(sofar) >= cfTDec; })
+      .forEach(function (c, ri) { cfTicket.push({ c: c, pillar: primaryOf(c), rank: ri + 1 }); });
     var cfDec = ticketDec();
     var cfReached = st.cfTarget === 'safe' || cfDec >= cfTDec;
     var cfShort = cfN && cfTicket.length < cfN;
@@ -1156,7 +1179,8 @@ class Component extends DCLogic {
       var ed = Math.round(c.edge * 1000) / 10;
       if (pil === 'fade') return c.fadeWhy || c.note;
       if (pil === 'dog') return 'Plus-value dog, edge ' + (ed >= 0 ? '+' : '') + ed + ' pts · ' + c.note;
-      return 'Horseshoe ' + pct(c.p) + ' · ' + c.note;
+      var ev = Math.round(evOf(c) * 1000) / 10;
+      return 'Horseshoe ' + pct(c.p) + ' vs book ' + pct(c.imp) + ', value ' + (ev >= 0 ? '+' : '') + ev + '% · ' + c.note;
     };
     var cfRows = cfTicket.map(function (t, ix) {
       var c = t.c;
@@ -1230,7 +1254,7 @@ class Component extends DCLogic {
       };
     }).sort(function (a, c) { return c.edge - a.edge; });
     // ---- Upset Special: balanced across fade, value and live dogs
-    var upMode = st.upMode || 'ml';
+    var upMode = st.upMode || 'all';
     var upN = st.upN || 3;
     var liveCut = function (c) { return c.p >= (c.k === 'ml' ? 0.45 : 0.53); };
     var upPool = candList.filter(function (c) { return c.dog && (upMode === 'all' || c.k === 'ml'); });
@@ -1240,19 +1264,11 @@ class Component extends DCLogic {
       if (pil === 'value') return c.edge >= 0 ? c.edge * 3 + bonus : -1;
       return c.p + bonus;
     };
-    var upOrder = ['fade', 'value', 'live'];
-    var upT = [];
-    var upTaken = function (g) { return upT.some(function (t) { return t.c.g === g; }); };
-    for (var ui = 0; ui < upN; ui++) {
-      var got = false;
-      for (var uj = 0; uj < 3 && !got; uj++) {
-        var upil = upOrder[(ui + uj) % 3];
-        var ub = null, ubs = -1;
-        upPool.forEach(function (c) { if (upTaken(c.g)) return; var sc = upScore(c, upil); if (sc > ubs) { ubs = sc; ub = c; } });
-        if (ub) { upT.push({ c: ub, pillar: upil }); got = true; }
-      }
-      if (!got) break;
-    }
+    // Best upsets by value against the price (Horseshoe chance x payout), one per game, moneylines and dog spreads mixed.
+    var upValue = function (c) { return evOf(c) * 3 + c.edge * 2 + (c.fade ? 0.04 : 0); };
+    var upSeen = {}, upRanked = [];
+    upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }).forEach(function (c) { if (upSeen[c.g]) return; upSeen[c.g] = 1; upRanked.push(c); });
+    var upT = pickMixed(upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }), upN).map(function (c) { return { c: c, pillar: c.fade ? 'fade' : c.edge >= 0 ? 'value' : 'live' }; });
     var upDec = 1, upHit = 1, upBook = 1;
     upT.forEach(function (t) { upDec *= self.dec(t.c.odds); upHit *= t.c.p; upBook *= t.c.imp; });
     var upInfo = { fade: ['Fade', B, '#EEF4FE'], value: ['Value', AMBER, '#FFF4E5'], live: ['Live dog', GREEN, '#EAF6EF'] };
