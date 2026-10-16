@@ -939,9 +939,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016130808';</script>
-<script src="runtime.js?v=20261016130808"></script>
-<script src="lines.js?v=20261016130808"></script>
+<script>window.BH_VERSION='20261016131117';</script>
+<script src="runtime.js?v=20261016131117"></script>
+<script src="lines.js?v=20261016131117"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1268,7 +1268,7 @@ class Component extends DCLogic {
     var books = D.books || [];
     var bookShort = D.bookShort || [];
     var myBook = typeof st.myBook === 'number' && st.myBook < books.length ? st.myBook : (D.bookDefault || 0);
-    var kindInfo = { yds: [20, 1.5, 'yds'], rec: [4, 0.3, 'rec'], total: [4, 0.5, 'pts'], spread: [4, 0.4, 'pts'] };
+    var kindInfo = { yds: [20, 1.5, 'yds'], rec: [4, 0.3, ''], total: [4, 0.5, 'pts'], spread: [4, 0.4, 'pts'] };
     var oneDec = function (x) { return (Math.round(x * 10) / 10).toFixed(1); };
     var signed = function (x) { return (x > 0 ? '+' : '') + x; };
     var lcKind = st.lcKind || 'line';

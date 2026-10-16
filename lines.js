@@ -266,9 +266,16 @@
         if (pr.odds < -400 || pr.odds > 2500) return;
         if (pr.side === 'under') return; // player props: overs (and yes props like anytime TD) only
         if (pr.c === 'kick' || pr.c === 'def') return; // no kicking or defense props (field goals, sacks, tackles)
-        if (pr.books && !pr.alt) {
-          var pb = {};
-          Object.keys(pr.books).forEach(function (bk) { var key = SGO_BOOK[bk] || bk; if (BOOKS[key]) pb[key] = pr.books[bk]; });
+        // Line check works on yardage and count props priced near even money; TD props and long prices don't compare cleanly.
+        if (pr.books && !pr.alt && !/TD|interception/i.test(pr.what)) {
+          var pb = {}, lines = [];
+          Object.keys(pr.books).forEach(function (bk) {
+            var key = SGO_BOOK[bk] || bk, v = pr.books[bk];
+            if (BOOKS[key] && v[1] >= -250 && v[1] <= 200) { pb[key] = v; lines.push(v[0]); }
+          });
+          lines.sort(function (x, y) { return x - y; });
+          var med = lines.length ? lines[Math.floor(lines.length / 2)] : 0;
+          Object.keys(pb).forEach(function (k) { if (Math.abs(pb[k][0] - med) > Math.max(2.5, med * 0.2)) delete pb[k]; }); // drop alt-line outliers
           propRows.push({ label: pr.player + ' ' + pr.what, game: e.short, kind: /yds|longest/.test(pr.what) ? 'yds' : 'rec', books: pb });
         }
         var who = inj.byName[pr.player];
