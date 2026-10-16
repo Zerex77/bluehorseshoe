@@ -264,6 +264,7 @@
       (ev.props || []).forEach(function (pr) {
         // Skip lines no one would parlay: near-locks shorter than -400 and lottery tickets longer than +2500.
         if (pr.odds < -400 || pr.odds > 2500) return;
+        if (pr.side === 'under') return; // player props: overs (and yes props like anytime TD) only
         var who = inj.byName[pr.player];
         if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
         var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
@@ -299,6 +300,7 @@
     (props.legs || []).forEach(function (p) {
       var gid = shortToId[p.game];
       if (!gid || sgoGames[gid]) return;
+      if (/ under /.test(p.label)) return; // overs only
       var who = inj.byName[p.player];
       if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
       var asOf = props.asOf ? ' · prop line as of ' + props.asOf : '';
@@ -307,7 +309,7 @@
       legs.push({ g: gid, k: 'prop', c: p.c, pk: gid + '|' + p.player + '|' + p.label.replace(/^.* (over|under) [\d.]+ /, ''), label: p.label, odds: p.odds, conf: p.conf - qDrop, s: p.s, note: p.note + asOf });
       injMap[gid + '|' + p.label] = whoRow;
       // The other side of the prop, when its price is known.
-      if (p.alt && p.alt.label && p.alt.odds != null) {
+      if (p.alt && p.alt.label && p.alt.odds != null && !/ under /.test(p.alt.label)) {
         legs.push({ g: gid, k: 'prop', c: p.c, pk: gid + '|' + p.player + '|' + p.label.replace(/^.* (over|under) [\d.]+ /, ''), label: p.alt.label, odds: p.alt.odds, conf: Math.max(30, 100 - p.conf - 8), s: [0, 0, 0], note: 'Other side of the Horseshoe lean' + asOf });
         injMap[gid + '|' + p.alt.label] = whoRow;
       }
