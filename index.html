@@ -316,11 +316,19 @@ button{font:inherit}
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 13px; color: #0F7A43; font-weight: 600;">{{evCount}}</span>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Check
+              <select onChange="{{onLcKind}}" value="{{lcKindVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <sc-for list="{{lcKindOpts}}" as="o" hint-placeholder-count="2"><option value="{{o.v}}">{{o.label}}</option></sc-for>
+              </select>
+            </label>
             <button type="button" onClick="{{evToggle}}" aria-pressed="{{evOnly}}" style="{{evBtnStyle}}">Value only</button>
           </div>
         </div>
         <sc-if value="{{lineEmpty}}" hint-placeholder-val="{{ false }}">
           <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">Book-by-book prices aren't loaded yet.</b> Line check compares Hard Rock with the other sportsbooks every 4 hours. Check back shortly.</div>
+        </sc-if>
+        <sc-if value="{{lcPropNote}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background: #FFF8E8; border: 1px solid #F0D9A8; color: #7A4A00; border-radius: 8px; padding: 10px 14px; font-size: 13px;">{{lcPropNote}}</div>
         </sc-if>
         <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -931,9 +939,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016130221';</script>
-<script src="runtime.js?v=20261016130221"></script>
-<script src="lines.js?v=20261016130221"></script>
+<script>window.BH_VERSION='20261016130808';</script>
+<script src="runtime.js?v=20261016130808"></script>
+<script src="lines.js?v=20261016130808"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1263,7 +1271,9 @@ class Component extends DCLogic {
     var kindInfo = { yds: [20, 1.5, 'yds'], rec: [4, 0.3, 'rec'], total: [4, 0.5, 'pts'], spread: [4, 0.4, 'pts'] };
     var oneDec = function (x) { return (Math.round(x * 10) / 10).toFixed(1); };
     var signed = function (x) { return (x > 0 ? '+' : '') + x; };
-    var screenRows = D.lineCheck.filter(function (r) { return r[3][myBook] && r[3].filter(function (bk, ix) { return bk && ix !== myBook; }).length >= 2; }).map(function (r) {
+    var lcKind = st.lcKind || 'line';
+    var lcRows = D.lineCheck.filter(function (r) { return (r[6] || 'line') === lcKind; });
+    var screenRows = lcRows.filter(function (r) { return r[3][myBook] && r[3].filter(function (bk, ix) { return bk && ix !== myBook; }).length >= 2; }).map(function (r) {
       var ki = kindInfo[r[2]];
       var adj = function (bk) { var imp = 1 / self.dec(bk[1]) - 0.524; return r[2] === 'spread' ? bk[0] - imp * ki[0] : bk[0] + imp * ki[0]; };
       var others = r[3].filter(function (bk, ix) { return bk && ix !== myBook; });
@@ -1296,6 +1306,8 @@ class Component extends DCLogic {
     }).sort(function (a, c) { return c.absGap - a.absGap; });
     var evCount = screenRows.filter(function (r) { return r.val; }).length;
     if (st.evOnly) screenRows = screenRows.filter(function (r) { return r.val; });
+    var lcTotal = screenRows.length;
+    if (lcKind === 'prop') screenRows = screenRows.slice(0, 60); // biggest gaps first
     var bookOpts = books.map(function (bname, ix) {
       var on = myBook === ix;
       return { label: bname, on: on, style: seg(on), pick: function () { self.setState({ myBook: ix }); } };
@@ -1858,6 +1870,9 @@ class Component extends DCLogic {
 
       screenRows: screenRows, bookOpts: bookOpts, myBookName: books[myBook],
       evCount: evCount + ' value spot' + (evCount === 1 ? '' : 's') + ' at ' + books[myBook],
+      lcKindVal: lcKind, lcKindOpts: [{ v: 'line', label: 'Spreads + totals' }, { v: 'prop', label: 'Player props' }],
+      onLcKind: function (ev) { self.setState({ lcKind: ev.target.value }); },
+      lcPropNote: lcKind === 'prop' ? (lcRows.length && !screenRows.length && !st.evOnly ? books[myBook] + " doesn't post props in our free feed. Pick DraftKings, FanDuel or another book above to check props." : lcTotal > 60 ? 'Showing the 60 biggest gaps of ' + lcTotal + ' props.' : '') : '',
       evOnly: st.evOnly, evToggle: function () { self.setState({ evOnly: !st.evOnly }); }, evBtnStyle: chip(st.evOnly),
 
       fadeCards: nflFade.shown, fadeMkts: fadeMkts, fadeOnly: st.fadeOnly,

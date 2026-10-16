@@ -5,7 +5,12 @@ name: Refresh lines
 on:
   schedule:
     - cron: "*/15 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_props:
+        description: 'Pull props now even if the last pull is recent'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -27,6 +32,7 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
+          SGO_FORCE: ${{ inputs.force_props && '1' || '' }}
         run: node scripts/refresh.mjs
       - name: Save changes
         run: |

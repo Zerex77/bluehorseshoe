@@ -143,10 +143,20 @@ function slimSgoEvent(ev) {
       const line = num(b ? b[1].overUnder : null) ?? num(odd.bookOverUnder);
       const price = num(b ? b[1].odds : null) ?? num(odd.bookOdds);
       if (price == null || (odd.betTypeID === 'ou' && line == null)) continue;
+      // Every book's line and price on the main over, for the prop Line check
+      let books;
+      if (odd.betTypeID === 'ou' && odd.sideID === 'over') {
+        books = {};
+        for (const [bk, v] of Object.entries(odd.byBookmaker || {})) {
+          const bl = num(v.overUnder), bo = num(v.odds);
+          if (v.available !== false && bl != null && bo != null) books[bk] = [bl, bo];
+        }
+        if (Object.keys(books).length < 2) books = undefined;
+      }
       out.props.push({
         player: name, team: pl.teamID || null, stat: odd.statID, c: st[0], what: st[1],
         side: odd.betTypeID === 'yn' ? 'yes' : odd.sideID, line, odds: price,
-        fair: num(odd.fairOdds), book: b ? b[0] : 'consensus'
+        fair: num(odd.fairOdds), book: b ? b[0] : 'consensus', books
       });
       // Alternate prop lines (overs only), used to feather big parlays
       if (b && odd.betTypeID === 'ou' && odd.sideID === 'over' && Array.isArray(b[1].altLines)) {
@@ -178,7 +188,7 @@ async function sgoLeague(meta, league, file, everyMin, maxEvents) {
   if (meta.sgoMonth !== month) { meta.sgoMonth = month; meta.sgoUsed = 0; }
   const cur = await readJSON(file, { updated: null, events: [] });
   const age = cur.updated ? (Date.now() - Date.parse(cur.updated)) / 60000 : Infinity;
-  if (age < everyMin) { console.log(`${league}: ${Math.round(age)} min old; next pull after ${everyMin}.`); return; }
+  if (age < everyMin && !process.env.SGO_FORCE) { console.log(`${league}: ${Math.round(age)} min old; next pull after ${everyMin}.`); return; }
   if (meta.sgoUsed >= SGO_MONTHLY_CAP) { console.log(`SportsGameOdds: ${meta.sgoUsed} events used this month; holding until next month.`); return; }
   const now = new Date();
   const before = new Date(now.getTime() + 6.5 * 864e5).toISOString();

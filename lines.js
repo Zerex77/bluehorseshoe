@@ -239,7 +239,7 @@
       }
     });
     // Full prop and alternate-line menu from SportsGameOdds (refreshed every 6 hours by the GitHub Action).
-    var sgoGames = {};
+    var sgoGames = {}, propRows = [];
     var byTeams = {};
     events.forEach(function (e) { if (liveIds[e.id]) byTeams[e.a.displayName + '|' + e.h.displayName] = e; });
     var sgoAsOf = extra.sgo && extra.sgo.updated ? new Date(extra.sgo.updated) : null;
@@ -266,6 +266,11 @@
         if (pr.odds < -400 || pr.odds > 2500) return;
         if (pr.side === 'under') return; // player props: overs (and yes props like anytime TD) only
         if (pr.c === 'kick' || pr.c === 'def') return; // no kicking or defense props (field goals, sacks, tackles)
+        if (pr.books && !pr.alt) {
+          var pb = {};
+          Object.keys(pr.books).forEach(function (bk) { var key = SGO_BOOK[bk] || bk; if (BOOKS[key]) pb[key] = pr.books[bk]; });
+          propRows.push({ label: pr.player + ' ' + pr.what, game: e.short, kind: /yds|longest/.test(pr.what) ? 'yds' : 'rec', books: pb });
+        }
         var who = inj.byName[pr.player];
         if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
         var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
@@ -333,7 +338,7 @@
     // Public splits (if posted) for live games only.
     var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
     // Multi-book Line check from the Odds API snapshot.
-    var lc = buildLineCheck(extra.books, events);
+    var lc = buildLineCheck(extra.books, events, propRows);
     var wk = g(json, 'week.number');
     return {
       games: games, legs: legs, mu: {}, inj: injMap, screen: [], publicBoard: publicBoard,
@@ -344,29 +349,41 @@
   }
 
   var BOOKS = {
-    hardrockbet_fl: ['Hard Rock', 'HR'], hardrockbet: ['Hard Rock', 'HR'], draftkings: ['DraftKings', 'DK'], fanduel: ['FanDuel', 'FD'],
+    hardrockbet_fl: ['Hard Rock', 'HR'], bovada: ['Bovada', 'BOV'], unibet: ['Unibet', 'UNI'], pointsbet: ['PointsBet', 'PB'], hardrockbet: ['Hard Rock', 'HR'], draftkings: ['DraftKings', 'DK'], fanduel: ['FanDuel', 'FD'],
     betmgm: ['BetMGM', 'MGM'], williamhill_us: ['Caesars', 'CZR'], fanatics: ['Fanatics', 'FAN'], betrivers: ['BetRivers', 'RIV'], espnbet: ['ESPN Bet', 'ESPN']
   };
-  function buildLineCheck(books, events) {
+  var SGO_BOOK = { caesars: 'williamhill_us', williamhill: 'williamhill_us' };
+  function buildLineCheck(books, events, propRows) {
     var out = { rows: [], books: [], bookShort: [], def: 0, asOf: null };
-    if (!books || !books.games || !books.games.length) return out;
+    propRows = propRows || [];
+    var hasBooks = books && books.games && books.games.length;
+    if (!hasBooks && !propRows.length) return out;
     var keys = [];
-    books.games.forEach(function (gm) { Object.keys(gm.books || {}).forEach(function (k) { if (keys.indexOf(k) === -1 && BOOKS[k]) keys.push(k); }); });
-    keys.sort(function (x, y) { return (x.indexOf('hardrock') === 0 ? -1 : 0) - (y.indexOf('hardrock') === 0 ? -1 : 0); });
+    var addKey = function (k) { if (keys.indexOf(k) === -1 && BOOKS[k]) keys.push(k); };
+    if (hasBooks) books.games.forEach(function (gm) { Object.keys(gm.books || {}).forEach(addKey); });
+    propRows.forEach(function (r) { Object.keys(r.books).forEach(addKey); });
+    var rank = function (k) { return k.indexOf('hardrock') === 0 ? 0 : k === 'draftkings' ? 1 : k === 'fanduel' ? 2 : 3; };
+    keys.sort(function (x, y) { return rank(x) - rank(y); });
     out.books = keys.map(function (k) { return BOOKS[k][0]; });
     out.bookShort = keys.map(function (k) { return BOOKS[k][1]; });
     out.def = 0;
-    out.asOf = books.updated;
-    var byName = {};
-    events.forEach(function (e) { if (e.state === 'pre') byName[e.a.displayName + '|' + e.h.displayName] = e; });
-    books.games.forEach(function (gm) {
-      var e = byName[gm.away + '|' + gm.home];
-      if (!e) return;
-      var A = e.a.shortDisplayName, H = e.h.shortDisplayName;
-      var sp = keys.map(function (k) { var b = gm.books[k]; return b && b.spread ? [b.spread[0], b.spread[1]] : null; });
-      if (sp.filter(Boolean).length >= 3) out.rows.push([A + ' spread', e.short, 'spread', sp, A, H]);
-      var tt = keys.map(function (k) { var b = gm.books[k]; return b && b.total ? [b.total[0], b.total[1]] : null; });
-      if (tt.filter(Boolean).length >= 3) out.rows.push([e.short + ' total', e.short, 'total', tt]);
+    out.asOf = hasBooks ? books.updated : null;
+    if (hasBooks) {
+      var byName = {};
+      events.forEach(function (e) { if (e.state === 'pre') byName[e.a.displayName + '|' + e.h.displayName] = e; });
+      books.games.forEach(function (gm) {
+        var e = byName[gm.away + '|' + gm.home];
+        if (!e) return;
+        var A = e.a.shortDisplayName, H = e.h.shortDisplayName;
+        var sp = keys.map(function (k) { var b = gm.books[k]; return b && b.spread ? [b.spread[0], b.spread[1]] : null; });
+        if (sp.filter(Boolean).length >= 3) out.rows.push([A + ' spread', e.short, 'spread', sp, A, H, 'line']);
+        var tt = keys.map(function (k) { var b = gm.books[k]; return b && b.total ? [b.total[0], b.total[1]] : null; });
+        if (tt.filter(Boolean).length >= 3) out.rows.push([e.short + ' total', e.short, 'total', tt, null, null, 'line']);
+      });
+    }
+    propRows.forEach(function (r) {
+      var arr = keys.map(function (k) { return r.books[k] || null; });
+      if (arr.filter(Boolean).length >= 3) out.rows.push([r.label, r.game, r.kind, arr, null, null, 'prop']);
     });
     return out;
   }
