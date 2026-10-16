@@ -1,0 +1,5 @@
+{
+  "note": "Public betting splits. Rows: [game, market ('spread'|'total'|'ml'), public side, other side, bets %, money %, open line, current line]. NFL game names use ESPN short names like 'NYJ @ NE'; college uses 'Away @ Home' with ESPN school names.",
+  "nfl": [],
+  "cf": []
+}

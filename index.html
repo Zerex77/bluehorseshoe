@@ -1,0 +1,1513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blue Horseshoe Picks</title>
+<meta name="description" content="Blue Horseshoe: NFL and college football parlay picks built from live lines.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F7F8FA}
+a{color:#1D5FD6}a:hover{color:#123F91}
+button{font:inherit}
+.fader{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;margin:0}
+.fader:focus-visible{outline:2px solid #1D5FD6;outline-offset:3px;border-radius:4px}
+.fader::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#D5DAE1}
+.fader::-moz-range-track{height:4px;border-radius:2px;background:#D5DAE1}
+.fader::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:#1D5FD6;border:2px solid #FFFFFF;box-shadow:0 0 0 1px #1D5FD6}
+.fader::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#1D5FD6;border:2px solid #FFFFFF;box-shadow:0 0 0 1px #1D5FD6}
+.fader.off::-webkit-slider-thumb{background:#AEB5C0;box-shadow:0 0 0 1px #AEB5C0}
+.fader.off::-moz-range-thumb{background:#AEB5C0;box-shadow:0 0 0 1px #AEB5C0}
+.fader.onblue::-webkit-slider-runnable-track{background:rgba(255,255,255,0.35)}
+.fader.onblue::-moz-range-track{background:rgba(255,255,255,0.35)}
+.fader.onblue::-webkit-slider-thumb{background:#FFFFFF;border-color:#1D5FD6;box-shadow:0 0 0 1px #FFFFFF}
+.fader.onblue::-moz-range-thumb{background:#FFFFFF;border-color:#1D5FD6;box-shadow:0 0 0 1px #FFFFFF}
+.fader.onblue.off::-webkit-slider-thumb{background:#8FB0EC;box-shadow:0 0 0 1px #8FB0EC}
+.fader.onblue.off::-moz-range-thumb{background:#8FB0EC;box-shadow:0 0 0 1px #8FB0EC}
+.fader.onblue:focus-visible{outline-color:#FFFFFF}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>Blue Horseshoe needs JavaScript to load live lines.</noscript>
+<script type="text/x-template" id="tpl">
+<div style="min-height: 100vh; background: #F7F8FA; color: #111827; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; box-sizing: border-box;">
+
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E3E6EB;">
+    <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px;">
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 56px;">
+        <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
+        <span style="font-weight: 700; font-size: 17px; letter-spacing: -0.01em;">Blue Horseshoe</span>
+      </div>
+      <nav aria-label="Pages" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6B7280;">NFL</span>
+        <sc-for list="{{nflTabs}}" as="tb" hint-placeholder-count="4">
+          <button type="button" onClick="{{tb.pick}}" aria-current="{{tb.current}}" style="{{tb.style}}">{{tb.label}}</button>
+        </sc-for>
+        <span aria-hidden="true" style="width: 1px; height: 18px; background: #E3E6EB;"></span>
+        <button type="button" onClick="{{collegeTab.pick}}" aria-current="{{collegeTab.current}}" style="{{collegeTab.style}}">College</button>
+      </nav>
+      <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; padding: 6px 0;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6472;">{{chipText}}</span>
+        <span role="status" aria-live="polite" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #6B7280;"><span aria-hidden="true" style="{{liveDot}}"></span>{{liveStamp}}</span>
+      </span>
+    </div>
+  </header>
+
+  <main style="max-width: 1400px; margin: 0 auto; padding: 20px 20px 40px; display: flex; flex-direction: column; gap: 16px;">
+
+    <sc-if value="{{isBuilder}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px;">
+          <h1 style="margin: 0; font-size: 20px; font-weight: 700;">The Horseshoe's ticket</h1>
+          <span style="font-size: 13px; color: #5B6472;">Every leg passes 2 of 3 checks: price strength (S), home spot (H), market move (M).</span>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+          <aside aria-label="Ticket settings" style="flex: 1 1 260px; max-width: 100%; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Target odds</span>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;">
+                <sc-for list="{{targets}}" as="t" hint-placeholder-count="6">
+                  <button type="button" onClick="{{t.pick}}" aria-pressed="{{t.on}}" style="{{t.style}}">{{t.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Legs</span>
+                <span style="font-size: 12px; color: #5B6472;">{{legsHint}}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" onClick="{{legsAuto}}" aria-pressed="{{legsIsAuto}}" style="{{legsAutoStyle}}">Auto</button>
+                <button type="button" onClick="{{legsDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">−</button>
+                <span aria-live="polite" style="min-width: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600;">{{faderLabel}}</span>
+                <button type="button" onClick="{{legsUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">+</button>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Markets</span>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;">
+                <sc-for list="{{markets}}" as="m" hint-placeholder-count="3">
+                  <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="{{m.style}}">{{m.label}}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{showPropFilter}}" hint-placeholder-val="{{ true }}">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;">
+                  <sc-for list="{{propTypes}}" as="p" hint-placeholder-count="6">
+                    <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="{{p.style}}">{{p.label}}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Games</span>
+                <button type="button" onClick="{{clearGames}}" style="background: none; border: none; padding: 4px 0; color: #1D5FD6; font-size: 12px; font-weight: 600; cursor: pointer;">All games</button>
+              </div>
+              <div style="display: flex; flex-direction: column; border: 1px solid #E3E6EB; border-radius: 6px; overflow: hidden;">
+                <sc-for list="{{games}}" as="g" hint-placeholder-count="10">
+                  <button type="button" onClick="{{g.pick}}" aria-pressed="{{g.on}}" style="{{g.style}}">
+                    <span aria-hidden="true" style="{{g.boxStyle}}">{{g.mark}}</span>
+                    <span style="flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{g.label}}</span>
+                    <span style="font-size: 11px; color: #6B7280;">{{g.sub}}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <span style="font-size: 12px; color: #6B7280;">{{gamesHint}}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Stake</span>
+              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
+                <sc-for list="{{stakes}}" as="s" hint-placeholder-count="4">
+                  <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.on}}" style="{{s.style}}">{{s.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+          </aside>
+
+          <section aria-label="Your ticket" style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: #E3E6EB; border: 1px solid #E3E6EB; border-radius: 8px; overflow: hidden;">
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">{{ticketTitle}}</span>
+                <span style="{{priceStyle}}">{{priceStr}}</span>
+              </div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">{{stakeLabel}} pays</span>
+                <span style="{{payoutStyle}}">{{payoutStr}}</span>
+              </div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Profit</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; overflow-wrap: anywhere;">{{profitStr}}</span>
+              </div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit chance</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{hitStr}}</span>
+              </div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Legs · flags</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{legCount}} · {{flagStr}}</span>
+              </div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; justify-content: center;">
+                <span style="font-size: 11px; font-weight: 600; color: #5B6472;">Status</span>
+                <span style="{{statusStyle}}">{{statusLabel}}</span>
+              </div>
+            </div>
+
+            <sc-if value="{{showWarn}}" hint-placeholder-val="{{ false }}">
+              <div role="status" style="display: flex; gap: 8px; align-items: flex-start; border: 1px solid #F0D9A8; background: #FFF8E8; color: #7A4A00; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{warnText}}</div>
+            </sc-if>
+
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+              <span style="font-size: 13px; color: #5B6472;">{{softLine}}</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <button type="button" onClick="{{toggleAll}}" style="min-height: 34px; padding: 0 12px; background: #FFFFFF; color: #111827; border: 1px solid #D5DAE1; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{toggleAllLabel}}</button>
+                <button type="button" onClick="{{toggleBuild}}" aria-expanded="{{buildOpen}}" style="min-height: 34px; padding: 0 12px; background: #FFFFFF; color: #111827; border: 1px solid #D5DAE1; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{buildLabel}}</button>
+                <a href="https://www.hardrock.bet/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #1D5FD6; color: #FFFFFF; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none;">Open Hard Rock Bet
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3h7v7M13 3L4 12" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </a>
+              </div>
+            </div>
+
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+              <div>
+                <sc-for list="{{ticket}}" as="leg" hint-placeholder-count="6">
+                  <div style="border-bottom: 1px solid #EEF0F3;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;">
+                      <span style="width: 18px; flex-shrink: 0; padding-top: 1px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B7280;">{{leg.num}}</span>
+                      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+                        <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
+                          <span style="font-weight: 600;">{{leg.label}}</span>
+                          <span style="font-size: 12px; color: #6B7280;">{{leg.game}} · {{leg.note}}</span>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px;">
+                          <span style="{{leg.tagStyle}}">{{leg.tag}}</span>
+                          <span style="display: flex; gap: 3px;" aria-label="{{leg.sigAria}}">
+                            <sc-for list="{{leg.sigs}}" as="sg" hint-placeholder-count="3">
+                              <span title="{{sg.name}}" style="{{sg.style}}">{{sg.letter}}</span>
+                            </sc-for>
+                          </span>
+                          <span style="display: inline-flex; align-items: center; gap: 6px; color: #5B6472;">Conf <span style="font-family: 'IBM Plex Mono', monospace; color: #111827;">{{leg.conf}}</span><span style="width: 40px; height: 3px; background: #EEF0F3; border-radius: 2px; overflow: hidden; display: inline-block;"><span style="{{leg.barStyle}}; display: block;"></span></span></span>
+                          <span style="{{leg.injStyle}}">{{leg.injLabel}}</span>
+                        </div>
+                      </div>
+                      <span style="flex-shrink: 0; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{leg.oddsStr}}</span>
+                      <button type="button" onClick="{{leg.toggle}}" aria-expanded="{{leg.open}}" aria-label="Leg details" style="flex-shrink: 0; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #D5DAE1; border-radius: 6px; cursor: pointer;">
+                        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="{{leg.chevStyle}}"><path d="M2 4l4 4 4-4" stroke="#111827" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                      </button>
+                    </div>
+                    <sc-if value="{{leg.stackWarn}}" hint-placeholder-val="{{ false }}">
+                      <div role="note" style="margin: 0 12px 8px 52px; font-size: 12px; color: #7A4A00;">{{leg.stackText}}</div>
+                    </sc-if>
+                    <sc-if value="{{leg.open}}" hint-placeholder-val="{{ false }}">
+                      <div style="margin: 0 12px 12px 52px; padding: 12px; background: #F7F8FA; border-radius: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px; font-size: 13px;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #5B6472;">Why the Horseshoe likes it</span><span>{{leg.note}}</span></div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #5B6472;">Signals hit</span><span>{{leg.sigList}}</span></div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #5B6472;">Injury report · {{leg.injStatus}}</span><span>{{leg.injWho}}</span><span style="font-size: 12px; color: #6B7280;">{{leg.injNote}}</span></div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <sc-if value="{{buildOpen}}" hint-placeholder-val="{{ false }}">
+              <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px;">
+                  <h2 style="margin: 0; font-size: 15px; font-weight: 700;">Build it on Hard Rock</h2>
+                  <span style="font-size: 13px; color: #5B6472;">{{buildProgress}} · target <span style="font-family: 'IBM Plex Mono', monospace; color: #111827;">{{buildPrice}}</span> · <button type="button" onClick="{{resetChecks}}" style="background: none; border: none; padding: 0; color: #1D5FD6; font-size: 13px; font-weight: 600; cursor: pointer;">Reset</button></span>
+                </div>
+                <div style="height: 4px; background: #EEF0F3; border-radius: 2px; overflow: hidden;"><div style="{{buildBarStyle}}"></div></div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px 16px;">
+                  <sc-for list="{{buildGroups}}" as="grp" hint-placeholder-count="3">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: #5B6472;">{{grp.game}} · {{grp.count}}</span>
+                      <sc-for list="{{grp.items}}" as="it" hint-placeholder-count="2">
+                        <button type="button" onClick="{{it.toggle}}" aria-pressed="{{it.done}}" style="{{it.rowStyle}}">
+                          <span aria-hidden="true" style="{{it.boxStyle}}">{{it.mark}}</span>
+                          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                            <span style="{{it.labelStyle}}">{{it.label}}</span>
+                            <span style="font-size: 12px; color: #6B7280;">{{it.where}}</span>
+                          </span>
+                          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{it.oddsStr}}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+                <span style="font-size: 12px; color: #6B7280;">Menu names in the app may differ slightly. If a line isn't offered, take the closest one and check the slip total.</span>
+              </div>
+            </sc-if>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Next best legs</span>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
+                <sc-for list="{{bench}}" as="b" hint-placeholder-count="3">
+                  <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
+                    <span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{b.label}}</span><span style="font-size: 12px; color: #6B7280;">{{b.game}} · conf {{b.conf}}</span></span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{b.oddsStr}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isSpin}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px;">
+          <h1 style="margin: 0; font-size: 20px; font-weight: 700;">Spin it</h1>
+          <span style="font-size: 13px; color: #5B6472;">The Horseshoe draws a random parlay from legs that pass its checks and your Builder filters.</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+          <aside style="flex: 1 1 260px; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Legs</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" onClick="{{rndDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">−</button>
+                <span style="min-width: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600;">{{rndN}}</span>
+                <button type="button" onClick="{{rndUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">+</button>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Stake</span>
+              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
+                <sc-for list="{{stakes}}" as="s2" hint-placeholder-count="4">
+                  <button type="button" onClick="{{s2.pick}}" aria-pressed="{{s2.on}}" style="{{s2.style}}">{{s2.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+            <button type="button" onClick="{{spin}}" style="min-height: 40px; background: #1D5FD6; color: #FFFFFF; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer;">Spin</button>
+            <span style="font-size: 12px; color: #6B7280;">{{spinNote}}</span>
+          </aside>
+          <section style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: #E3E6EB; border: 1px solid #E3E6EB; border-radius: 8px; overflow: hidden;">
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Price</span><span style="{{spinPriceStyle}}">{{spinPrice}}</span></div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">{{stakeLabel}} pays</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; overflow-wrap: anywhere;">{{spinPayout}}</span></div>
+              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit chance</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{spinHit}}</span></div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+              <sc-for list="{{spinLegs}}" as="sp" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+                  <span style="width: 22px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B7280;">{{sp.num}}</span>
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-weight: 600;">{{sp.label}}</span><span style="font-size: 12px; color: #6B7280;">{{sp.game}} · conf {{sp.conf}}</span></span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{sp.oddsStr}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isOdds}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <h1 style="margin: 0; font-size: 20px; font-weight: 700;">Line check</h1>
+          <span style="font-size: 13px; color: #5B6472;">What the market thinks the line should be. We take the other books' numbers, adjust for juice, and compare them to your book. If the books lean -4.6 and you can lay -4.5, you're getting a fair-or-better price.</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Your book</span>
+            <div role="group" aria-label="Your book" style="display: flex; flex-wrap: wrap; gap: 4px;">
+              <sc-for list="{{bookOpts}}" as="bo" hint-placeholder-count="5">
+                <button type="button" onClick="{{bo.pick}}" aria-pressed="{{bo.on}}" style="{{bo.style}}">{{bo.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 13px; color: #0F7A43; font-weight: 600;">{{evCount}}</span>
+            <button type="button" onClick="{{evToggle}}" aria-pressed="{{evOnly}}" style="{{evBtnStyle}}">Value only</button>
+          </div>
+        </div>
+        <sc-if value="{{lineEmpty}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">Book-by-book prices aren't loaded yet.</b> Line check compares Hard Rock with the other sportsbooks every 4 hours. Check back shortly.</div>
+        </sc-if>
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: #FAFBFC;">
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Market</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's take</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Your line</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Books say</th>
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Gap</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{screenRows}}" as="row" hint-placeholder-count="10">
+                <tr style="{{row.rowStyle}}">
+                  <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{row.label}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{row.game}}</span></th>
+                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{row.takeStyle}}">{{row.take}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{row.takeSub}}</span></td>
+                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{row.mineStr}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{row.mineOdds}}</span></td>
+                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{row.fairStr}}</span><span style="display: block; font-size: 11px; color: #6B7280;">{{row.othersStr}}</span></td>
+                  <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{row.gapStyle}}">{{row.gapStr}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <span style="font-size: 12px; color: #6B7280;">{{booksStamp}} Rows are sorted by the biggest gap. Juice matters: a book hanging -140 on the Over at 6.5 catches is really saying 7.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isFade}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <h1 style="margin: 0; font-size: 20px; font-weight: 700;">Fade the public</h1>
+            <span style="font-size: 13px; color: #5B6472;">Share of bets vs. share of money. A big gap means bigger bettors are on the other side.</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+            <sc-for list="{{fadeMkts}}" as="fm" hint-placeholder-count="3">
+              <button type="button" onClick="{{fm.pick}}" aria-pressed="{{fm.on}}" style="{{fm.style}}">{{fm.label}}</button>
+            </sc-for>
+            <button type="button" onClick="{{fadeToggle}}" aria-pressed="{{fadeOnly}}" style="{{fadeBtnStyle}}">Fades only</button>
+          </div>
+        </div>
+        <sc-if value="{{fadeEmpty}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">Splits aren't posted yet.</b> Books release bets-vs-money splits closer to kickoff. Fades show up here as soon as a real gap between bets and money appears.</div>
+        </sc-if>
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: #FAFBFC;">
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Game</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's pick</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Public split</th>
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Line move</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{fadeCards}}" as="fc" hint-placeholder-count="8">
+                <tr style="{{fc.rowStyle}}">
+                  <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{fc.game}}</span><span style="{{fc.mkStyle}}; margin-top: 3px;">{{fc.mkLabel}}</span></th>
+                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{fc.pickStyle}}">{{fc.pick}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{fc.reason}}</span></td>
+                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-size: 12px; color: #6B7280;">Public on {{fc.pub}}</span><span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span>Bets {{fc.tickets}}</span><span style="color: #1D5FD6;">Money {{fc.money}}</span></span></td>
+                  <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{fc.move}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isCollege}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h1 style="margin: 0; font-size: 20px; font-weight: 700;">College football · the Horseshoe has spoken</h1>
+              <span style="font-size: 13px; color: #5B6472;">Moneylines, spreads and totals only. No props.</span>
+            </div>
+          </div>
+          <nav aria-label="College pages" style="display: flex; gap: 4px; background: #EEF0F3; padding: 3px; border-radius: 8px;">
+            <sc-for list="{{cfTabs}}" as="ct" hint-placeholder-count="3">
+              <button type="button" onClick="{{ct.pick}}" aria-current="{{ct.current}}" style="{{ct.style}}">{{ct.label}}</button>
+            </sc-for>
+          </nav>
+        </div>
+
+        <sc-if value="{{cfIsSlate}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+              <div role="group" aria-label="Conference" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                <sc-for list="{{cfConfChips}}" as="cc" hint-placeholder-count="7">
+                  <button type="button" onClick="{{cc.pick}}" aria-pressed="{{cc.on}}" style="{{cc.style}}">{{cc.label}}</button>
+                </sc-for>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                <span style="font-size: 13px; color: #5B6472;">{{slateCount}}</span>
+                <div role="group" aria-label="Sort by Horseshoe lean" style="display: flex; gap: 2px; background: #EEF0F3; padding: 2px; border-radius: 6px;">
+                  <sc-for list="{{cfSortOpts}}" as="so" hint-placeholder-count="3">
+                    <button type="button" onClick="{{so.pick}}" aria-pressed="{{so.on}}" style="{{so.style}}">{{so.label}}</button>
+                  </sc-for>
+                </div>
+                <button type="button" onClick="{{cfLeansToggle}}" aria-pressed="{{cfLeansOnly}}" style="{{cfLeansStyle}}">Horseshoe leans only</button>
+              </div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                  <tr style="background: #FAFBFC;">
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Game</th>
+                    <th scope="col" aria-sort="{{leanAria}}" style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #E3E6EB;"><button type="button" onClick="{{cycleSort}}" style="background: none; border: none; padding: 4px 0; cursor: pointer; font-size: 11px; font-weight: 600; color: #1D5FD6;">Horseshoe lean{{leanArrow}}</button></th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Spread</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Total</th>
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Moneyline</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{slateRows}}" as="sr" hint-placeholder-count="12">
+                    <tr>
+                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{sr.game}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{sr.conf}}</span></th>
+                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;">
+                        <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                          <span style="{{sr.leanStyle}}">{{sr.lean}}</span>
+                          <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.shoeAria}}">
+                            <sc-for list="{{sr.shoes}}" as="sh" hint-placeholder-count="5">
+                              <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
+                            </sc-for>
+                          </span>
+                        </span>
+                        <span style="display: block; font-size: 12px; color: #6B7280;">{{sr.leanSub}}</span>
+                      </td>
+                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px; white-space: nowrap;">{{sr.spread}}</td>
+                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{sr.total}}</td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{sr.ml}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{cfIsPicks}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <section aria-label="The Horseshoe Parlay" style="background: #1D5FD6; color: #FFFFFF; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 18px 32px;">
+                <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 340px;">
+                  <svg width="56" height="56" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="37" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle></svg>
+                  <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #CFDDF8;">THE MAIN EVENT · SATURDAY</span>
+                    <h2 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em;">The Horseshoe Parlay</h2>
+                    <span style="font-size: 13px; line-height: 1.5; color: #DCE7FB;">Every moneyline, spread and total ranked by how much the Horseshoe likes it. Each leg you add is the next best line on the board, one per game.</span>
+                  </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 14px 28px;">
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Price</span>
+                    <span style="{{cfPriceStyle}}">{{cfPrice}}</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">{{stakeLabel}} pays</span>
+                    <span style="{{cfPayoutStyle}}">{{cfPayout}}</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Horseshoe says</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; line-height: 1.2;">{{cfHitStr}}</span>
+                    <span style="font-size: 11px; color: #CFDDF8;">Book says {{cfBookStr}}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;" aria-label="Ticket mix">
+                <sc-for list="{{cfPillars}}" as="pl" hint-placeholder-count="3">
+                  <span style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.14); font-size: 13px;">
+                    <span aria-hidden="true" style="{{pl.dotStyle}}"></span>
+                    <span>{{pl.label}}</span>
+                    <b style="font-family: 'IBM Plex Mono', monospace;">{{pl.count}}</b>
+                  </span>
+                </sc-for>
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; background: rgba(0,0,0,0.12); border-radius: 8px; padding: 12px 14px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Target</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <sc-for list="{{cfTargets}}" as="ctg" hint-placeholder-count="6">
+                      <button type="button" onClick="{{ctg.pick}}" aria-pressed="{{ctg.on}}" style="{{ctg.style}}">{{ctg.label}}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Size · {{cfSizeHint}}</span>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" onClick="{{cfSizeAuto}}" aria-pressed="{{cfSizeIsAuto}}" style="{{cfSizeAutoStyle}}">Auto</button>
+                    <button type="button" onClick="{{cfDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                    <span aria-live="polite" style="min-width: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{cfFaderLabel}}</span>
+                    <button type="button" onClick="{{cfUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Stake</span>
+                  <div style="display: flex; gap: 4px;">
+                    <sc-for list="{{cfStakes}}" as="s3" hint-placeholder-count="4">
+                      <button type="button" onClick="{{s3.pick}}" aria-pressed="{{s3.on}}" style="{{s3.style}}">{{s3.label}}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Lines</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <sc-for list="{{cfMktPills}}" as="cm" hint-placeholder-count="4">
+                      <button type="button" onClick="{{cm.pick}}" aria-pressed="{{cm.on}}" style="{{cm.style}}">{{cm.label}}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <sc-if value="{{cfShowOU}}" hint-placeholder-val="{{ true }}">
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #CFDDF8;">Totals</span>
+                    <div role="group" aria-label="Totals direction" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                      <sc-for list="{{cfOUOpts}}" as="ou" hint-placeholder-count="3">
+                        <button type="button" onClick="{{ou.pick}}" aria-pressed="{{ou.on}}" style="{{ou.style}}">{{ou.label}}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </section>
+
+            <sc-if value="{{cfHasUpset}}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; background: #0F1B3D; color: #FFFFFF; border-radius: 8px; padding: 10px 14px;">
+                <span style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0;">
+                  <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #FFC24D;">UPSET SPECIAL</span>
+                  <span style="font-size: 13px; font-weight: 600;">{{upTeaser}}</span>
+                </span>
+                <span style="display: flex; align-items: center; gap: 14px;">
+                  <b style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #FFC24D;">{{cfUpsetPrice}}</b>
+                  <button type="button" onClick="{{cfGoDogs}}" style="min-height: 32px; padding: 0 12px; background: #FFFFFF; color: #0F1B3D; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">See the upsets</button>
+                </span>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{cfWarn}}" hint-placeholder-val="{{ false }}">
+              <div role="status" style="border: 1px solid #F0D9A8; background: #FFF8E8; color: #7A4A00; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{cfWarnText}}</div>
+            </sc-if>
+
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+              <sc-for list="{{cfTicket}}" as="cr" hint-placeholder-count="3">
+                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #EEF0F3;">
+                  <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: #1D5FD6; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;">{{cr.num}}</span>
+                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
+                      <span style="font-size: 15px; font-weight: 700;">{{cr.label}}</span>
+                      <span style="font-size: 12px; color: #6B7280;">{{cr.game}}</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px;">
+                      <sc-for list="{{cr.badges}}" as="bd" hint-placeholder-count="2">
+                        <span style="{{bd.style}}">{{bd.label}}</span>
+                      </sc-for>
+                      <span style="{{cr.mkStyle}}">{{cr.mkLabel}}</span>
+                      <span style="display: inline-flex; gap: 1px;" role="img" aria-label="{{cr.shoeAria}}">
+                        <sc-for list="{{cr.shoes}}" as="sh" hint-placeholder-count="5">
+                          <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
+                        </sc-for>
+                      </span>
+                      <span style="color: #5B6472;">{{cr.why}}</span>
+                    </div>
+                  </div>
+                  <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{cr.oddsStr}}</span>
+                    <span style="font-size: 11px; color: #6B7280;">Horseshoe <b style="font-family: 'IBM Plex Mono', monospace; color: #1D5FD6;">{{cr.pStr}}</b> · Book {{cr.impStr}}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Next up if you want to swap a leg</span>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
+                <sc-for list="{{cfBench}}" as="cb" hint-placeholder-count="4">
+                  <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
+                    <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span style="font-weight: 600;">{{cb.label}}</span>
+                      <span style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                        <sc-for list="{{cb.badges}}" as="bd2" hint-placeholder-count="1">
+                          <span style="{{bd2.style}}">{{bd2.label}}</span>
+                        </sc-for>
+                        <span style="font-size: 12px; color: #6B7280;">{{cb.game}} · {{cb.pStr}}</span>
+                      </span>
+                    </span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{cb.oddsStr}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{cfIsDogs}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <section aria-label="The Horseshoe Upset Special" style="background: #0F1B3D; color: #FFFFFF; border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 18px 32px;">
+                <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 340px;">
+                  <svg width="56" height="56" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="37" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><path d="M52 4 l2.2 4.4 l4.8 0.7 l-3.5 3.4 l0.8 4.8 l-4.3 -2.3 l-4.3 2.3 l0.8 -4.8 l-3.5 -3.4 l4.8 -0.7 z" fill="#FFC24D"></path></svg>
+                  <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #FFC24D;">UPSET SPECIAL · SATURDAY</span>
+                    <h2 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em;">The Horseshoe Upset Special</h2>
+                    <span style="font-size: 13px; line-height: 1.5; color: #C9D3E8;">Dogs only, balanced the same way: one public fade, one value play over the book and one live dog at a time.</span>
+                  </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 14px 28px;">
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Price</span>
+                    <span style="{{upPriceStyle}}">{{cfUpsetPrice}}</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                    <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">{{stakeLabel}} pays</span>
+                    <span style="{{upPayStyle}}">{{cfUpsetPay}}</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Horseshoe says</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; line-height: 1.2;">{{cfUpsetHit}}</span>
+                    <span style="font-size: 11px; color: #C9D3E8;">Book says {{cfUpsetBook}}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;" aria-label="Upset balance">
+                <sc-for list="{{upPillars}}" as="upl" hint-placeholder-count="3">
+                  <span style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.1); font-size: 13px;">
+                    <span aria-hidden="true" style="{{upl.dotStyle}}"></span>
+                    <span>{{upl.label}}</span>
+                    <b style="font-family: 'IBM Plex Mono', monospace;">{{upl.count}}</b>
+                  </span>
+                </sc-for>
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; background: rgba(255,255,255,0.06); border-radius: 8px; padding: 12px 14px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Type</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <sc-for list="{{upModes}}" as="um" hint-placeholder-count="2">
+                      <button type="button" onClick="{{um.pick}}" aria-pressed="{{um.on}}" style="{{um.style}}">{{um.label}}</button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Size</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" onClick="{{upDown}}" aria-label="Fewer upsets" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">−</button>
+                    <span style="min-width: 28px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{upNStr}}</span>
+                    <button type="button" onClick="{{upUp}}" aria-label="More upsets" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.45); background: transparent; color: #FFFFFF; font-size: 16px; cursor: pointer;">+</button>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 600; color: #C9D3E8;">Stake</span>
+                  <div style="display: flex; gap: 4px;">
+                    <sc-for list="{{cfStakes}}" as="us" hint-placeholder-count="4">
+                      <button type="button" onClick="{{us.pick}}" aria-pressed="{{us.on}}" style="{{us.style}}">{{us.label}}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <sc-for list="{{cfUpsetLegs}}" as="ul" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,0.07);">
+                    <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: #FFC24D; color: #0F1B3D; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700;">{{ul.num}}</span>
+                    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+                      <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
+                        <span style="font-size: 15px; font-weight: 700;">{{ul.label}}</span>
+                        <span style="font-size: 12px; color: #C9D3E8;">{{ul.game}}</span>
+                      </div>
+                      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px;">
+                        <sc-for list="{{ul.badges}}" as="ub" hint-placeholder-count="2">
+                          <span style="{{ub.style}}">{{ub.label}}</span>
+                        </sc-for>
+                        <span style="color: #C9D3E8;">{{ul.why}}</span>
+                      </div>
+                    </div>
+                    <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; color: #FFC24D;">{{ul.oddsStr}}</span>
+                      <span style="font-size: 11px; color: #C9D3E8;">Horseshoe <b style="font-family: 'IBM Plex Mono', monospace; color: #FFFFFF;">{{ul.pStr}}</b> · Book {{ul.impStr}}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+
+            <h2 style="margin: 6px 0 0; font-size: 15px; font-weight: 700;">Every underdog on the board</h2>
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                  <tr style="background: #FAFBFC;">
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Underdog</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's read</th>
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe vs book</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{cfDogs}}" as="dg" hint-placeholder-count="8">
+                    <tr>
+                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{dg.label}} <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{dg.oddsStr}}</span></span><span style="display: block; font-size: 12px; color: #6B7280;">{{dg.game}} · {{dg.note}}</span><span style="{{dg.mkStyle}}; margin-top: 3px;">{{dg.mkLabel}}</span></th>
+                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{dg.verdictStyle}}; display: block;">{{dg.verdict}}</span><span style="display: block; font-size: 12px; color: #6B7280;">Edge <b style="font-family: 'IBM Plex Mono', monospace; color: {{dg.edgeColor}};">{{dg.edgeStr}}</b> pts</span></td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top;">
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                          <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 64px; height: 4px; background: #EEF0F3; border-radius: 2px; overflow: hidden;"><div style="{{dg.horseBar}}"></div></div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #1D5FD6;">{{dg.pStr}}</span></div>
+                          <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 64px; height: 4px; background: #EEF0F3; border-radius: 2px; overflow: hidden;"><div style="{{dg.bookBar}}"></div></div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6472;">{{dg.impStr}}</span></div>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{cfIsFade}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+              <sc-for list="{{cfFadeMkts}}" as="cfm" hint-placeholder-count="4">
+                <button type="button" onClick="{{cfm.pick}}" aria-pressed="{{cfm.on}}" style="{{cfm.style}}">{{cfm.label}}</button>
+              </sc-for>
+              <button type="button" onClick="{{cfFadeToggle}}" aria-pressed="{{cfFadeOnly}}" style="{{cfFadeBtnStyle}}">Fades only</button>
+            </div>
+            <sc-if value="{{cfFadeEmpty}}" hint-placeholder-val="{{ false }}">
+              <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">College splits aren't posted yet.</b> Until real bets-vs-money numbers land, the Parlay and Upset Special lean on line movement instead of public fades.</div>
+            </sc-if>
+            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                  <tr style="background: #FAFBFC;">
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Game</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's pick</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Public split</th>
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Line move</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{cfFadeCards}}" as="cfc" hint-placeholder-count="8">
+                    <tr style="{{cfc.rowStyle}}">
+                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{cfc.game}}</span><span style="{{cfc.mkStyle}}; margin-top: 3px;">{{cfc.mkLabel}}</span></th>
+                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{cfc.pickStyle}}">{{cfc.pick}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{cfc.reason}}</span></td>
+                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-size: 12px; color: #6B7280;">Public on {{cfc.pub}}</span><span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span>Bets {{cfc.tickets}}</span><span style="color: #1D5FD6;">Money {{cfc.money}}</span></span></td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{cfc.move}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; line-height: 1.5; color: #6B7280; border-top: 1px solid #E3E6EB; padding-top: 14px;">
+      <svg width="16" height="16" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path></svg>
+      <span>{{footText}}</span>
+    </footer>
+  </main>
+</div>
+</script>
+<script src="runtime.js"></script>
+<script src="lines.js"></script>
+<script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { page: 'builder', target: 'fav', market: 'both', games: [], stake: 5, props: [], open: {}, allOpen: false, build: false, checked: {}, legs: 'auto', lastLegs: 6, rnd: 4, seed: 7, evOnly: false, fadeOnly: false, fadeMkt: 'all', cfTab: 'picks', cfTarget: 'safe', cfMkts: [], cfLegs: 'auto', cfLastLegs: 4, cfFadeMkt: 'all', cfFadeOnly: false };
+  }
+
+  data() { return window.BH.nfl; }
+
+  cfData() { return window.BH.cf; }
+
+  dec(o) { return o > 0 ? 1 + o / 100 : 1 + 100 / (-o); }
+  amer(d) {
+    if (d <= 1) return '—';
+    var v = d >= 2 ? (d - 1) * 100 : -100 / (d - 1);
+    var r = Math.round(v);
+    var s = Math.abs(r).toLocaleString('en-US');
+    return r > 0 ? '+' + s : '-' + s;
+  }
+  money(v) { return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  fitSize(str, max, min) {
+    var len = String(str).length;
+    return Math.max(min, Math.min(max, Math.floor(max * 8 / Math.max(len, 8))));
+  }
+  fmtOdds(o) { return o > 0 ? '+' + o : String(o); }
+
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var D = this.data();
+    var B = '#1D5FD6', TXT = '#111827', MUTED = '#5B6472', FAINT = '#6B7280', BORDER = '#D5DAE1', LIGHT = '#EEF0F3';
+    var GREEN = '#0F7A43', AMBER = '#9A5B00', RED = '#B42318';
+    var gameMap = {};
+    D.games.forEach(function (g) { gameMap[g.id] = g; });
+    var allIds = D.games.map(function (g) { return g.id; });
+    var activeGames = st.games.length ? st.games : allIds;
+
+    // ---- shared control styles
+    var seg = function (on) {
+      return 'min-height: 32px; padding: 0 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF; border: 1px solid ' + B + ';' : 'background: #FFFFFF; color: ' + TXT + '; border: 1px solid ' + BORDER + ';');
+    };
+    var chip = function (on) {
+      return 'min-height: 28px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500; box-sizing: border-box; ' + (on ? 'background: #EEF4FE; color: ' + B + '; border: 1px solid #A9C4F5;' : 'background: #FFFFFF; color: ' + MUTED + '; border: 1px solid ' + BORDER + ';');
+    };
+    var tag = function (txt, kind) {
+      var c = kind === 'line' || kind === 'spread' ? ['#EEF4FE', B] : kind === 'total' ? ['#F3EEFE', '#5B3FB8'] : kind === 'ml' ? ['#EAF6EF', GREEN] : ['#F1F3F6', '#374151'];
+      return 'display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: ' + c[0] + '; color: ' + c[1] + '; white-space: nowrap;';
+    };
+
+    var passes = function (l) {
+      if (l.s[0] + l.s[1] + l.s[2] < 2) return false;
+      if (st.market !== 'both' && l.k !== st.market) return false;
+      if (l.k === 'prop' && st.props.length && st.props.indexOf(l.c) === -1) return false;
+      return true;
+    };
+    var qualCount = {};
+    D.legs.forEach(function (l) { if (passes(l)) qualCount[l.g] = (qualCount[l.g] || 0) + 1; });
+    var pool = D.legs.filter(function (l) { return passes(l) && activeGames.indexOf(l.g) !== -1; }).sort(function (a, b) { return b.conf - a.conf; });
+    // Books won't take a moneyline and a spread from the same game in one parlay, so keep only the stronger side.
+    var sideTaken = {};
+    pool = pool.filter(function (l) { if (l.mk !== 'ml' && l.mk !== 'spread') return true; if (sideTaken[l.g]) return false; sideTaken[l.g] = 1; return true; });
+
+    // ---- NFL ticket selection
+    var ticket = [];
+    var decTotal = 1;
+    var reached = true;
+    var targetDec = 0;
+    var N = st.legs === 'auto' ? 0 : st.legs;
+    var prodDec = function (arr) { var d = 1; arr.forEach(function (l) { d *= self.dec(l.odds); }); return d; };
+    if (st.target === 'fav') {
+      if (N) ticket = pool.slice(0, N);
+      else {
+        ticket = pool.filter(function (l) { return l.conf >= 75; }).slice(0, 6);
+        if (ticket.length < 3) ticket = pool.slice(0, 3);
+      }
+      decTotal = prodDec(ticket);
+    } else if (N) {
+      targetDec = this.dec(st.target);
+      ticket = pool.slice(0, N);
+      var benchPool = pool.slice(N);
+      for (var guard = 0; guard < 40; guard++) {
+        if (prodDec(ticket) >= targetDec || !ticket.length) break;
+        var minIx = 0;
+        ticket.forEach(function (l, ix) { if (self.dec(l.odds) < self.dec(ticket[minIx].odds)) minIx = ix; });
+        var minDec = self.dec(ticket[minIx].odds);
+        var swapIx = -1;
+        for (var b = 0; b < benchPool.length; b++) { if (self.dec(benchPool[b].odds) > minDec) { swapIx = b; break; } }
+        if (swapIx === -1) break;
+        var out = ticket[minIx];
+        ticket[minIx] = benchPool[swapIx];
+        benchPool.splice(swapIx, 1);
+        benchPool.push(out);
+      }
+      ticket.sort(function (a, b2) { return b2.conf - a.conf; });
+      decTotal = prodDec(ticket);
+      reached = decTotal >= targetDec;
+    } else {
+      targetDec = this.dec(st.target);
+      for (var i = 0; i < pool.length && i < 20; i++) {
+        if (decTotal >= targetDec) break;
+        ticket.push(pool[i]);
+        decTotal *= this.dec(pool[i].odds);
+      }
+      reached = decTotal >= targetDec;
+    }
+    var shortLegs = N && ticket.length < N;
+    var hit = 1;
+    ticket.forEach(function (l) { hit *= 1 / self.dec(l.odds); });
+    var inTicket = ticket.map(function (l) { return l.label; });
+    var bench = pool.filter(function (l) { return inTicket.indexOf(l.label) === -1; }).slice(0, 3);
+
+    var sigNames = ['Price strength', 'Home spot', 'Market move'];
+    var sigLetters = ['S', 'H', 'M'];
+    var ord = function (n) { var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+    var softCount = 0, flagCount = 0;
+    var whoCount = {};
+    var injOf = function (l) { return D.inj[l.label] || ['', 'No designation', '']; };
+    ticket.forEach(function (l) { var ij = injOf(l); if (ij[1] !== 'No designation') whoCount[ij[0]] = (whoCount[ij[0]] || 0) + 1; });
+
+    var ticketRows = ticket.map(function (l, idx) {
+      var ij = injOf(l);
+      var stt = ij[1];
+      var injC = stt === 'Out' || stt === 'Doubtful' ? RED : stt === 'Questionable' ? AMBER : GREEN;
+      var flagged = stt !== 'No designation';
+      if (flagged) flagCount++;
+      var stackWarn = flagged && whoCount[ij[0]] > 1;
+      var open = st.allOpen || !!st.open[l.label];
+      var hits = [];
+      var sigs = l.s.map(function (on, j) {
+        if (on) hits.push(sigNames[j]);
+        return {
+          name: sigNames[j] + (on ? ': yes' : ': no'), letter: sigLetters[j],
+          style: 'width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-family: IBM Plex Mono, monospace; font-size: 11px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #EEF4FE; color: ' + B + '; border: 1px solid #A9C4F5;' : 'color: #9AA3AF; border: 1px dashed ' + BORDER + ';')
+        };
+      });
+      return {
+        num: String(idx + 1),
+        label: l.label, game: gameMap[l.g].label, note: l.note,
+        tag: l.k === 'line' ? 'Line' : 'Prop', tagStyle: tag('', l.k === 'line' ? 'line' : 'prop'),
+        sigs: sigs, sigAria: 'Signals: ' + hits.join(', '),
+        sigList: hits.length ? hits.join(', ') : 'None',
+        conf: l.conf,
+        barStyle: 'height: 100%; width: ' + l.conf + '%; background: ' + (l.conf >= 80 ? B : l.conf >= 70 ? '#6B9BE8' : '#AEB5C0') + ';',
+        injLabel: flagged ? ij[0] + ' ' + stt.toLowerCase() : 'No injury flags',
+        injStyle: 'font-size: 12px; font-weight: 600; color: ' + injC + ';',
+        injWho: ij[0], injStatus: stt, injNote: ij[2] || '—',
+        stackWarn: stackWarn,
+        stackText: 'Rule check: ' + ij[0] + ' is ' + stt.toLowerCase() + ' and touches ' + whoCount[ij[0]] + ' legs. Keep one at most.',
+        open: open,
+        chevStyle: open ? 'transform: rotate(180deg);' : '',
+        toggle: function () { var o = Object.assign({}, st.open); o[l.label] = !open; self.setState({ open: o, allOpen: false }); },
+        oddsStr: self.fmtOdds(l.odds),
+        estOdds: l.note.indexOf('est.') !== -1
+      };
+    });
+
+    var targets = [{ v: 'fav', label: 'Faves' }, { v: 300, label: '+300' }, { v: 600, label: '+600' }, { v: 1000, label: '+1000' }, { v: 2000, label: '+2000' }, { v: 5000, label: '+5000' }].map(function (t) {
+      var on = st.target === t.v;
+      return { label: t.label, on: on, style: seg(on), pick: function () { self.setState({ target: t.v }); } };
+    });
+    var markets = [{ v: 'both', label: 'Both' }, { v: 'line', label: 'Lines' }, { v: 'prop', label: 'Props' }].map(function (m) {
+      var on = st.market === m.v;
+      return { label: m.label, on: on, style: seg(on), pick: function () { self.setState({ market: m.v }); } };
+    });
+    var propTypes = [{ v: 'all', label: 'All props' }, { v: 'rush', label: 'Rush yds' }, { v: 'rec', label: 'Rec yds' }, { v: 'recp', label: 'Receptions' }, { v: 'pass', label: 'Pass yds' }, { v: 'td', label: 'TDs' }].map(function (p) {
+      var on = p.v === 'all' ? st.props.length === 0 : st.props.indexOf(p.v) !== -1;
+      return {
+        label: p.label, on: on, style: chip(on),
+        pick: function () {
+          if (p.v === 'all') { self.setState({ props: [] }); return; }
+          var cur = st.props.slice(); var ix = cur.indexOf(p.v);
+          if (ix === -1) cur.push(p.v); else cur.splice(ix, 1);
+          self.setState({ props: cur });
+        }
+      };
+    });
+    var gamesUi = D.games.map(function (g, gi) {
+      var on = st.games.indexOf(g.id) !== -1;
+      var n = qualCount[g.id] || 0;
+      return {
+        label: g.label, on: on, sub: n + ' legs', mark: on ? '✓' : '',
+        boxStyle: 'width: 14px; height: 14px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #AEB5C0;'),
+        style: 'display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 10px; background: ' + (on ? '#F5F8FE' : '#FFFFFF') + '; border: none; ' + (gi ? 'border-top: 1px solid ' + LIGHT + ';' : '') + ' cursor: pointer; text-align: left; color: ' + TXT + ';',
+        pick: function () { var cur = st.games.slice(); var ix = cur.indexOf(g.id); if (ix === -1) cur.push(g.id); else cur.splice(ix, 1); self.setState({ games: cur }); }
+      };
+    });
+    var stakes = [5, 10, 25, 50].map(function (v) {
+      var on = st.stake === v;
+      return { label: '$' + v, on: on, style: seg(on), pick: function () { self.setState({ stake: v }); } };
+    });
+
+    var hasTicket = ticket.length > 0;
+    var statusLabel = st.target === 'fav' ? 'Favorites' : (reached ? 'Target hit' : 'Short of target');
+    var statusC = st.target === 'fav' ? B : (reached ? GREEN : AMBER);
+    var checkedN = ticket.filter(function (l) { return st.checked[l.label]; }).length;
+    var where = function (l) {
+      if (l.k === 'line') return l.label.indexOf('moneyline') !== -1 ? 'Game lines › Moneyline' : /^(Over|Under) /.test(l.label) ? 'Game lines › Total' : 'Game lines › Spread';
+      return { rush: 'Player props › Rushing yards', rec: 'Player props › Receiving yards', recp: 'Player props › Receptions', pass: 'Player props › Passing yards', td: 'Player props › Anytime TD scorer' }[l.c] || 'Player props';
+    };
+    var order = [], by = {};
+    ticket.forEach(function (l) { if (!by[l.g]) { by[l.g] = []; order.push(l.g); } by[l.g].push(l); });
+    var buildGroups = order.map(function (gid) {
+      return {
+        game: gameMap[gid].label, count: by[gid].length + ' leg' + (by[gid].length === 1 ? '' : 's'),
+        items: by[gid].map(function (l) {
+          var done = !!st.checked[l.label];
+          return {
+            label: l.label, where: where(l), oddsStr: self.fmtOdds(l.odds), done: done, mark: done ? '✓' : '',
+            boxStyle: 'width: 16px; height: 16px; flex-shrink: 0; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; box-sizing: border-box; ' + (done ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #AEB5C0;'),
+            rowStyle: 'width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; text-align: left; font: inherit; box-sizing: border-box; background: ' + (done ? '#F7F8FA' : '#FFFFFF') + '; border: 1px solid ' + (done ? LIGHT : BORDER) + '; color: ' + (done ? FAINT : TXT) + ';',
+            labelStyle: 'font-weight: 600; ' + (done ? 'text-decoration: line-through;' : ''),
+            toggle: function () { var c = Object.assign({}, st.checked); c[l.label] = !done; self.setState({ checked: c }); }
+          };
+        })
+      };
+    });
+
+    var isAuto = st.legs === 'auto';
+
+    // ---- spin
+    var rng = (function (a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })(st.seed);
+    var rPool = D.legs.filter(passes).slice();
+    for (var si = rPool.length - 1; si > 0; si--) { var sj = Math.floor(rng() * (si + 1)); var tmp = rPool[si]; rPool[si] = rPool[sj]; rPool[sj] = tmp; }
+    var spinSide = {};
+    rPool = rPool.filter(function (l) { if (l.mk !== 'ml' && l.mk !== 'spread') return true; if (spinSide[l.g]) return false; spinSide[l.g] = 1; return true; });
+    var spun = rPool.slice(0, st.rnd);
+    var spunDec = prodDec(spun);
+    var spunHit = 1;
+    spun.forEach(function (l) { spunHit *= 1 / self.dec(l.odds); });
+    var spinPriceStr = spun.length ? this.amer(spunDec) : '—';
+
+    // ---- line check: your book's number vs the juice-adjusted consensus of the other books
+    var books = D.books || [];
+    var bookShort = D.bookShort || [];
+    var myBook = typeof st.myBook === 'number' && st.myBook < books.length ? st.myBook : (D.bookDefault || 0);
+    var kindInfo = { yds: [20, 1.5, 'yds'], rec: [4, 0.3, 'rec'], total: [4, 0.5, 'pts'], spread: [4, 0.4, 'pts'] };
+    var oneDec = function (x) { return (Math.round(x * 10) / 10).toFixed(1); };
+    var signed = function (x) { return (x > 0 ? '+' : '') + x; };
+    var screenRows = D.lineCheck.filter(function (r) { return r[3][myBook] && r[3].filter(function (bk, ix) { return bk && ix !== myBook; }).length >= 2; }).map(function (r) {
+      var ki = kindInfo[r[2]];
+      var adj = function (bk) { var imp = 1 / self.dec(bk[1]) - 0.524; return r[2] === 'spread' ? bk[0] - imp * ki[0] : bk[0] + imp * ki[0]; };
+      var others = r[3].filter(function (bk, ix) { return bk && ix !== myBook; });
+      var cons = others.reduce(function (acc, bk) { return acc + adj(bk); }, 0) / others.length;
+      var mine = r[3][myBook];
+      var gap, take, val;
+      if (r[2] === 'spread') {
+        gap = mine[0] - cons;
+        val = Math.abs(gap) >= ki[1];
+        take = !val ? 'Fair number, no edge' : gap > 0 ? 'Take ' + r[4] + ' ' + signed(mine[0]) : 'Take ' + r[5] + ' ' + signed(-mine[0]);
+      } else {
+        gap = cons - mine[0];
+        val = Math.abs(gap) >= ki[1];
+        take = !val ? 'Fair number, no edge' : (gap > 0 ? 'Over ' : 'Under ') + mine[0];
+      }
+      var g1 = Math.round(Math.abs(gap) * 10) / 10;
+      return {
+        label: r[0], game: r[1], val: val, absGap: Math.abs(gap) / ki[1],
+        mineStr: bookShort[myBook] + ' ' + (r[2] === 'spread' ? signed(mine[0]) : mine[0]),
+        mineOdds: (r[2] === 'spread' ? r[4] + ' ' : 'Over ') + self.fmtOdds(mine[1]),
+        fairStr: r[2] === 'spread' ? r[4] + ' ' + signed(Number(oneDec(cons))) : oneDec(cons),
+        othersStr: r[3].map(function (bk, ix) { return ix === myBook || !bk ? null : bookShort[ix] + ' ' + (r[2] === 'spread' ? signed(bk[0]) : bk[0]); }).filter(function (x) { return x; }).join(' \u00b7 '),
+        gapStr: (val ? '' : '') + g1 + ' ' + ki[2],
+        gapStyle: 'font-family: IBM Plex Mono, monospace; font-weight: 600; color: ' + (val ? GREEN : MUTED) + ';',
+        take: take,
+        takeStyle: 'display: block; font-weight: ' + (val ? '700' : '500') + '; color: ' + (val ? GREEN : FAINT) + ';',
+        takeSub: val ? 'Books lean ' + (r[2] === 'spread' ? signed(Number(oneDec(cons))) : oneDec(cons)) + ', your book has ' + (r[2] === 'spread' ? signed(mine[0]) : mine[0]) : 'Your number matches the market',
+        rowStyle: val ? 'background: #F2FAF5;' : ''
+      };
+    }).sort(function (a, c) { return c.absGap - a.absGap; });
+    var evCount = screenRows.filter(function (r) { return r.val; }).length;
+    if (st.evOnly) screenRows = screenRows.filter(function (r) { return r.val; });
+    var bookOpts = books.map(function (bname, ix) {
+      var on = myBook === ix;
+      return { label: bname, on: on, style: seg(on), pick: function () { self.setState({ myBook: ix }); } };
+    });
+
+    // ---- fade helper (NFL + college)
+    var mkNames = { ml: 'Moneyline', spread: 'Spread', total: 'Total' };
+    var fadeRows = function (rows, mkt, only, lineFor) {
+      var all = rows.map(function (row) {
+        var gap = row[4] - row[5];
+        var contrarian = row[4] >= 55 && gap >= 15;
+        var agree = Math.abs(gap) < 8;
+        var sharpPublic = gap <= -10;
+        var verdict = contrarian ? 'Fade: take ' + row[3] : sharpPublic ? 'Money backs ' + row[2] + ' too' : agree ? 'Public and money agree' : 'Lean public, light split';
+        var isTotal = row[1] === 'total';
+        return {
+          mk: row[1], mkLabel: mkNames[row[1]], mkStyle: tag('', row[1]),
+          game: row[0], pub: row[2], tickets: row[4] + '%', money: row[5] + '%',
+          open: isTotal ? 'O/U ' + row[6] : row[6], now: isTotal ? row[7] : row[7],
+          contrarian: contrarian, gap: gap, verdict: verdict,
+          pick: contrarian ? 'Take ' + lineFor(row, row[3]) : sharpPublic ? 'Take ' + lineFor(row, row[2]) : 'No play',
+          pickStyle: 'display: block; ' + (contrarian ? 'font-weight: 700; font-size: 14px; color: ' + B + ';' : sharpPublic ? 'font-weight: 700; font-size: 14px; color: ' + GREEN + ';' : 'font-weight: 500; color: ' + FAINT + ';'),
+          reason: contrarian ? 'Fade the public: money opposes bets by ' + gap + ' pts' : sharpPublic ? 'Sharp money is even heavier on ' + row[2] : agree ? 'Bets and money agree' : 'Split too small to fade',
+          move: (isTotal ? 'O/U ' : '') + row[6] + ' → ' + row[7],
+          verdictStyle: 'font-size: 12px; font-weight: 600; ' + (contrarian ? 'color: ' + B + ';' : sharpPublic ? 'color: ' + GREEN + ';' : 'color: ' + MUTED + ';'),
+          rowStyle: contrarian ? 'background: #F5F8FE;' : '',
+          ticketBar: 'height: 100%; width: ' + row[4] + '%; background: #AEB5C0;',
+          moneyBar: 'height: 100%; width: ' + row[5] + '%; background: ' + B + ';'
+        };
+      }).sort(function (a, c) { return c.gap - a.gap; });
+      var shown = all.filter(function (c) { return mkt === 'all' || c.mk === mkt; });
+      if (only) shown = shown.filter(function (c) { return c.contrarian; });
+      return { all: all, shown: shown };
+    };
+    var nflAbbr = { Cowboys: 'DAL', Packers: 'GB', Bears: 'CHI', Falcons: 'ATL', Steelers: 'PIT', Buccaneers: 'TB', Bills: 'BUF', Raiders: 'LV', Chiefs: 'KC', Chargers: 'LAC', Rams: 'LAR', Cardinals: 'ARI', Patriots: 'NE', Jets: 'NYJ', Colts: 'IND', Titans: 'TEN' };
+    var nflLine = function (row, side) {
+      if (row[1] === 'total') return side + ' ' + row[7];
+      if (row[1] === 'ml') return side + ' ML';
+      var parts = String(row[7]).split(' ');
+      var mag = Math.abs(parseFloat(parts[1]));
+      return side + ' ' + (nflAbbr[side] === parts[0] ? '-' : '+') + mag;
+    };
+    var nflFade = fadeRows(D.publicBoard, st.fadeMkt, st.fadeOnly, nflLine);
+    var fadeMkts = [{ v: 'all', label: 'All' }, { v: 'spread', label: 'Spreads' }, { v: 'total', label: 'Totals' }].map(function (f) {
+      var on = st.fadeMkt === f.v;
+      var n = nflFade.all.filter(function (c) { return (f.v === 'all' || c.mk === f.v) && c.contrarian; }).length;
+      return { label: f.label + ' · ' + n, on: on, style: seg(on), pick: function () { self.setState({ fadeMkt: f.v }); } };
+    });
+
+    // ---- college: Blue Horseshoe
+    var CF = this.cfData();
+    var cfGameMap = {};
+    CF.games.forEach(function (g) { cfGameMap[g.id] = g; });
+    var cfMk = st.cfMkts;
+    var mkOk = function (k) { return !cfMk.length || cfMk.indexOf(k) !== -1; };
+    // ---- candidate pool tagged by the three pillars: lean, fade, dog
+    var candMap = {}, candList = [];
+    var addCand = function (o) {
+      var key = o.g + '|' + o.label;
+      var ex = candMap[key];
+      if (ex) {
+        if (o.fade) { ex.fade = true; ex.fadeWhy = o.fadeWhy; ex.p = Math.max(ex.p, o.p); }
+        return;
+      }
+      candMap[key] = o; candList.push(o);
+    };
+    CF.legs.forEach(function (l) {
+      if (l.s[0] + l.s[1] + l.s[2] < 2) return;
+      addCand({ g: l.g, k: l.k, label: l.label, odds: l.odds, p: l.p, conf: l.conf, note: l.note, dog: !!l.dog || l.odds > 0, fade: false, fadeWhy: '' });
+    });
+    var slateByName = {};
+    CF.slate.forEach(function (s) { slateByName[s.a + (s.n ? ' vs ' : ' @ ') + s.h] = s; });
+    var cfLine = function (row, side) {
+      if (row[1] === 'total') return side + ' ' + row[7];
+      if (row[1] === 'ml') return side + ' ML';
+      var s = slateByName[row[0]];
+      var mag = Math.abs(parseFloat(String(row[7]).split(' ')[1]));
+      var fav = s ? (s.hs < 0 ? s.h : s.a) : row[2];
+      return side + ' ' + (side === fav ? '-' : '+') + mag;
+    };
+    CF.publicBoard.forEach(function (row) {
+      var gap = row[4] - row[5];
+      if (!(row[4] >= 55 && gap >= 15)) return;
+      var s = slateByName[row[0]];
+      if (!s) return;
+      var side = row[3], mk = row[1], odds = -110;
+      var label = cfLine(row, side);
+      if (mk === 'ml') odds = side === s.h ? s.hml : s.aml;
+      var ln = label.indexOf('+') !== -1 ? 1 : -1;
+      var imp0 = 1 / self.dec(odds);
+      var why = 'Public ' + row[4] + '% on ' + row[2] + ', money only ' + row[5] + '%';
+      addCand({ g: s.id, k: mk, label: label, odds: odds, p: Math.min(0.95, imp0 + gap / 500), conf: 58 + Math.min(20, Math.round(gap / 2)), note: why, dog: odds > 0 || (mk === 'spread' && ln > 0), fade: true, fadeWhy: why });
+    });
+    candList.forEach(function (c) {
+      c.imp = 1 / self.dec(c.odds);
+      c.edge = c.p - c.imp;
+      c.lean = c.p >= 0.6 || c.conf >= 72;
+      c.dogOk = c.dog && c.edge >= 0;
+      c.tagN = (c.fade ? 1 : 0) + (c.dogOk ? 1 : 0) + (c.lean ? 1 : 0);
+    });
+    var cfOU = st.cfOU || 'either';
+    var ouOk = function (c) { return c.k !== 'total' || cfOU === 'either' || c.label.toLowerCase().indexOf(cfOU) === 0; };
+    var cfPool = candList.filter(function (c) { return mkOk(c.k) && ouOk(c); });
+    // Rank every line by how much the Horseshoe likes it; the parlay grows by adding the next best one (one line per game).
+    var favScore = function (c) { return c.p + c.edge * 2 + c.tagN * 0.02; };
+    var primaryOf = function (c) { return c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean'; };
+    var rankedAll = cfPool.slice().sort(function (x, y) { return favScore(y) - favScore(x); });
+    var seenG = {}, rankedUnique = [];
+    rankedAll.forEach(function (c) { if (seenG[c.g]) return; seenG[c.g] = 1; rankedUnique.push(c); });
+    var cfTicket = [];
+    var ticketDec = function () { var d = 1; cfTicket.forEach(function (t) { d *= self.dec(t.c.odds); }); return d; };
+    var cfTDec = st.cfTarget === 'safe' ? 0 : this.dec(st.cfTarget);
+    var cfN = st.cfLegs === 'auto' ? 0 : st.cfLegs;
+    var wantN = cfN ? cfN : (st.cfTarget === 'safe' ? 3 : 10);
+    for (var ri = 0; ri < rankedUnique.length && cfTicket.length < wantN; ri++) {
+      if (!cfN && st.cfTarget !== 'safe' && ticketDec() >= cfTDec) break;
+      cfTicket.push({ c: rankedUnique[ri], pillar: primaryOf(rankedUnique[ri]), rank: ri + 1 });
+    }
+    var cfDec = ticketDec();
+    var cfReached = st.cfTarget === 'safe' || cfDec >= cfTDec;
+    var cfShort = cfN && cfTicket.length < cfN;
+    var cfIsAuto = !cfN;
+    var cfHit = 1, cfBook = 1;
+    cfTicket.forEach(function (t) { cfHit *= t.c.p; cfBook *= t.c.imp; });
+    var shoeCount = function (cc) { return cc >= 85 ? 5 : cc >= 76 ? 4 : cc >= 68 ? 3 : cc >= 58 ? 2 : 1; };
+    var shoes = function (cc) { var n = shoeCount(cc); return [0,1,2,3,4].map(function (k) { return { color: k < n ? B : '#D5DAE1' }; }); };
+    var pct = function (x) { return Math.round(x * 100) + '%'; };
+    var pillarInfo = { lean: ['Lean', GREEN, '#EAF6EF'], fade: ['Fade', B, '#EEF4FE'], dog: ['Dog', AMBER, '#FFF4E5'] };
+    var badgesFor = function (c, primary) {
+      var list = [];
+      ['fade', 'dog', 'lean'].forEach(function (k) {
+        var has = k === 'fade' ? c.fade : k === 'dog' ? c.dogOk : c.lean;
+        if (!has) return;
+        var inf = pillarInfo[k], prim = k === primary;
+        list.push({ label: inf[0], style: 'display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; ' + (prim ? 'background: ' + inf[1] + '; color: #FFFFFF;' : 'background: ' + inf[2] + '; color: ' + inf[1] + ';') });
+      });
+      return list;
+    };
+    var whyFor = function (c, pil) {
+      var ed = Math.round(c.edge * 1000) / 10;
+      if (pil === 'fade') return c.fadeWhy || c.note;
+      if (pil === 'dog') return 'Plus-value dog, edge ' + (ed >= 0 ? '+' : '') + ed + ' pts · ' + c.note;
+      return 'Horseshoe ' + pct(c.p) + ' · ' + c.note;
+    };
+    var cfRows = cfTicket.map(function (t, ix) {
+      var c = t.c;
+      var ed = Math.round(c.edge * 1000) / 10;
+      return {
+        num: String(ix + 1), label: c.label, game: cfGameMap[c.g].label, why: whyFor(c, t.pillar),
+        badges: badgesFor(c, t.pillar),
+        mkLabel: mkNames[c.k], mkStyle: tag('', c.k),
+        shoes: shoes(c.conf), shoeAria: 'Horseshoe rating ' + shoeCount(c.conf) + ' of 5',
+        pStr: pct(c.p), impStr: pct(c.imp),
+        edgeStr: (ed >= 0 ? '+' : '') + ed, edgeColor: ed >= 0 ? GREEN : RED,
+        oddsStr: self.fmtOdds(c.odds)
+      };
+    });
+    var mixCounts = { ml: 0, spread: 0, total: 0 };
+    cfTicket.forEach(function (t) { mixCounts[t.c.k]++; });
+    var cfPillars = [['ml', 'Moneylines', '#9BE3B8'], ['spread', 'Spreads', '#FFFFFF'], ['total', 'Over / unders', '#C9B8FF']].map(function (p) {
+      return { label: p[1], count: String(mixCounts[p[0]]), dotStyle: 'width: 8px; height: 8px; border-radius: 50%; background: ' + p[2] + ';' };
+    });
+    var cfInT = cfTicket.map(function (t) { return t.c.g + '|' + t.c.label; });
+    var cfBench = cfPool.filter(function (c) { return cfInT.indexOf(c.g + '|' + c.label) === -1; })
+      .filter(function (c) { return !cfTicket.some(function (t) { return t.c.g === c.g; }); })
+      .sort(function (x, y) { return favScore(y) - favScore(x); })
+      .slice(0, 4).map(function (c) {
+        var prim = c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean';
+        return { label: c.label, game: cfGameMap[c.g].label, pStr: 'Horseshoe ' + pct(c.p), oddsStr: self.fmtOdds(c.odds), badges: badgesFor(c, prim) };
+      });
+    var segW = function (on) {
+      return 'min-height: 32px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
+    };
+    var chipW = function (on) {
+      return 'min-height: 28px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
+    };
+    var cfStakes = [5, 10, 25, 50].map(function (v) {
+      var on = st.stake === v;
+      return { label: '$' + v, on: on, style: segW(on), pick: function () { self.setState({ stake: v }); } };
+    });
+    var cfTargets = [{ v: 'safe', label: 'Safest' }, { v: 200, label: '+200' }, { v: 400, label: '+400' }, { v: 800, label: '+800' }, { v: 1500, label: '+1500' }, { v: 3000, label: '+3000' }].map(function (t) {
+      var on = st.cfTarget === t.v;
+      return { label: t.label, on: on, style: segW(on), pick: function () { self.setState({ cfTarget: t.v }); } };
+    });
+    var cfMktPills = [{ v: 'all', label: 'All' }, { v: 'ml', label: 'Moneyline' }, { v: 'spread', label: 'Spread' }, { v: 'total', label: 'Total' }].map(function (m) {
+      var on = m.v === 'all' ? cfMk.length === 0 : cfMk.indexOf(m.v) !== -1;
+      return {
+        label: m.label, on: on, style: chipW(on),
+        pick: function () {
+          if (m.v === 'all') { self.setState({ cfMkts: [] }); return; }
+          var cur = cfMk.slice(); var ix = cur.indexOf(m.v);
+          if (ix === -1) cur.push(m.v); else cur.splice(ix, 1);
+          self.setState({ cfMkts: cur });
+        }
+      };
+    });
+    var cfPriceVal = cfTicket.length ? this.amer(cfDec) : '—';
+    var cfPayVal = cfTicket.length ? this.money(st.stake * cfDec) : '$0.00';
+
+    var cfDogs = CF.legs.filter(function (l) { return l.dog; }).map(function (l) {
+      var imp = 1 / self.dec(l.odds);
+      var edge = l.p - imp;
+      var ed = Math.round(edge * 1000) / 10;
+      var bite = edge >= 0.025, sniff = edge >= 0;
+      return {
+        edge: edge, label: l.label, game: cfGameMap[l.g].label, note: l.note, isMl: l.k === 'ml', odds: l.odds, p: l.p,
+        mkLabel: mkNames[l.k], mkStyle: tag('', l.k),
+        oddsStr: self.fmtOdds(l.odds), pStr: pct(l.p), impStr: pct(imp),
+        edgeStr: (ed >= 0 ? '+' : '') + ed, edgeColor: ed >= 0 ? GREEN : RED,
+        verdict: bite ? 'Horseshoe bites' : sniff ? 'Worth a sniff' : 'Pass',
+        verdictStyle: 'font-size: 12px; font-weight: 600; color: ' + (bite ? B : sniff ? MUTED : '#9AA3AF') + ';',
+        horseBar: 'height: 100%; width: ' + Math.round(l.p * 100) + '%; background: ' + B + ';',
+        bookBar: 'height: 100%; width: ' + Math.round(imp * 100) + '%; background: #AEB5C0;'
+      };
+    }).sort(function (a, c) { return c.edge - a.edge; });
+    // ---- Upset Special: balanced across fade, value and live dogs
+    var upMode = st.upMode || 'ml';
+    var upN = st.upN || 3;
+    var liveCut = function (c) { return c.p >= (c.k === 'ml' ? 0.45 : 0.53); };
+    var upPool = candList.filter(function (c) { return c.dog && (upMode === 'all' || c.k === 'ml'); });
+    var upScore = function (c, pil) {
+      var bonus = ((c.fade ? 1 : 0) + (c.edge >= 0 ? 1 : 0) + (liveCut(c) ? 1 : 0)) * 0.03;
+      if (pil === 'fade') return c.fade ? 0.5 + c.edge * 2 + bonus : -1;
+      if (pil === 'value') return c.edge >= 0 ? c.edge * 3 + bonus : -1;
+      return c.p + bonus;
+    };
+    var upOrder = ['fade', 'value', 'live'];
+    var upT = [];
+    var upTaken = function (g) { return upT.some(function (t) { return t.c.g === g; }); };
+    for (var ui = 0; ui < upN; ui++) {
+      var got = false;
+      for (var uj = 0; uj < 3 && !got; uj++) {
+        var upil = upOrder[(ui + uj) % 3];
+        var ub = null, ubs = -1;
+        upPool.forEach(function (c) { if (upTaken(c.g)) return; var sc = upScore(c, upil); if (sc > ubs) { ubs = sc; ub = c; } });
+        if (ub) { upT.push({ c: ub, pillar: upil }); got = true; }
+      }
+      if (!got) break;
+    }
+    var upDec = 1, upHit = 1, upBook = 1;
+    upT.forEach(function (t) { upDec *= self.dec(t.c.odds); upHit *= t.c.p; upBook *= t.c.imp; });
+    var upInfo = { fade: ['Fade', B, '#EEF4FE'], value: ['Value', AMBER, '#FFF4E5'], live: ['Live dog', GREEN, '#EAF6EF'] };
+    var upBadges = function (c, primary) {
+      var out = [];
+      ['fade', 'value', 'live'].forEach(function (k) {
+        var has = k === 'fade' ? c.fade : k === 'value' ? c.edge >= 0 : liveCut(c);
+        if (!has) return;
+        var inf = upInfo[k], prim = k === primary;
+        out.push({ label: inf[0], style: 'display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; ' + (prim ? 'background: ' + inf[1] + '; color: #FFFFFF; box-shadow: 0 0 0 1px rgba(255,255,255,0.5);' : 'background: ' + inf[2] + '; color: ' + inf[1] + ';') });
+      });
+      return out;
+    };
+    var upRows = upT.map(function (t, ix) {
+      var c = t.c;
+      var ed = Math.round(c.edge * 1000) / 10;
+      var why = t.pillar === 'fade' ? (c.fadeWhy || c.note) : t.pillar === 'value' ? 'Edge ' + (ed >= 0 ? '+' : '') + ed + ' pts over the book · ' + c.note : 'Horseshoe gives it ' + pct(c.p) + ' · ' + c.note;
+      return { num: String(ix + 1), label: c.label, game: cfGameMap[c.g].label, why: why, badges: upBadges(c, t.pillar), oddsStr: self.fmtOdds(c.odds), pStr: pct(c.p), impStr: pct(c.imp) };
+    });
+    var upCounts = { fade: 0, value: 0, live: 0 };
+    upT.forEach(function (t) { upCounts[t.pillar]++; });
+    var upPillars = [['fade', 'Fade the public', '#9DBBF5'], ['value', 'Value over the book', '#FFC24D'], ['live', 'Live dog', '#9BE3B8']].map(function (p) {
+      return { label: p[1], count: String(upCounts[p[0]]), dotStyle: 'width: 8px; height: 8px; border-radius: 50%; background: ' + p[2] + ';' };
+    });
+    var upModes = [{ v: 'ml', label: 'Moneyline upsets' }, { v: 'all', label: 'Dogs + points' }].map(function (m) {
+      var on = upMode === m.v;
+      return { label: m.label, on: on, style: segW(on).replace('color: ' + B, 'color: #0F1B3D'), pick: function () { self.setState({ upMode: m.v }); } };
+    });
+    var upPriceVal = upT.length ? this.amer(upDec) : '—';
+    var upPayVal = upT.length ? this.money(st.stake * upDec) : '$0.00';
+
+    var cfFade = fadeRows(CF.publicBoard, st.cfFadeMkt, st.cfFadeOnly, cfLine);
+    var cfFadeMkts = [{ v: 'all', label: 'All' }, { v: 'ml', label: 'Moneyline' }, { v: 'spread', label: 'Spreads' }, { v: 'total', label: 'Totals' }].map(function (f) {
+      var on = st.cfFadeMkt === f.v;
+      var n = cfFade.all.filter(function (c) { return (f.v === 'all' || c.mk === f.v) && c.contrarian; }).length;
+      return { label: f.label + ' · ' + n, on: on, style: seg(on), pick: function () { self.setState({ cfFadeMkt: f.v }); } };
+    });
+    var confF = st.cfConf || 'All';
+    var cfConfChips = ['All', 'SEC', 'Big Ten', 'Big 12', 'ACC', 'Group of 5', 'Independent'].map(function (c) {
+      var on = confF === c;
+      var n = c === 'All' ? CF.slate.length : CF.slate.filter(function (s) { return s.cf === c; }).length;
+      return { label: c + ' · ' + n, on: on, style: chip(on), pick: function () { self.setState({ cfConf: c }); } };
+    });
+    var slateRows = CF.slate.filter(function (s) { return confF === 'All' || s.cf === confF; }).map(function (s) {
+      var fav = s.hs < 0 ? s.h + ' ' + s.hs : s.hs > 0 ? s.a + ' -' + s.hs : 'Pick’em';
+      var best = CF.legs.filter(function (l) { return l.g === s.id && l.s[0] + l.s[1] + l.s[2] >= 2; }).sort(function (x, y) { return y.conf - x.conf; })[0];
+      return {
+        game: s.a + (s.n ? ' vs ' : ' @ ') + s.h, conf: s.cf,
+        spread: fav, total: String(s.tot),
+        ml: s.a + ' ' + self.fmtOdds(s.aml) + ' · ' + s.h + ' ' + self.fmtOdds(s.hml),
+        hasLean: !!best,
+        sortKey: best ? best.conf + best.p : -1,
+        lean: best ? best.label : 'No lean',
+        leanStyle: best ? 'display: block; font-weight: 600; color: ' + B + ';' : 'display: block; color: ' + FAINT + ';',
+        leanSub: best ? 'Horseshoe ' + pct(best.p) + ' · ' + best.note : 'Nothing passes the checks',
+        shoes: best ? shoes(best.conf) : [],
+        shoeAria: best ? 'Horseshoe rating ' + shoeCount(best.conf) + ' of 5' : 'No rating'
+      };
+    });
+    if (st.cfLeansOnly) slateRows = slateRows.filter(function (r) { return r.hasLean; });
+    var cfSort = st.cfSort || 'slate';
+    if (cfSort === 'desc') slateRows.sort(function (x, y) { return y.sortKey - x.sortKey; });
+    if (cfSort === 'asc') slateRows.sort(function (x, y) { if (!x.hasLean) return 1; if (!y.hasLean) return -1; return x.sortKey - y.sortKey; });
+    var cfSortOpts = [{ v: 'slate', label: 'Slate order' }, { v: 'desc', label: 'Strongest first' }, { v: 'asc', label: 'Weakest first' }].map(function (o) {
+      var on = cfSort === o.v;
+      return { label: o.label, on: on, style: 'min-height: 28px; padding: 0 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 500; ' + (on ? 'background: #FFFFFF; color: ' + TXT + '; box-shadow: 0 1px 2px rgba(17,24,39,0.12);' : 'background: transparent; color: ' + MUTED + ';'), pick: function () { self.setState({ cfSort: o.v }); } };
+    });
+    var leanArrow = cfSort === 'desc' ? ' ↓' : cfSort === 'asc' ? ' ↑' : '';
+    var leanAria = cfSort === 'desc' ? 'descending' : cfSort === 'asc' ? 'ascending' : 'none';
+    var cycleSort = function () { self.setState({ cfSort: cfSort === 'desc' ? 'asc' : cfSort === 'asc' ? 'slate' : 'desc' }); };
+    var cfTabs = [{ id: 'picks', label: 'Horseshoe Parlay' }, { id: 'slate', label: 'Full slate' }, { id: 'dogs', label: 'Upset Special' }, { id: 'fade', label: 'Fade the public' }].map(function (t) {
+      var on = st.cfTab === t.id;
+      return {
+        label: t.label, current: on ? 'page' : 'false',
+        style: 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #FFFFFF; color: ' + TXT + '; box-shadow: 0 1px 2px rgba(17,24,39,0.12);' : 'background: transparent; color: ' + MUTED + ';'),
+        pick: function () { self.setState({ cfTab: t.id }); }
+      };
+    });
+
+    // ---- page tabs
+    var tabStyle = function (on) {
+      return 'min-height: 44px; padding: 0 2px; background: none; border: none; border-bottom: 2px solid ' + (on ? B : 'transparent') + '; cursor: pointer; font-size: 14px; font-weight: ' + (on ? '600' : '500') + '; color: ' + (on ? TXT : MUTED) + ';';
+    };
+    var go = function (id) { return function () { self.setState({ page: id }); try { window.scrollTo(0, 0); } catch (e) {} }; };
+    var nflTabs = [{ id: 'builder', label: 'Builder' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'fade', label: 'Fade the public' }].map(function (t) {
+      var on = st.page === t.id;
+      return { label: t.label, current: on ? 'page' : 'false', style: tabStyle(on), pick: go(t.id) };
+    });
+    var isCollege = st.page === 'college';
+
+    var payoutVal = hasTicket ? this.money(st.stake * decTotal) : '$0.00';
+    var priceVal = hasTicket ? this.amer(decTotal) : '—';
+    var mono = function (size, color) { return 'font-family: IBM Plex Mono, monospace; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; color: ' + (color || TXT) + '; font-size: ' + size + 'px;'; };
+
+    return {
+      nflTabs: nflTabs,
+      collegeTab: { current: isCollege ? 'page' : 'false', style: tabStyle(isCollege), pick: go('college') },
+      isBuilder: st.page === 'builder', isSpin: st.page === 'spin', isOdds: st.page === 'odds', isFade: st.page === 'fade', isCollege: isCollege,
+      chipText: isCollege ? CF.chip : D.chip,
+      liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#AEB5C0') + ';',
+      lineEmpty: !D.lineCheck.length, booksStamp: window.BH.booksAsOf ? 'Book prices from The Odds API, updated ' + window.BHLines.etTime(window.BH.booksAsOf) + ' ET ' + window.BH.booksAsOf.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '. They refresh every 4 hours.' : '',
+      footText: 'Game lines: ' + (window.BH.source === 'snapshot' ? 'DraftKings via ESPN (backup snapshot, refreshed every 15 min)' : 'DraftKings via ESPN, refreshed every minute') + '. NFL moneylines and college prices marked est. are converted from the spread.' + (window.BH.propsAsOf ? ' Player props as of ' + window.BH.propsAsOf + '.' : '') + ' Lines move, so confirm the price at your sportsbook. Horseshoe ratings are analysis, not advice. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.',
+      fadeEmpty: D.publicBoard.length === 0, cfFadeEmpty: CF.publicBoard.length === 0,
+
+      targets: targets, markets: markets, propTypes: propTypes, showPropFilter: st.market !== 'line',
+      games: gamesUi, stakes: stakes,
+      clearGames: function () { self.setState({ games: [] }); },
+      gamesHint: st.games.length ? st.games.length + ' selected' : 'None selected: pulling from every game',
+      legsAuto: function () { self.setState({ legs: isAuto ? (st.lastLegs || 6) : 'auto', lastLegs: isAuto ? st.lastLegs : st.legs }); },
+      legsIsAuto: isAuto, legsAutoStyle: chip(isAuto),
+      faderLabel: isAuto ? 'Auto' : String(st.legs),
+      legsDown: function () { var v = Math.max(2, (isAuto ? (st.lastLegs || 6) : st.legs) - 1); self.setState({ legs: v, lastLegs: v }); },
+      legsUp: function () { var v = Math.min(20, (isAuto ? (st.lastLegs || 6) : st.legs) + 1); self.setState({ legs: v, lastLegs: v }); },
+      onFader: function (e) { var v = parseInt(e.target.value, 10); if (!isNaN(v)) self.setState({ legs: v, lastLegs: v }); },
+      legsHint: N ? N + ' exactly' : 'auto',
+
+      ticket: ticketRows,
+      bench: bench.map(function (l) { return { label: l.label, game: gameMap[l.g].label, conf: l.conf, oddsStr: self.fmtOdds(l.odds) }; }),
+      toggleAll: function () { self.setState({ allOpen: !st.allOpen, open: {} }); },
+      toggleAllLabel: st.allOpen ? 'Collapse all' : 'Expand all',
+      softLine: ticket.length ? flagCount + ' of ' + ticket.length + ' legs carry an injury flag.' : 'No legs on the board right now.',
+      flagStr: String(flagCount),
+      buildOpen: st.build, buildLabel: st.build ? 'Hide checklist' : 'Build on Hard Rock',
+      toggleBuild: function () { self.setState({ build: !st.build }); },
+      resetChecks: function () { self.setState({ checked: {} }); },
+      buildGroups: buildGroups, buildProgress: checkedN + ' of ' + ticket.length + ' added', buildPrice: priceVal,
+      buildBarStyle: 'height: 100%; background: ' + B + '; width: ' + (ticket.length ? Math.round(checkedN / ticket.length * 100) : 0) + '%;',
+      ticketTitle: st.target === 'fav' ? 'Favorites price' : 'Built for ' + (st.target > 0 ? '+' + st.target : st.target),
+      priceStr: priceVal, priceStyle: mono(this.fitSize(priceVal, 24, 16), B),
+      legCount: ticket.length, stakeLabel: '$' + st.stake,
+      payoutStr: payoutVal, payoutStyle: mono(this.fitSize(payoutVal, 18, 13)),
+      profitStr: hasTicket ? this.money(st.stake * decTotal - st.stake) : '$0.00',
+      hitStr: hasTicket ? (hit * 100).toFixed(1) + '%' : '—',
+      statusLabel: statusLabel, statusStyle: 'font-size: 13px; font-weight: 600; color: ' + statusC + ';',
+      showWarn: !hasTicket || shortLegs || (st.target !== 'fav' && !reached),
+      warnText: !hasTicket ? 'No legs pass the Horseshoe’s checks with these filters. Add games or switch markets to Both.' : shortLegs ? 'Only ' + ticket.length + ' legs pass the checks with these filters, fewer than ' + N + '. Add games or loosen filters.' : (N && !reached) ? 'With exactly ' + N + ' legs the best price is ' + priceVal + '. Add legs to hit the target.' : 'Not enough qualifying legs to reach this price. The Horseshoe won’t pad the ticket with weak legs.',
+
+      rndN: String(st.rnd),
+      rndDown: function () { self.setState({ rnd: Math.max(2, st.rnd - 1) }); },
+      rndUp: function () { self.setState({ rnd: Math.min(20, st.rnd + 1) }); },
+      spin: function () { self.setState({ seed: (Date.now() % 2147483647) | 0 }); },
+      spinLegs: spun.map(function (l, ix) { return { num: String(ix + 1), label: l.label, game: gameMap[l.g].label, conf: l.conf, oddsStr: self.fmtOdds(l.odds) }; }),
+      spinPrice: spinPriceStr, spinPriceStyle: mono(this.fitSize(spinPriceStr, 24, 16), B),
+      spinPayout: spun.length ? this.money(st.stake * spunDec) : '$0.00',
+      spinHit: spun.length ? (spunHit * 100).toFixed(1) + '%' : '—',
+      spinNote: spun.length < st.rnd ? 'Only ' + spun.length + ' legs pass your current filters.' : 'Results change only when you spin.',
+
+      screenRows: screenRows, bookOpts: bookOpts, myBookName: books[myBook],
+      evCount: evCount + ' value spot' + (evCount === 1 ? '' : 's') + ' at ' + books[myBook],
+      evOnly: st.evOnly, evToggle: function () { self.setState({ evOnly: !st.evOnly }); }, evBtnStyle: chip(st.evOnly),
+
+      fadeCards: nflFade.shown, fadeMkts: fadeMkts, fadeOnly: st.fadeOnly,
+      fadeToggle: function () { self.setState({ fadeOnly: !st.fadeOnly }); }, fadeBtnStyle: chip(st.fadeOnly),
+
+      cfIsSlate: st.cfTab === 'slate', cfConfChips: cfConfChips, slateRows: slateRows,
+      slateCount: slateRows.length + ' games',
+      cfSortOpts: cfSortOpts, leanArrow: leanArrow, leanAria: leanAria, cycleSort: cycleSort,
+      cfLeansOnly: !!st.cfLeansOnly, cfLeansToggle: function () { self.setState({ cfLeansOnly: !st.cfLeansOnly }); }, cfLeansStyle: chip(!!st.cfLeansOnly),
+      cfTabs: cfTabs, cfIsPicks: st.cfTab === 'picks', cfIsDogs: st.cfTab === 'dogs', cfIsFade: st.cfTab === 'fade',
+      cfTargets: cfTargets, cfMktPills: cfMktPills,
+      cfSizeIsAuto: cfIsAuto,
+      cfSizeAuto: function () { self.setState({ cfLegs: cfIsAuto ? (st.cfLastLegs || 4) : 'auto', cfLastLegs: cfIsAuto ? st.cfLastLegs : st.cfLegs }); },
+      cfSizeAutoStyle: chipW(cfIsAuto), cfStakes: cfStakes, cfPillars: cfPillars,
+      cfShowOU: mkOk('total'),
+      cfOUOpts: [{ v: 'either', label: 'Either' }, { v: 'over', label: 'Overs only' }, { v: 'under', label: 'Unders only' }].map(function (o) {
+        var on = cfOU === o.v;
+        var n = candList.filter(function (c) { return c.k === 'total' && (o.v === 'either' || c.label.toLowerCase().indexOf(o.v) === 0); }).length;
+        return { label: o.label + ' · ' + n, on: on, style: chipW(on), pick: function () { self.setState({ cfOU: o.v }); } };
+      }),
+      cfFaderVal: cfIsAuto ? (st.cfLastLegs || 4) : cfN, cfFaderClass: cfIsAuto ? 'fader onblue off' : 'fader onblue', cfFaderLabel: cfIsAuto ? 'Auto' : String(cfN),
+      cfDown: function () { var v = Math.max(2, (cfIsAuto ? (st.cfLastLegs || 4) : cfN) - 1); self.setState({ cfLegs: v, cfLastLegs: v }); },
+      cfUp: function () { var v = Math.min(10, (cfIsAuto ? (st.cfLastLegs || 4) : cfN) + 1); self.setState({ cfLegs: v, cfLastLegs: v }); },
+      cfOnFader: function (e) { var v = parseInt(e.target.value, 10); if (!isNaN(v)) self.setState({ cfLegs: v, cfLastLegs: v }); },
+      cfSizeHint: cfIsAuto ? 'Horseshoe decides' : cfN + ' legs, one per game',
+      cfTicket: cfRows, cfBench: cfBench, cfLegCount: cfTicket.length,
+      cfTicketTitle: st.cfTarget === 'safe' ? 'Safest price' : 'Path to ' + (st.cfTarget > 0 ? '+' + st.cfTarget : st.cfTarget),
+      cfPrice: cfPriceVal, cfPriceStyle: mono(this.fitSize(cfPriceVal, 34, 20), '#FFFFFF'),
+      cfPayout: cfPayVal, cfPayoutStyle: mono(this.fitSize(cfPayVal, 22, 15), '#FFFFFF'),
+      cfHitStr: cfTicket.length ? (cfHit * 100).toFixed(1) + '%' : '—',
+      cfBookStr: cfTicket.length ? (cfBook * 100).toFixed(1) + '%' : '—',
+      cfWarn: !cfTicket.length || cfShort || !cfReached,
+      cfWarnText: !cfTicket.length ? 'No lines pass the Horseshoe’s checks with these filters. Turn on more lines.' : cfShort ? 'Only ' + cfTicket.length + ' games have a line the Horseshoe trusts, fewer than ' + cfN + '. Turn on more lines.' : (cfN && !cfReached) ? 'With ' + cfN + ' legs the Horseshoe tops out at ' + this.amer(cfDec) + '. Make it bigger or lower the target.' : 'Even the Horseshoe can’t reach this price with one line per game. Turn on more lines or lower the target.',
+      cfDogs: cfDogs, cfUpsetLegs: upRows, cfHasUpset: upT.length > 0,
+      cfUpsetPrice: upPriceVal, cfUpsetHit: upT.length ? (upHit * 100).toFixed(1) + '%' : '—',
+      cfUpsetBook: upT.length ? (upBook * 100).toFixed(1) + '%' : '—',
+      cfUpsetPay: upPayVal,
+      upPriceStyle: mono(this.fitSize(upPriceVal, 34, 20), '#FFC24D'),
+      upPayStyle: mono(this.fitSize(upPayVal, 22, 15), '#FFFFFF'),
+      upPillars: upPillars, upModes: upModes, upNStr: String(upN),
+      upDown: function () { self.setState({ upN: Math.max(2, upN - 1) }); },
+      upUp: function () { self.setState({ upN: Math.min(5, upN + 1) }); },
+      upTeaser: upRows.map(function (r) { return r.label; }).join(' + '),
+      cfGoDogs: function () { self.setState({ cfTab: 'dogs' }); try { window.scrollTo(0, 0); } catch (e) {} },
+      cfFadeCards: cfFade.shown, cfFadeMkts: cfFadeMkts, cfFadeOnly: st.cfFadeOnly,
+      cfFadeToggle: function () { self.setState({ cfFadeOnly: !st.cfFadeOnly }); }, cfFadeBtnStyle: chip(st.cfFadeOnly)
+    };
+  }
+}
+
+(function () {
+  var app = BHRuntime.mount(Component, document.getElementById('tpl').textContent, document.getElementById('app'));
+  function refresh() { return BHLines.load().then(function () { app.forceUpdate(); }); }
+  refresh();
+  setInterval(function () { if (!document.hidden) refresh(); }, BHLines.REFRESH_MS);
+  setInterval(function () { app.forceUpdate(); }, 20000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+})();
+</script>
+</body>
+</html>
