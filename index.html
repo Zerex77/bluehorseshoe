@@ -790,8 +790,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script src="runtime.js"></script>
-<script src="lines.js"></script>
+<script>window.BH_VERSION='20261016111024';</script>
+<script src="runtime.js?v=20261016111024"></script>
+<script src="lines.js?v=20261016111024"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1523,6 +1524,16 @@ class Component extends DCLogic {
   setInterval(function () { if (!document.hidden) refresh(); }, BHLines.REFRESH_MS);
   setInterval(function () { app.forceUpdate(); }, 20000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+  // Pick up site updates automatically: if a newer version is published, reload once.
+  setInterval(function () {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (v) {
+      if (!v || !v.v || v.v === window.BH_VERSION) return;
+      var tried = null; try { tried = sessionStorage.getItem('bhReloadFor'); } catch (e) {}
+      if (tried === v.v) return; // already tried once for this version; don't loop
+      try { sessionStorage.setItem('bhReloadFor', v.v); } catch (e) {}
+      location.replace(location.pathname + '?v=' + v.v + location.hash);
+    }).catch(function () {});
+  }, 60000);
 })();
 </script>
 </body>
