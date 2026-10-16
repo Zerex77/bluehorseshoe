@@ -184,6 +184,7 @@ button{font:inherit}
                         </div>
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px;">
                           <span style="{{leg.tagStyle}}">{{leg.tag}}</span>
+                          <sc-if value="{{leg.belowBar}}" hint-placeholder-val="{{ false }}"><span title="Fails the 2-of-3 check. Shown because you picked this game." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #FFF4E5; color: #9A5B00; white-space: nowrap;">Below the bar</span></sc-if>
                           <span style="display: flex; gap: 3px;" aria-label="{{leg.sigAria}}">
                             <sc-for list="{{leg.sigs}}" as="sg" hint-placeholder-count="3">
                               <span title="{{sg.name}}" style="{{sg.style}}">{{sg.letter}}</span>
@@ -840,14 +841,18 @@ class Component extends DCLogic {
       return 'display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: ' + c[0] + '; color: ' + c[1] + '; white-space: nowrap;';
     };
 
+    // With no games picked, only Horseshoe picks (2 of 3 checks) qualify.
+    // Once someone picks games, every leg in those games is fair game, still ranked by confidence.
+    var meetsBar = function (l) { return l.s[0] + l.s[1] + l.s[2] >= 2; };
     var passes = function (l) {
-      if (l.s[0] + l.s[1] + l.s[2] < 2) return false;
+      if (!meetsBar(l) && !st.games.length) return false;
       if (st.market !== 'both' && l.k !== st.market) return false;
       if (l.k === 'prop' && st.props.length && st.props.indexOf(l.c) === -1) return false;
       return true;
     };
     var qualCount = {};
-    D.legs.forEach(function (l) { if (passes(l)) qualCount[l.g] = (qualCount[l.g] || 0) + 1; });
+    var allCount = {};
+    D.legs.forEach(function (l) { if (passes(l) && meetsBar(l)) qualCount[l.g] = (qualCount[l.g] || 0) + 1; if (passes(l)) allCount[l.g] = (allCount[l.g] || 0) + 1; });
     var pool = D.legs.filter(function (l) { return passes(l) && activeGames.indexOf(l.g) !== -1; }).sort(function (a, b) { return b.conf - a.conf; });
     // Books won't take a moneyline and a spread from the same game in one parlay, so keep only the stronger side.
     var sideTaken = {};
@@ -907,7 +912,7 @@ class Component extends DCLogic {
     var ord = function (n) { var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
     var softCount = 0, flagCount = 0;
     var whoCount = {};
-    var injOf = function (l) { return D.inj[l.label] || ['', 'No designation', '']; };
+    var injOf = function (l) { return D.inj[l.g + '|' + l.label] || D.inj[l.label] || ['', 'No designation', '']; };
     ticket.forEach(function (l) { var ij = injOf(l); if (ij[1] !== 'No designation') whoCount[ij[0]] = (whoCount[ij[0]] || 0) + 1; });
 
     var ticketRows = ticket.map(function (l, idx) {
@@ -942,6 +947,7 @@ class Component extends DCLogic {
         open: open,
         chevStyle: open ? 'transform: rotate(180deg);' : '',
         toggle: function () { var o = Object.assign({}, st.open); o[l.label] = !open; self.setState({ open: o, allOpen: false }); },
+        belowBar: !meetsBar(l),
         oddsStr: self.fmtOdds(l.odds),
         estOdds: l.note.indexOf('est.') !== -1
       };
@@ -971,7 +977,7 @@ class Component extends DCLogic {
       var on = st.games.indexOf(g.id) !== -1;
       var n = qualCount[g.id] || 0;
       return {
-        label: g.label, on: on, sub: n + ' legs', mark: on ? '✓' : '',
+        label: g.label, on: on, sub: on ? (allCount[g.id] || 0) + ' legs' : n + ' pick' + (n === 1 ? '' : 's'), mark: on ? '✓' : '',
         boxStyle: 'width: 14px; height: 14px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #AEB5C0;'),
         style: 'display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 10px; background: ' + (on ? '#F5F8FE' : '#FFFFFF') + '; border: none; ' + (gi ? 'border-top: 1px solid ' + LIGHT + ';' : '') + ' cursor: pointer; text-align: left; color: ' + TXT + ';',
         pick: function () { var cur = st.games.slice(); var ix = cur.indexOf(g.id); if (ix === -1) cur.push(g.id); else cur.splice(ix, 1); self.setState({ games: cur }); }
@@ -1408,7 +1414,7 @@ class Component extends DCLogic {
       targets: targets, markets: markets, propTypes: propTypes, showPropFilter: st.market !== 'line',
       games: gamesUi, stakes: stakes,
       clearGames: function () { self.setState({ games: [] }); },
-      gamesHint: st.games.length ? st.games.length + ' selected' : 'None selected: pulling from every game',
+      gamesHint: st.games.length ? st.games.length + ' selected: every leg in these games is in play, Horseshoe picks first' : 'None selected: Horseshoe picks from every game. Pick games to open up every leg in them.',
       legsAuto: function () { self.setState({ legs: isAuto ? (st.lastLegs || 6) : 'auto', lastLegs: isAuto ? st.lastLegs : st.legs }); },
       legsIsAuto: isAuto, legsAutoStyle: chip(isAuto),
       faderLabel: isAuto ? 'Auto' : String(st.legs),
@@ -1418,7 +1424,7 @@ class Component extends DCLogic {
       legsHint: N ? N + ' exactly' : 'auto',
 
       ticket: ticketRows,
-      bench: bench.map(function (l) { return { label: l.label, game: gameMap[l.g].label, conf: l.conf, oddsStr: self.fmtOdds(l.odds) }; }),
+      bench: bench.map(function (l) { return { label: l.label, game: gameMap[l.g].label, conf: l.conf + (meetsBar(l) ? '' : ' · below the Horseshoe bar'), oddsStr: self.fmtOdds(l.odds) }; }),
       toggleAll: function () { self.setState({ allOpen: !st.allOpen, open: {} }); },
       toggleAllLabel: st.allOpen ? 'Collapse all' : 'Expand all',
       softLine: ticket.length ? flagCount + ' of ' + ticket.length + ' legs carry an injury flag.' : 'No legs on the board right now.',

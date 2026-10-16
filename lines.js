@@ -165,7 +165,7 @@
         legs.push({ g: e.id, k: 'line', mk: 'ml', label: fav + ' moneyline', odds: favOdds, conf: conf,
           s: [fp >= 0.66 ? 1 : 0, favA ? 0 : 1, steamFav ? 1 : 0],
           note: fav + ' ' + signed(favSpread) + ', no-vig ' + pct(favP) + (steamFav ? ', ' + mvTxt : '') + (est ? '; price est. from spread' : '') });
-        injMap[fav + ' moneyline'] = injEntry(favInj, fav);
+        injMap[e.id + '|' + fav + ' moneyline'] = injEntry(favInj, fav);
       }
       if (steam) {
         var side = steam === 'a' ? A : H, line = steam === 'a' ? o.aNow : -o.aNow;
@@ -175,7 +175,7 @@
           conf: clamp(56 + Math.round(Math.abs(mv) * 4) + (crossKey ? 3 : 0), 50, 74),
           s: [Math.abs(mv) >= 1.5 ? 1 : 0, steam === 'h' ? 1 : 0, 1],
           note: 'Opened ' + signed(steam === 'a' ? o.aOpen : -o.aOpen) + ', now ' + signed(line) + (crossKey ? ', moved through a key number' : '') });
-        injMap[spLabel] = injEntry((inj.byTeam[steam === 'a' ? e.a.displayName : e.h.displayName] || [])[0], side);
+        injMap[e.id + '|' + spLabel] = injEntry((inj.byTeam[steam === 'a' ? e.a.displayName : e.h.displayName] || [])[0], side);
       }
       if (o.tot != null) {
         var tMove = o.tot - o.tOpen;
@@ -190,8 +190,51 @@
             note: (moved ? 'Total moved ' + o.tOpen + ' → ' + o.tot : 'Total steady at ' + o.tot) + (juice === dir ? ', books shading the ' + dir + ' (' + signed(dir === 'Over' ? o.oOdds : o.uOdds) + ')' : '') });
           var both = (inj.byTeam[e.a.displayName] || []).concat(inj.byTeam[e.h.displayName] || []);
           both.sort(function (x, y) { return (KEYPOS[y.pos] * 10 + STATUS_RANK[y.status]) - (KEYPOS[x.pos] * 10 + STATUS_RANK[x.status]); });
-          injMap[tl] = injEntry(both[0], '');
+          injMap[e.id + '|' + tl] = injEntry(both[0], '');
         }
+      }
+      // Every other side of this game, so picking a game shows all of its legs.
+      // These carry honest signals, so most fall below the Horseshoe bar and only appear when the game is picked.
+      var have = {};
+      legs.forEach(function (l) { if (l.g === e.id) have[l.label] = 1; });
+      var teamInj = function (side) { return (inj.byTeam[side === 'a' ? e.a.displayName : e.h.displayName] || [])[0]; };
+      ['a', 'h'].forEach(function (side) {
+        var T = side === 'a' ? A : H, p = side === 'a' ? pA : pH, ml = side === 'a' ? aml : hml;
+        var toward = steam === side, ti = teamInj(side);
+        var lab = T + ' moneyline';
+        if (!have[lab]) {
+          var pp = clamp(p + (toward ? bump : steam ? -bump : 0), 0.03, 0.97);
+          legs.push({ g: e.id, k: 'line', mk: 'ml', label: lab, odds: ml, conf: clamp(Math.round(pp * 100) - (ti && ti.pos === 'QB' ? 8 : 0), 5, 92),
+            s: [pp >= 0.66 ? 1 : 0, side === 'h' ? 1 : 0, toward ? 1 : 0],
+            note: T + ' ' + signed(side === 'a' ? o.aNow : -o.aNow) + ', no-vig ' + pct(p) + (toward ? ', ' + mvTxt : steam ? ', line moving away from them' : '') + (est ? '; price est. from spread' : '') });
+          injMap[e.id + '|' + lab] = injEntry(ti, T);
+        }
+        var ln = side === 'a' ? o.aNow : -o.aNow;
+        var slab = T + ' ' + signed(ln);
+        if (!have[slab]) {
+          legs.push({ g: e.id, k: 'line', mk: 'spread', label: slab, odds: side === 'a' ? o.aSpOdds : o.hSpOdds,
+            conf: clamp(52 + (toward ? Math.round(Math.abs(mv) * 4) : steam ? -Math.round(Math.abs(mv) * 2) : 0) + (side === 'h' ? 1 : 0), 40, 74),
+            s: [toward && Math.abs(mv) >= 1.5 ? 1 : 0, side === 'h' ? 1 : 0, toward ? 1 : 0],
+            note: 'Opened ' + signed(side === 'a' ? o.aOpen : -o.aOpen) + ', now ' + signed(ln) + (steam && !toward ? ', money on the other side' : '') });
+          injMap[e.id + '|' + slab] = injEntry(ti, T);
+        }
+      });
+      if (o.tot != null) {
+        var tm = o.tot - o.tOpen;
+        var jz = o.oOdds < o.uOdds - 7 ? 'Over' : o.uOdds < o.oOdds - 7 ? 'Under' : null;
+        ['Over', 'Under'].forEach(function (d) {
+          var lab = d + ' ' + o.tot;
+          if (have[lab]) return;
+          var mvd = (d === 'Over' && tm >= 1) || (d === 'Under' && tm <= -1);
+          var against = (d === 'Over' && tm <= -1) || (d === 'Under' && tm >= 1);
+          legs.push({ g: e.id, k: 'line', mk: 'total', label: lab, odds: d === 'Over' ? o.oOdds : o.uOdds,
+            conf: clamp(52 + (mvd ? Math.round(Math.abs(tm) * 3) : against ? -Math.round(Math.abs(tm) * 2) : 0) + (jz === d ? 4 : jz ? -2 : 0), 40, 72),
+            s: [mvd ? 1 : 0, jz === d ? 1 : 0, mvd && Math.abs(tm) >= 2 ? 1 : 0],
+            note: (o.tOpen !== o.tot ? 'Total moved ' + o.tOpen + ' → ' + o.tot : 'Total steady at ' + o.tot) + (jz === d ? ', books shading the ' + d : '') });
+          var b2 = (inj.byTeam[e.a.displayName] || []).concat(inj.byTeam[e.h.displayName] || []);
+          b2.sort(function (x, y) { return (KEYPOS[y.pos] * 10 + STATUS_RANK[y.status]) - (KEYPOS[x.pos] * 10 + STATUS_RANK[x.status]); });
+          injMap[e.id + '|' + lab] = injEntry(b2[0], '');
+        });
       }
     });
     // Player props from the snapshot file, only for games that haven't kicked off.
@@ -201,8 +244,16 @@
       if (!gid) return;
       var who = inj.byName[p.player];
       if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
-      legs.push({ g: gid, k: 'prop', c: p.c, label: p.label, odds: p.odds, conf: p.conf, s: p.s, note: p.note + (props.asOf ? ' · prop line as of ' + props.asOf : '') });
-      injMap[p.label] = who ? [who.name, who.status, who.pos + (who.note ? ' · ' + who.note : '')] : [p.player, 'No designation', ''];
+      var asOf = props.asOf ? ' · prop line as of ' + props.asOf : '';
+      var whoRow = who ? [who.name, who.status, who.pos + (who.note ? ' · ' + who.note : '')] : [p.player, 'No designation', ''];
+      var qDrop = who && who.status === 'Questionable' ? 6 : 0;
+      legs.push({ g: gid, k: 'prop', c: p.c, label: p.label, odds: p.odds, conf: p.conf - qDrop, s: p.s, note: p.note + asOf });
+      injMap[gid + '|' + p.label] = whoRow;
+      // The other side of the prop, when its price is known.
+      if (p.alt && p.alt.label && p.alt.odds != null) {
+        legs.push({ g: gid, k: 'prop', c: p.c, label: p.alt.label, odds: p.alt.odds, conf: Math.max(30, 100 - p.conf - 8), s: [0, 0, 0], note: 'Other side of the Horseshoe lean' + asOf });
+        injMap[gid + '|' + p.alt.label] = whoRow;
+      }
     });
     // Public splits (if posted) for live games only.
     var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });

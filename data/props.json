@@ -1,16 +1,404 @@
 {
-  "asOf": "Oct 15",
-  "note": "Player prop lines from SportsBettingDime. Edit this file to add or update props; legs only show for games that haven't started.",
-  "legs": [
-    { "game": "BUF @ LV", "player": "James Cook", "c": "rush", "label": "James Cook over 92.5 rush yds", "odds": -115, "conf": 68, "s": [1,1,0], "note": "91 yds a game through Week 5" },
-    { "game": "ARI @ LAR", "player": "Puka Nacua", "c": "recp", "label": "Puka Nacua over 7.5 receptions", "odds": -154, "conf": 72, "s": [1,1,0], "note": "9 catches in his return last week" },
-    { "game": "ARI @ LAR", "player": "Matthew Stafford", "c": "pass", "label": "Matthew Stafford over 285.5 pass yds", "odds": -115, "conf": 66, "s": [1,0,1], "note": "383 yds last week" },
-    { "game": "TEN @ IND", "player": "Jonathan Taylor", "c": "rush", "label": "Jonathan Taylor over 89.5 rush yds", "odds": -114, "conf": 67, "s": [1,1,0], "note": "Colts favored by 7, run-friendly script" },
-    { "game": "CHI @ ATL", "player": "Bijan Robinson", "c": "rush", "label": "Bijan Robinson over 89.5 rush yds", "odds": -113, "conf": 63, "s": [1,0,1], "note": "Falcons lean on the run" },
-    { "game": "LAC @ KC", "player": "Kenneth Walker III", "c": "rush", "label": "Kenneth Walker over 86.5 rush yds", "odds": -112, "conf": 64, "s": [1,1,0], "note": "Chiefs 8.5-pt favorites" },
-    { "game": "ARI @ LAR", "player": "Trey McBride", "c": "rec", "label": "Trey McBride over 68.5 rec yds", "odds": -115, "conf": 61, "s": [1,1,0], "note": "Cardinals likely chasing as big dogs" },
-    { "game": "DAL @ GB", "player": "Dak Prescott", "c": "pass", "label": "Dak Prescott over 277.5 pass yds", "odds": -115, "conf": 62, "s": [1,0,1], "note": "Total rising" },
-    { "game": "BAL @ CLE", "player": "Derrick Henry", "c": "rush", "label": "Derrick Henry over 89.5 rush yds", "odds": -114, "conf": 62, "s": [1,1,0], "note": "Lamar questionable could mean more Henry" },
-    { "game": "BUF @ LV", "player": "Josh Allen", "c": "td", "label": "Josh Allen over 1.5 pass TDs", "odds": -125, "conf": 58, "s": [1,0,1], "note": "Bills 5.5-pt road favorites" }
-  ]
+ "asOf": "Oct 15",
+ "note": "Player prop lines from SportsBettingDime. Legs with s summing to 2+ are Horseshoe picks; the rest only show when someone picks that game. 'alt' is the other side of the line. Props hide once the game starts or the player is ruled out or doubtful.",
+ "legs": [
+  {
+   "game": "BUF @ LV",
+   "player": "James Cook",
+   "c": "rush",
+   "label": "James Cook over 92.5 rush yds",
+   "odds": -115,
+   "conf": 68,
+   "s": [
+    1,
+    1,
+    0
+   ],
+   "note": "91 yds a game through Week 5",
+   "alt": {
+    "label": "James Cook under 92.5 rush yds",
+    "odds": -114
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Puka Nacua",
+   "c": "recp",
+   "label": "Puka Nacua over 7.5 receptions",
+   "odds": -154,
+   "conf": 72,
+   "s": [
+    1,
+    1,
+    0
+   ],
+   "note": "9 catches in his return last week",
+   "alt": {
+    "label": "Puka Nacua under 7.5 receptions",
+    "odds": 115
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Matthew Stafford",
+   "c": "pass",
+   "label": "Matthew Stafford over 285.5 pass yds",
+   "odds": -115,
+   "conf": 66,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "383 yds last week",
+   "alt": {
+    "label": "Matthew Stafford under 285.5 pass yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "TEN @ IND",
+   "player": "Jonathan Taylor",
+   "c": "rush",
+   "label": "Jonathan Taylor over 89.5 rush yds",
+   "odds": -114,
+   "conf": 67,
+   "s": [
+    1,
+    1,
+    0
+   ],
+   "note": "Colts favored by 7, run-friendly script"
+  },
+  {
+   "game": "CHI @ ATL",
+   "player": "Bijan Robinson",
+   "c": "rush",
+   "label": "Bijan Robinson over 89.5 rush yds",
+   "odds": -113,
+   "conf": 63,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Falcons lean on the run"
+  },
+  {
+   "game": "LAC @ KC",
+   "player": "Kenneth Walker III",
+   "c": "rush",
+   "label": "Kenneth Walker III over 86.5 rush yds",
+   "odds": -112,
+   "conf": 64,
+   "s": [
+    1,
+    1,
+    0
+   ],
+   "note": "Chiefs big home favorites",
+   "alt": {
+    "label": "Kenneth Walker III under 86.5 rush yds",
+    "odds": -114
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Trey McBride",
+   "c": "rec",
+   "label": "Trey McBride over 68.5 rec yds",
+   "odds": -115,
+   "conf": 61,
+   "s": [
+    1,
+    1,
+    0
+   ],
+   "note": "Cardinals likely chasing as big dogs"
+  },
+  {
+   "game": "DAL @ GB",
+   "player": "Dak Prescott",
+   "c": "pass",
+   "label": "Dak Prescott over 277.5 pass yds",
+   "odds": -115,
+   "conf": 62,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Total rising",
+   "alt": {
+    "label": "Dak Prescott under 277.5 pass yds",
+    "odds": -114
+   }
+  },
+  {
+   "game": "BAL @ CLE",
+   "player": "Derrick Henry",
+   "c": "rush",
+   "label": "Derrick Henry over 89.5 rush yds",
+   "odds": -114,
+   "conf": 62,
+   "s": [
+    1,
+    1,
+    0
+   ],
+   "note": "Lamar questionable could mean more Henry"
+  },
+  {
+   "game": "BUF @ LV",
+   "player": "Josh Allen",
+   "c": "td",
+   "label": "Josh Allen over 1.5 pass TDs",
+   "odds": -125,
+   "conf": 58,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Bills road favorites",
+   "alt": {
+    "label": "Josh Allen under 1.5 pass TDs",
+    "odds": -102
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Matthew Stafford",
+   "c": "td",
+   "label": "Matthew Stafford under 2.5 pass TDs",
+   "odds": -154,
+   "conf": 60,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Rams lean on Puka underneath; 2.5 is a high bar",
+   "alt": {
+    "label": "Matthew Stafford over 2.5 pass TDs",
+    "odds": 115
+   }
+  },
+  {
+   "game": "DAL @ GB",
+   "player": "CeeDee Lamb",
+   "c": "recp",
+   "label": "CeeDee Lamb under 6.5 receptions",
+   "odds": -139,
+   "conf": 58,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Questionable (quad); books shading the under",
+   "alt": {
+    "label": "CeeDee Lamb over 6.5 receptions",
+    "odds": 107
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Trey McBride",
+   "c": "recp",
+   "label": "Trey McBride under 7.5 receptions",
+   "odds": -139,
+   "conf": 57,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Books shading the under",
+   "alt": {
+    "label": "Trey McBride over 7.5 receptions",
+    "odds": 105
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Davante Adams",
+   "c": "recp",
+   "label": "Davante Adams under 4.5 receptions",
+   "odds": -133,
+   "conf": 56,
+   "s": [
+    1,
+    0,
+    1
+   ],
+   "note": "Books shading the under",
+   "alt": {
+    "label": "Davante Adams over 4.5 receptions",
+    "odds": 100
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Puka Nacua",
+   "c": "rec",
+   "label": "Puka Nacua over 97.5 rec yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean",
+   "alt": {
+    "label": "Puka Nacua under 97.5 rec yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "DAL @ GB",
+   "player": "CeeDee Lamb",
+   "c": "rec",
+   "label": "CeeDee Lamb over 80.5 rec yds",
+   "odds": -113,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean",
+   "alt": {
+    "label": "CeeDee Lamb under 80.5 rec yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "ARI @ LAR",
+   "player": "Davante Adams",
+   "c": "rec",
+   "label": "Davante Adams over 59.5 rec yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean",
+   "alt": {
+    "label": "Davante Adams under 59.5 rec yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "BUF @ LV",
+   "player": "DJ Moore",
+   "c": "rec",
+   "label": "DJ Moore over 49.5 rec yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean (price approx., check your book)",
+   "alt": {
+    "label": "DJ Moore under 49.5 rec yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "BUF @ LV",
+   "player": "Dalton Kincaid",
+   "c": "rec",
+   "label": "Dalton Kincaid over 46.5 rec yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean (price approx., check your book)",
+   "alt": {
+    "label": "Dalton Kincaid under 46.5 rec yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "BUF @ LV",
+   "player": "Ashton Jeanty",
+   "c": "rush",
+   "label": "Ashton Jeanty over 54.5 rush yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean (price approx., check your book)",
+   "alt": {
+    "label": "Ashton Jeanty under 54.5 rush yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "BUF @ LV",
+   "player": "Josh Allen",
+   "c": "pass",
+   "label": "Josh Allen over 235.5 pass yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean (price approx., check your book)",
+   "alt": {
+    "label": "Josh Allen under 235.5 pass yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "LAC @ KC",
+   "player": "Patrick Mahomes",
+   "c": "pass",
+   "label": "Patrick Mahomes over 227.5 pass yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean (price approx., check your book)",
+   "alt": {
+    "label": "Patrick Mahomes under 227.5 pass yds",
+    "odds": -115
+   }
+  },
+  {
+   "game": "LAC @ KC",
+   "player": "Justin Herbert",
+   "c": "pass",
+   "label": "Justin Herbert over 192.5 pass yds",
+   "odds": -115,
+   "conf": 50,
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "note": "No Horseshoe lean (price approx., check your book)",
+   "alt": {
+    "label": "Justin Herbert under 192.5 pass yds",
+    "odds": -115
+   }
+  }
+ ]
 }
