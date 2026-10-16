@@ -441,10 +441,13 @@
       }
     });
     // Alternate spreads and totals from SportsGameOdds (Friday and Saturday pulls), used to feather big parlays.
-    var cfByTeams = {};
-    events.forEach(function (e) { if (byId[e.id]) cfByTeams[e.a.displayName + '|' + e.h.displayName] = e; });
+    // The two feeds spell schools differently ("Appalachian State" vs "App State"), so match loosely.
+    var normT = function (x) { return String(x || '').toLowerCase().replace(/\bappalachian\b/, 'app').replace(/\bstate\b/g, 'st').replace(/[^a-z]/g, ''); };
+    var teamKeys = function (t) { return [t.location, t.displayName, t.shortDisplayName].map(normT).filter(Boolean); };
+    var sameTeam = function (name, t) { var n = normT(name); return teamKeys(t).some(function (k) { return k === n || (n.length > 4 && k.indexOf(n) === 0); }); };
+    var cfLive = events.filter(function (e) { return byId[e.id]; });
     ((extra.sgoCfb || {}).events || []).forEach(function (ev) {
-      var e = cfByTeams[ev.away + '|' + ev.home];
+      var e = cfLive.filter(function (x) { return sameTeam(ev.away, x.a) && sameTeam(ev.home, x.h); })[0];
       if (!e) return;
       var sl = slate.filter(function (x) { return x.id === e.id; })[0];
       if (!sl) return;
