@@ -107,7 +107,7 @@ async function oddsApi(meta) {
 }
 
 // ---------- SportsGameOdds (free plan: 2,500 events a month). NFL player props + alternate lines, every 6 hours.
-const SGO_EVERY_MIN = 355;
+const SGO_EVERY_MIN = 475; // ~8 hours
 const SGO_MONTHLY_CAP = 2300; // stay under the 2,500 free events
 const PREF_BOOKS = ['draftkings', 'fanduel', 'espnbet', 'betmgm', 'caesars', 'williamhill'];
 const STAT = {
@@ -148,10 +148,19 @@ function slimSgoEvent(ev) {
         side: odd.betTypeID === 'yn' ? 'yes' : odd.sideID, line, odds: price,
         fair: num(odd.fairOdds), book: b ? b[0] : 'consensus'
       });
+      // Alternate prop lines (overs only), used to feather big parlays
+      if (b && odd.betTypeID === 'ou' && odd.sideID === 'over' && Array.isArray(b[1].altLines)) {
+        for (const a of b[1].altLines) {
+          if (a.available === false || a.odds == null || a.overUnder == null) continue;
+          const al = num(a.overUnder), ao = num(a.odds);
+          if (al == null || ao == null || al === line) continue;
+          out.props.push({ player: name, team: pl.teamID || null, stat: odd.statID, c: st[0], what: st[1], side: 'over', line: al, odds: ao, fair: null, book: b[0], alt: true });
+        }
+      }
       continue;
     }
     // Alternate game lines (spreads + totals) from the preferred book
-    if (odd.statID === 'points' && !odd.playerID && (odd.betTypeID === 'sp' || odd.betTypeID === 'ou') && b && Array.isArray(b[1].altLines)) {
+    if (odd.statID === 'points' && !odd.playerID && (odd.betTypeID === 'sp' || (odd.betTypeID === 'ou' && odd.statEntityID === 'all')) && b && Array.isArray(b[1].altLines)) {
       for (const a of b[1].altLines) {
         if (a.available === false || a.odds == null) continue;
         const line = odd.betTypeID === 'sp' ? num(a.spread) : num(a.overUnder);
@@ -162,21 +171,21 @@ function slimSgoEvent(ev) {
   }
   return out;
 }
-async function sgo(meta) {
+async function sgoLeague(meta, league, file, everyMin, maxEvents) {
   const key = process.env.SGO_API_KEY;
   if (!key) { console.log('No SGO_API_KEY secret set; skipping props and alt lines.'); return; }
   const month = new Date().toISOString().slice(0, 7);
   if (meta.sgoMonth !== month) { meta.sgoMonth = month; meta.sgoUsed = 0; }
-  const cur = await readJSON('data/sgo-nfl.json', { updated: null, events: [] });
+  const cur = await readJSON(file, { updated: null, events: [] });
   const age = cur.updated ? (Date.now() - Date.parse(cur.updated)) / 60000 : Infinity;
-  if (age < SGO_EVERY_MIN) { console.log(`Props are ${Math.round(age)} min old; next pull after ${SGO_EVERY_MIN}.`); return; }
+  if (age < everyMin) { console.log(`${league}: ${Math.round(age)} min old; next pull after ${everyMin}.`); return; }
   if (meta.sgoUsed >= SGO_MONTHLY_CAP) { console.log(`SportsGameOdds: ${meta.sgoUsed} events used this month; holding until next month.`); return; }
   const now = new Date();
   const before = new Date(now.getTime() + 6.5 * 864e5).toISOString();
   const events = [];
   let cursor = null;
-  for (let page = 0; page < 5; page++) {
-    const q = new URLSearchParams({ leagueID: 'NFL', oddsAvailable: 'true', includeAltLines: 'true', startsAfter: now.toISOString(), startsBefore: before, limit: '30' });
+  for (let page = 0; page < 5 && events.length < maxEvents; page++) {
+    const q = new URLSearchParams({ leagueID: league, oddsAvailable: 'true', includeAltLines: 'true', startsAfter: now.toISOString(), startsBefore: before, limit: '30' });
     if (cursor) q.set('cursor', cursor);
     const r = await fetch('https://api.sportsgameodds.com/v2/events?' + q, { headers: { 'x-api-key': key } });
     if (!r.ok) throw new Error(`SportsGameOdds ${r.status}: ${(await r.text()).slice(0, 200)}`);
@@ -191,11 +200,17 @@ async function sgo(meta) {
     cursor = j.nextCursor;
     if (!cursor || !data.length) break;
   }
-  await writeFile('data/sgo-nfl.json', JSON.stringify({ updated: now.toISOString(), events }));
-  console.log(`SportsGameOdds: ${events.length} NFL games, ${events.reduce((a, e) => a + e.props.length, 0)} props, ${events.reduce((a, e) => a + e.alts.length, 0)} alt lines; ${meta.sgoUsed} events used this month`);
+  await writeFile(file, JSON.stringify({ updated: now.toISOString(), events }));
+  console.log(`SportsGameOdds: ${events.length} ${league} games, ${events.reduce((a, e) => a + e.props.length, 0)} props, ${events.reduce((a, e) => a + e.alts.length, 0)} alt lines; ${meta.sgoUsed} events used this month`);
 }
 
 const meta = await readJSON('data/meta.json', {});
+// College alt lines: one pull Friday and one Saturday (Eastern), to stay inside the free 2,500 events a month.
+async function sgo(meta) {
+  await sgoLeague(meta, 'NFL', 'data/sgo-nfl.json', SGO_EVERY_MIN, 30);
+  const day = new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' });
+  if (['Fri', 'Sat'].includes(day)) await sgoLeague(meta, 'NCAAF', 'data/sgo-cfb.json', 20 * 60, 70);
+}
 const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta), sgo(meta)]);
 results.forEach((r) => { if (r.status === 'rejected') { console.error(r.reason); meta.lastError = String(r.reason?.stack || r.reason).slice(0, 500); } });
 await writeFile('data/meta.json', JSON.stringify(meta));

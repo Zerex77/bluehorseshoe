@@ -80,6 +80,7 @@ button{font:inherit}
               <div style="display: flex; flex-direction: column; min-width: 0;">
                 <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">The Horseshoe's Ticket</h2>
                 <span style="font-size: 11px; color: #DCE7FB;">{{statusLabel}} · {{legCount}} legs · {{flagStr}} injury flags</span>
+                <sc-if value="{{featherNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 600; color: #FFD166;">{{featherNote}}</span></sc-if>
               </div>
             </div>
             <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
@@ -111,6 +112,7 @@ button{font:inherit}
                   <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="{{m.style}}">{{m.label}}</button>
                 </sc-for>
               </div>
+              <button type="button" onClick="{{featherBtn.pick}}" aria-pressed="{{featherBtn.on}}" title="When the ticket beats your target, swap in safer alternate lines while staying at or above it." style="{{featherBtn.style}}">{{featherBtn.label}}</button>
               <sc-if value="{{showPropFilter}}" hint-placeholder-val="{{ true }}">
                 <div style="display: flex; flex-wrap: wrap; gap: 4px;" role="group" aria-label="Prop types">
                   <sc-for list="{{nPropTypes}}" as="p" hint-placeholder-count="6">
@@ -157,7 +159,7 @@ button{font:inherit}
                         </div>
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px;">
                           <span style="{{leg.tagStyle}}">{{leg.tag}}</span>
-                          <sc-if value="{{leg.belowBar}}" hint-placeholder-val="{{ false }}"><span title="Fails the 2-of-3 check. Shown because you picked this game." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #FFF4E5; color: #9A5B00; white-space: nowrap;">Below the bar</span></sc-if>
+                          <sc-if value="{{leg.belowBar}}" hint-placeholder-val="{{ false }}"><span title="Fails the 2-of-3 check. Shown because you picked this game." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #FFF4E5; color: #9A5B00; white-space: nowrap;">Below the bar</span></sc-if><sc-if value="{{leg.featherText}}" hint-placeholder-val="{{ false }}"><span title="Swapped to a safer alternate line because the ticket already beat its target." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #E6F6EF; color: #0B6E4F; white-space: nowrap;">Feathered</span></sc-if>
                           <span style="display: flex; gap: 3px;" aria-label="{{leg.sigAria}}">
                             <sc-for list="{{leg.sigs}}" as="sg" hint-placeholder-count="3">
                               <span title="{{sg.name}}" style="{{sg.style}}">{{sg.letter}}</span>
@@ -525,6 +527,7 @@ button{font:inherit}
                         <span style="display: inline-flex; align-items: center; gap: 4px;"><span aria-hidden="true" style="{{pl.dotStyle}}"></span>{{pl.label}} <b style="font-family: 'IBM Plex Mono', monospace;">{{pl.count}}</b></span>
                       </sc-for>
                     </span>
+                    <sc-if value="{{cfFeatherNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 600; color: #FFD166;">{{cfFeatherNote}}</span></sc-if>
                   </div>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
@@ -555,6 +558,7 @@ button{font:inherit}
                     <button type="button" onClick="{{cm.pick}}" aria-pressed="{{cm.on}}" style="{{cm.style}}">{{cm.label}}</button>
                   </sc-for>
                 </div>
+                <button type="button" onClick="{{cfFeatherBtn.pick}}" aria-pressed="{{cfFeatherBtn.on}}" title="When the parlay beats your target, swap in safer alternate lines while staying at or above it." style="{{cfFeatherBtn.style}}">{{cfFeatherBtn.label}}</button>
                 <sc-if value="{{cfShowOU}}" hint-placeholder-val="{{ true }}">
                   <div role="group" aria-label="Totals direction" style="display: flex; flex-wrap: wrap; gap: 4px;">
                     <sc-for list="{{cfOUOpts}}" as="ou" hint-placeholder-count="3">
@@ -836,9 +840,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016121304';</script>
-<script src="runtime.js?v=20261016121304"></script>
-<script src="lines.js?v=20261016121304"></script>
+<script>window.BH_VERSION='20261016122451';</script>
+<script src="runtime.js?v=20261016122451"></script>
+<script src="lines.js?v=20261016122451"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -869,6 +873,46 @@ class Component extends DCLogic {
     var self = this;
     var st = this.state;
     var D = this.data();
+
+    // ---- Feathering: once a parlay clears its target price, spend the extra payout on safer alternate lines
+    // (buy points on spreads, lower totals and prop lines), taking the swap that adds the most hit chance per bit of price.
+    var famOf = function (l) {
+      var lab = String(l.label).replace(/ \(alt\)$/, ''), m;
+      if (l.k === 'prop') { m = /^(.*) over ([\d.]+) (.*)$/.exec(lab); return m ? { key: l.g + '|p|' + m[1] + '|' + m[3], safe: -Number(m[2]) } : null; }
+      if ((m = /^(Over|Under) ([\d.]+)$/.exec(lab))) return { key: l.g + '|t|' + m[1], safe: m[1] === 'Over' ? -Number(m[2]) : Number(m[2]) };
+      if ((m = /^(.*) (moneyline|ML)$/.exec(lab))) return { key: l.g + '|s|' + m[1], safe: 0 };
+      if ((m = /^(.*) ([+-]\d+(\.\d+)?)$/.exec(lab))) return { key: l.g + '|s|' + m[1], safe: Number(m[2]) };
+      return null;
+    };
+    var noVig = function (o) { return (1 / self.dec(o)) * 0.955; };
+    var feather = function (ticket, targetDec, all) {
+      var idx = {};
+      all.forEach(function (l) { var f = famOf(l); if (f) (idx[f.key] = idx[f.key] || []).push({ l: l, safe: f.safe }); });
+      var cur = ticket.map(function (l) { return { l: l, from: null, pf: l.p != null ? l.p : noVig(l.odds) }; });
+      for (var it = 0; it < 80; it++) {
+        var d0 = 1; cur.forEach(function (c) { d0 *= self.dec(c.l.odds); });
+        var best = null;
+        cur.forEach(function (c, i) {
+          var f = famOf(c.l);
+          if (!f || !idx[f.key]) return;
+          var orig = c.from || c.l;
+          var bump = Math.max(0, (orig.p != null ? orig.p : noVig(orig.odds)) - noVig(orig.odds));
+          idx[f.key].forEach(function (a) {
+            if (a.safe <= f.safe || a.l === c.l || self.dec(a.l.odds) < 1.1) return;
+            var nd = d0 / self.dec(c.l.odds) * self.dec(a.l.odds);
+            if (nd < targetDec) return;
+            var pa = Math.min(0.97, noVig(a.l.odds) + bump);
+            if (pa <= c.pf) return;
+            var r = Math.log(pa / c.pf) / Math.max(1e-6, Math.log(self.dec(c.l.odds) / self.dec(a.l.odds)));
+            if (!best || r > best.r) best = { i: i, a: a.l, pa: pa, r: r };
+          });
+        });
+        if (!best) break;
+        var c0 = cur[best.i];
+        cur[best.i] = { l: best.a, from: c0.from || c0.l, pf: best.pa };
+      }
+      return cur;
+    };
     var B = '#1D5FD6', TXT = '#111827', MUTED = '#5B6472', FAINT = '#6B7280', BORDER = '#D5DAE1', LIGHT = '#EEF0F3';
     var GREEN = '#0F7A43', AMBER = '#9A5B00', RED = '#B42318';
     var gameMap = {};
@@ -958,18 +1002,31 @@ class Component extends DCLogic {
       }
       reached = decTotal >= targetDec;
     }
+    var featherOn = st.feather !== false, featherN = 0, hitBefore = 1;
+    ticket.forEach(function (l) { hitBefore *= (l.p != null ? l.p : noVig(l.odds)); });
+    if (featherOn && st.target !== 'fav' && reached && ticket.length) {
+      ticket = feather(ticket, targetDec, D.legs).map(function (c) {
+        if (!c.from) return c.l;
+        featherN++;
+        return Object.assign({}, c.l, { g: c.from.g, p: c.pf, conf: c.from.conf, s: c.from.s, mk: c.from.mk, featheredFrom: c.from.label, note: 'Feathered from ' + c.from.label + ' (' + self.fmtOdds(c.from.odds) + ')' });
+      });
+      decTotal = prodDec(ticket);
+    }
+    var hitAfter = 1;
+    ticket.forEach(function (l) { hitAfter *= (l.p != null ? l.p : noVig(l.odds)); });
     var shortLegs = N && ticket.length < N;
     var hit = 1;
     ticket.forEach(function (l) { hit *= 1 / self.dec(l.odds); });
-    var inTicket = ticket.map(function (l) { return l.label; });
-    var bench = pool.filter(function (l) { return inTicket.indexOf(l.label) === -1; }).slice(0, 3);
+    var inTicket = ticket.map(function (l) { return l.label; }).concat(ticket.map(function (l) { return l.featheredFrom; }).filter(Boolean));
+    var featheredGames = {}; ticket.forEach(function (l) { if (l.featheredFrom) featheredGames[l.g + '|' + l.mk] = 1; });
+    var bench = pool.filter(function (l) { return inTicket.indexOf(l.label) === -1 && !l.alt; }).slice(0, 3);
 
     var sigNames = ['Price strength', 'Home spot', 'Market move'];
     var sigLetters = ['S', 'H', 'M'];
     var ord = function (n) { var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
     var softCount = 0, flagCount = 0;
     var whoCount = {};
-    var injOf = function (l) { return D.inj[l.g + '|' + l.label] || D.inj[l.label] || ['', 'No designation', '']; };
+    var injOf = function (l) { return D.inj[l.g + '|' + l.label] || (l.featheredFrom && D.inj[l.g + '|' + l.featheredFrom]) || D.inj[l.label] || ['', 'No designation', '']; };
     ticket.forEach(function (l) { var ij = injOf(l); if (ij[1] !== 'No designation') whoCount[ij[0]] = (whoCount[ij[0]] || 0) + 1; });
 
     var ticketRows = ticket.map(function (l, idx) {
@@ -1004,7 +1061,7 @@ class Component extends DCLogic {
         open: open,
         chevStyle: open ? 'transform: rotate(180deg);' : '',
         toggle: function () { var o = Object.assign({}, st.open); o[l.label] = !open; self.setState({ open: o, allOpen: false }); },
-        belowBar: !meetsBar(l),
+        belowBar: !meetsBar(l) && !l.featheredFrom, featherText: l.featheredFrom ? 'Feathered' : '',
         oddsStr: self.fmtOdds(l.odds),
         estOdds: l.note.indexOf('est.') !== -1
       };
@@ -1268,6 +1325,17 @@ class Component extends DCLogic {
     var prodOf = function (arr) { var d = 1; arr.forEach(function (c) { d *= self.dec(c.odds); }); return d; };
     pickMixed(rankedAll, wantN, function (sofar) { return !cfN && st.cfTarget !== 'safe' && prodOf(sofar) >= cfTDec; })
       .forEach(function (c, ri) { cfTicket.push({ c: c, pillar: primaryOf(c), rank: ri + 1 }); });
+    var cfFeatherOn = st.cfFeather !== false, cfFeatherN = 0, cfHitBefore = 1;
+    cfTicket.forEach(function (t) { cfHitBefore *= t.c.p; });
+    if (cfFeatherOn && st.cfTarget !== 'safe' && cfTicket.length && ticketDec() >= cfTDec) {
+      var fe = feather(cfTicket.map(function (t) { return t.c; }), cfTDec, CF.legs);
+      fe.forEach(function (c, i) {
+        if (!c.from) return;
+        cfFeatherN++;
+        var im = 1 / self.dec(c.l.odds);
+        cfTicket[i] = { c: Object.assign({}, c.from, { label: c.l.label, odds: c.l.odds, p: c.pf, imp: im, edge: c.pf - im, featheredFrom: c.from.label, note: 'Feathered from ' + c.from.label + ' (' + self.fmtOdds(c.from.odds) + ')' }), pillar: cfTicket[i].pillar, rank: cfTicket[i].rank };
+      });
+    }
     var cfDec = ticketDec();
     var cfReached = st.cfTarget === 'safe' || cfDec >= cfTDec;
     var cfShort = cfN && cfTicket.length < cfN;
@@ -1301,7 +1369,7 @@ class Component extends DCLogic {
       return {
         num: String(ix + 1), label: c.label, game: cfGameMap[c.g].label, why: whyFor(c, t.pillar),
         badges: badgesFor(c, t.pillar),
-        mkLabel: mkNames[c.k], mkStyle: tag('', c.k),
+        mkLabel: mkNames[c.k] + (c.featheredFrom ? ' · feathered' : ''), mkStyle: tag('', c.k),
         shoes: shoes(c.conf), shoeAria: 'Horseshoe rating ' + shoeCount(c.conf) + ' of 5',
         pStr: pct(c.p), impStr: pct(c.imp),
         edgeStr: (ed >= 0 ? '+' : '') + ed, edgeColor: ed >= 0 ? GREEN : RED,
@@ -1516,7 +1584,7 @@ class Component extends DCLogic {
       return { label: m.label, on: on, style: chipW(on), pick: function () { self.setState({ ovMkt: m.v }); } };
     });
     // College: game-total overs
-    var cfOvAll = CF.legs.filter(function (l) { return l.k === 'total' && /^Over /.test(l.label); })
+    var cfOvAll = CF.legs.filter(function (l) { return l.k === 'total' && /^Over /.test(l.label) && !l.alt; })
       .map(function (l) { return ovRow(l, true, cfGameMap); }).sort(function (a, b) { return b.score - a.score; });
     var cfOvTop = ovBuild(cfOvAll, 20, function (l) { return l.g; });
     var cfOvN = st.cfOvN || 3;
@@ -1550,6 +1618,10 @@ class Component extends DCLogic {
     return {
       nflTabs: nflTabs,
       collegeTab: { current: isCollege ? 'page' : 'false', style: tabStyle(isCollege), pick: go('college') },
+      featherBtn: { label: 'Feather to target', on: featherOn, style: chipW(featherOn), pick: function () { self.setState({ feather: !featherOn }); } },
+      cfFeatherBtn: { label: 'Feather to target', on: cfFeatherOn, style: chipW(cfFeatherOn), pick: function () { self.setState({ cfFeather: !cfFeatherOn }); } },
+      featherNote: featherN ? 'Feathered ' + featherN + ' leg' + (featherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (hitBefore * 100).toFixed(1) + '% → ' + (hitAfter * 100).toFixed(1) + '%' : '',
+      cfFeatherNote: cfFeatherN ? 'Feathered ' + cfFeatherN + ' leg' + (cfFeatherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (cfHitBefore * 100).toFixed(1) + '% → ' + (function () { var h = 1; cfTicket.forEach(function (t) { h *= t.c.p; }); return (h * 100).toFixed(1); })() + '%' : '',
       nflTop: { current: !isCollege ? 'page' : 'false', style: tabStyle(!isCollege), pick: go(st.nflLast || 'builder') },
       isNfl: !isCollege,
       nTargets: targets.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
@@ -1575,7 +1647,7 @@ class Component extends DCLogic {
       chipText: isCollege ? CF.chip : D.chip,
       liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#AEB5C0') + ';',
       lineEmpty: !D.lineCheck.length, booksStamp: window.BH.booksAsOf ? 'Book prices from The Odds API, updated ' + window.BHLines.etTime(window.BH.booksAsOf) + ' ET ' + window.BH.booksAsOf.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '. They refresh every 4 hours.' : '',
-      footText: 'Game lines: ' + (window.BH.source === 'snapshot' ? 'DraftKings via ESPN (backup snapshot, refreshed every 15 min)' : 'DraftKings via ESPN, refreshed every minute') + '. NFL moneylines and college prices marked est. are converted from the spread.' + (window.BH.propsAsOf ? (String(window.BH.propsAsOf).indexOf('sgo:') === 0 ? ' Player props and alternate lines: SportsGameOdds (DraftKings/FanDuel prices), updated ' + window.BHLines.etTime(new Date(String(window.BH.propsAsOf).slice(4))) + ' ET, refreshed every 6 hours.' : ' Player props as of ' + window.BH.propsAsOf + '.') : '') + ' Lines move, so confirm the price at your sportsbook. Horseshoe ratings are analysis, not advice. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.',
+      footText: 'Game lines: ' + (window.BH.source === 'snapshot' ? 'DraftKings via ESPN (backup snapshot, refreshed every 15 min)' : 'DraftKings via ESPN, refreshed every minute') + '. NFL moneylines and college prices marked est. are converted from the spread.' + (window.BH.propsAsOf ? (String(window.BH.propsAsOf).indexOf('sgo:') === 0 ? ' Player props and alternate lines: SportsGameOdds (DraftKings/FanDuel prices), updated ' + window.BHLines.etTime(new Date(String(window.BH.propsAsOf).slice(4))) + ' ET, refreshed every 8 hours.' : ' Player props as of ' + window.BH.propsAsOf + '.') : '') + ' Lines move, so confirm the price at your sportsbook. Horseshoe ratings are analysis, not advice. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.',
       fadeEmpty: D.publicBoard.length === 0, cfFadeEmpty: CF.publicBoard.length === 0,
 
       targets: targets, markets: markets, propTypes: propTypes, showPropFilter: st.market !== 'line',

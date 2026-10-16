@@ -270,6 +270,14 @@
         var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
         if (pr.side === 'yes' && !YES[pr.stat]) return;
         var label = pr.side === 'yes' ? pr.player + ' ' + YES[pr.stat] : pr.player + ' ' + pr.side + ' ' + pr.line + ' ' + pr.what;
+        if (pr.alt) {
+          // Alternate prop line: only used to feather a parlay toward its target price.
+          var ap = imp(pr.odds) * 0.955;
+          legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, alt: true, label: label + ' (alt)', odds: pr.odds, p: ap,
+            conf: clamp(Math.round(ap * 100) - 20, 3, 80), s: [0, 0, 0], note: 'Alternate line' + sgoStamp });
+          injMap[e.id + '|' + label + ' (alt)'] = who ? [who.name, who.status, who.pos + (who.note ? ' · ' + who.note : '')] : [pr.player, 'No designation', ''];
+          return;
+        }
         var p = fairP(pr.fair, pr.odds);
         var lean = leanMap[pr.player + '|' + pr.what + '|' + pr.side];
         if (lean && Math.abs(lean.line - pr.line) > Math.max(1.5, lean.line * 0.1)) lean = null; // line moved too far from the lean
@@ -284,6 +292,7 @@
       legs.forEach(function (l) { if (l.g === e.id) seenAlt[l.label] = 1; });
       (ev.alts || []).forEach(function (al) {
         if (al.odds == null || al.odds < -400 || al.odds > 600) return;
+        if (al.type === 'ou' && al.entity && al.entity !== 'all') return; // team totals aren't game totals
         var label, mk;
         if (al.type === 'sp') { var T = al.side === 'away' ? A : H; label = T + ' ' + signed(al.line); mk = 'spread'; }
         else { label = (al.side === 'over' ? 'Over ' : 'Under ') + al.line; mk = 'total'; }
@@ -431,6 +440,22 @@
         }
       }
     });
+    // Alternate spreads and totals from SportsGameOdds (Friday and Saturday pulls), used to feather big parlays.
+    var cfByTeams = {};
+    events.forEach(function (e) { if (byId[e.id]) cfByTeams[e.a.displayName + '|' + e.h.displayName] = e; });
+    ((extra.sgoCfb || {}).events || []).forEach(function (ev) {
+      var e = cfByTeams[ev.away + '|' + ev.home];
+      if (!e) return;
+      var sl = slate.filter(function (x) { return x.id === e.id; })[0];
+      if (!sl) return;
+      (ev.alts || []).forEach(function (al) {
+        if (al.odds == null || al.odds < -600 || al.odds > 600) return;
+        if (al.type === 'ou' && al.entity && al.entity !== 'all') return;
+        var lab = al.type === 'sp' ? (al.side === 'away' ? sl.a : sl.h) + ' ' + signed(al.line) : (al.side === 'over' ? 'Over ' : 'Under ') + al.line;
+        var ap = imp(al.odds) * 0.955;
+        legs.push({ g: e.id, k: al.type === 'sp' ? 'spread' : 'total', alt: true, label: lab + ' (alt)', odds: al.odds, p: ap, conf: Math.round(ap * 100), s: [0, 0, 0], note: 'Alternate line, ' + (al.book === 'draftkings' ? 'DraftKings' : al.book) + ' price' });
+      });
+    });
     // Every other underdog and every over on the board, with no Horseshoe signals. They never make the Horseshoe Parlay,
     // but they let the Upset Special and Horseshoe Overs fill bigger slips.
     var haveL = {};
@@ -521,9 +546,10 @@
       soft(getJSON('data/books.json' + bust)),
       soft(getJSON('data/props.json' + bust)),
       soft(getJSON('data/sgo-nfl.json' + bust)),
+      soft(getJSON('data/sgo-cfb.json' + bust)),
       soft(getJSON('data/splits.json' + bust)),
       soft(getJSON('data/meta.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], splits: r[3], meta: r[4] }; });
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], splits: r[4], meta: r[5] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {
