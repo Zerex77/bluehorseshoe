@@ -44,6 +44,7 @@ button{font:inherit}
       <nav aria-label="Pages" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;">
         <button type="button" onClick="{{nflTop.pick}}" aria-current="{{nflTop.current}}" style="{{nflTop.style}}">NFL</button>
         <button type="button" onClick="{{collegeTab.pick}}" aria-current="{{collegeTab.current}}" style="{{collegeTab.style}}">College</button>
+        <button type="button" onClick="{{recordTab.pick}}" aria-current="{{recordTab.current}}" style="{{recordTab.style}}">Track record</button>
       </nav>
       <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; padding: 6px 0;">
         <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6472;">{{chipText}}</span>
@@ -932,6 +933,74 @@ button{font:inherit}
       </div>
     </sc-if>
 
+    <sc-if value="{{isRecord}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+            <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <h1 style="margin: 0; font-size: 20px; font-weight: 700;">The Horseshoe's track record</h1>
+              <span style="font-size: 13px; color: #5B6472;">Every pick it signals on is locked at kickoff and graded after the final. Margin shows how far the result landed from the line.</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px 14px;">
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Sport
+              <select onChange="{{onRecSport}}" value="{{recSportVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recSportOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Market
+              <select onChange="{{onRecMkt}}" value="{{recMktVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recMktOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Period
+              <select onChange="{{onRecPer}}" value="{{recPerVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recPerOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
+            </label>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Record (W-L-P)</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recWLP}}</span><span style="font-size: 11px; color: #6B7280;">{{recGradedStr}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recHit}}</span><span style="font-size: 11px; color: #6B7280;">Horseshoe expected {{recExp}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Profit, $10 a pick</span><span style="{{recProfitStyle}}">{{recProfit}}</span><span style="font-size: 11px; color: #6B7280;">ROI {{recRoi}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Avg margin vs line</span><span style="{{recDevStyle}}">{{recDev}}</span><span style="font-size: 11px; color: #6B7280;">wins {{recDevW}} · losses {{recDevL}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Waiting on results</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recPendingN}}</span><span style="font-size: 11px; color: #6B7280;">{{recUpcomingN}} more lock at kickoff</span></div>
+        </div>
+        <sc-if value="{{recEmpty}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No graded picks yet for this view. Picks are recorded every 15 minutes and graded within about 15 minutes of each final.</div>
+        </sc-if>
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+          <sc-for list="{{recByMkt}}" as="bm" hint-placeholder-count="4">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+              <b style="flex: 1 1 120px; font-size: 13px;">{{bm.label}}</b>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">W-L-P</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.wlp}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.hit}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Expected</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #6B7280;">{{bm.exp}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Profit ($10)</span><span style="{{bm.profitStyle}}">{{bm.profit}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Avg margin</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.dev}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+        <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">Graded picks</h2>
+        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+          <sc-for list="{{recRows}}" as="rr" hint-placeholder-count="10">
+            <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+              <span style="{{rr.chipStyle}}">{{rr.chip}}</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <span style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;"><b style="font-size: 14px;">{{rr.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{rr.oddsStr}}</span><span style="font-size: 12px; color: #6B7280;">{{rr.game}} · {{rr.when}}</span></span>
+                <span style="font-size: 12px; color: #374151;">{{rr.detail}}</span>
+              </div>
+              <span style="{{rr.devStyle}}">{{rr.devStr}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{recPendingAny}}" hint-placeholder-val="{{ false }}">
+          <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">Locked, waiting on the final</h2>
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+            <sc-for list="{{recPending}}" as="pp" hint-placeholder-count="5">
+              <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-size: 13px;"><b>{{pp.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{pp.oddsStr}}</span><span style="font-size: 12px; color: #6B7280;">{{pp.game}} · {{pp.when}}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; line-height: 1.5; color: #6B7280; border-top: 1px solid #E3E6EB; padding-top: 14px;">
       <svg width="16" height="16" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path></svg>
       <span>{{footText}}</span>
@@ -939,9 +1008,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016131117';</script>
-<script src="runtime.js?v=20261016131117"></script>
-<script src="lines.js?v=20261016131117"></script>
+<script>window.BH_VERSION='20261016174341';</script>
+<script src="runtime.js?v=20261016174341"></script>
+<script src="lines.js?v=20261016174341"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1748,6 +1817,57 @@ class Component extends DCLogic {
       };
     });
 
+
+    // ---- Track record
+    var PK = (typeof window !== 'undefined' && window.BH && window.BH.picks) || [];
+    var recSport = st.recSport || 'all', recMkt = st.recMkt || 'all', recPer = st.recPer || 'season';
+    var perCut = recPer === 'week' ? 7 : recPer === 'month' ? 30 : 400;
+    var nowMs = Date.now();
+    var inView = PK.filter(function (p) {
+      if (!p.active) return false;
+      if (recSport !== 'all' && p.sport !== recSport) return false;
+      if (recMkt !== 'all' && p.market !== recMkt) return false;
+      return nowMs - Date.parse(p.date) < perCut * 864e5;
+    });
+    var gradedP = inView.filter(function (p) { return p.result === 'win' || p.result === 'loss' || p.result === 'push'; });
+    var pendingP = inView.filter(function (p) { return p.locked && !p.result; });
+    var upcomingP = inView.filter(function (p) { return !p.locked; });
+    var tally = function (arr) {
+      var w = 0, l = 0, pu = 0, prof = 0, exp = 0, dev = 0, devW = 0, devL = 0, nw = 0, nl = 0;
+      arr.forEach(function (p) {
+        if (p.result === 'win') { w++; prof += 10 * (self.dec(p.odds) - 1); }
+        else if (p.result === 'loss') { l++; prof -= 10; }
+        else pu++;
+        exp += p.p || 0;
+        var d = Number(p.dev) || 0; dev += d;
+        if (p.result === 'win') { devW += d; nw++; } else if (p.result === 'loss') { devL += d; nl++; }
+      });
+      var dec2 = w + l;
+      return { n: arr.length, w: w, l: l, pu: pu, prof: prof, hit: dec2 ? w / dec2 : null, exp: arr.length ? exp / arr.length : null, dev: arr.length ? dev / arr.length : null, devW: nw ? devW / nw : null, devL: nl ? devL / nl : null };
+    };
+    var fmtPct = function (x) { return x == null ? '—' : (x * 100).toFixed(1) + '%'; };
+    var fmtDev = function (x) { return x == null ? '—' : (x >= 0 ? '+' : '') + (Math.round(x * 10) / 10); };
+    var fmtMoney = function (x) { return (x >= 0 ? '+$' : '−$') + Math.abs(x).toFixed(2); };
+    var allT = tally(gradedP);
+    var mktNames2 = { ml: 'Moneylines', spread: 'Spreads', total: 'Totals', prop: 'Player props' };
+    var recByMkt = ['ml', 'spread', 'total', 'prop'].map(function (k) {
+      var t = tally(gradedP.filter(function (p) { return p.market === k; }));
+      return { label: mktNames2[k], n: String(t.n), wlp: t.w + '-' + t.l + '-' + t.pu, hit: fmtPct(t.hit), exp: fmtPct(t.exp), profit: t.n ? fmtMoney(t.prof) : '—', profitStyle: 'font-family: IBM Plex Mono, monospace; font-weight: 600; color: ' + (t.prof > 0 ? GREEN : t.prof < 0 ? RED : MUTED) + ';', dev: fmtDev(t.dev), has: t.n > 0 };
+    }).filter(function (r) { return r.has || recMkt === 'all'; });
+    var unitOf = function (p) { return p.market === 'prop' ? (/yds|longest/.test(p.what) ? ' yds' : '') : ' pts'; };
+    var whenOf = function (p) { try { return new Date(p.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' }); } catch (e) { return ''; } };
+    var detailOf = function (p) {
+      if (p.market === 'ml') return 'Final ' + p.final + ' · ' + (p.result === 'win' ? 'won by ' : p.result === 'loss' ? 'lost by ' : 'tied ') + Math.abs(p.actual);
+      if (p.market === 'spread') return 'Final ' + p.final + ' · ' + (p.result === 'win' ? 'covered by ' + Math.abs(p.dev) : p.result === 'loss' ? 'missed by ' + Math.abs(p.dev) : 'pushed');
+      if (p.market === 'total') return 'Final ' + p.final + ' · ' + p.actual + ' total points vs ' + p.line;
+      return (p.side === 'yes' ? p.actual + ' TD' + (p.actual === 1 ? '' : 's') : p.actual + ' vs line ' + p.line) + (p.final ? ' · final ' + p.final : '');
+    };
+    var chipFor = function (r) { var c = r === 'win' ? [GREEN, '#EAF6EF'] : r === 'loss' ? [RED, '#FDEEEE'] : [MUTED, '#EEF0F3']; return 'flex-shrink: 0; min-width: 44px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; color: ' + c[0] + '; background: ' + c[1] + ';'; };
+    var recRows = gradedP.slice().sort(function (a, b) { return Date.parse(b.gradedAt || b.date) - Date.parse(a.gradedAt || a.date); }).slice(0, 150).map(function (p) {
+      return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p), detail: detailOf(p), chip: p.result, chipStyle: chipFor(p.result),
+        devStr: p.market === 'ml' ? '' : fmtDev(p.dev) + unitOf(p), devStyle: 'flex-shrink: 0; font-family: IBM Plex Mono, monospace; font-size: 13px; font-weight: 700; color: ' + ((p.dev || 0) > 0 ? GREEN : (p.dev || 0) < 0 ? RED : MUTED) + ';' };
+    });
+    var recPending = pendingP.sort(function (a, b) { return Date.parse(a.date) - Date.parse(b.date); }).slice(0, 60).map(function (p) { return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p) }; });
     // ---- page tabs
     var tabStyle = function (on) {
       return 'min-height: 44px; padding: 0 2px; background: none; border: none; border-bottom: 2px solid ' + (on ? B : 'transparent') + '; cursor: pointer; font-size: 14px; font-weight: ' + (on ? '600' : '500') + '; color: ' + (on ? TXT : MUTED) + ';';
@@ -1771,8 +1891,21 @@ class Component extends DCLogic {
       cfFeatherBtn: { label: 'Feather to target', on: cfFeatherOn, style: chipW(cfFeatherOn), pick: function () { self.setState({ cfFeather: !cfFeatherOn }); } },
       featherNote: featherN ? 'Feathered ' + featherN + ' leg' + (featherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (hitBefore * 100).toFixed(1) + '% → ' + (hitAfter * 100).toFixed(1) + '%' : '',
       cfFeatherNote: cfFeatherN ? 'Feathered ' + cfFeatherN + ' leg' + (cfFeatherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (cfHitBefore * 100).toFixed(1) + '% → ' + (function () { var h = 1; cfTicket.forEach(function (t) { h *= t.c.p; }); return (h * 100).toFixed(1); })() + '%' : '',
-      nflTop: { current: !isCollege ? 'page' : 'false', style: tabStyle(!isCollege), pick: go(st.nflLast || 'builder') },
-      isNfl: !isCollege,
+      nflTop: { current: !isCollege && st.page !== 'record' ? 'page' : 'false', style: tabStyle(!isCollege && st.page !== 'record'), pick: go(st.nflLast || 'builder') },
+      isNfl: !isCollege && st.page !== 'record',
+      isRecord: st.page === 'record',
+      recordTab: { current: st.page === 'record' ? 'page' : 'false', style: tabStyle(st.page === 'record'), pick: go('record') },
+      recSportVal: recSport, recSportOpts: [{ v: 'all', label: 'NFL + college' }, { v: 'nfl', label: 'NFL' }, { v: 'cfb', label: 'College' }], onRecSport: function (ev) { self.setState({ recSport: ev.target.value }); },
+      recMktVal: recMkt, recMktOpts: [{ v: 'all', label: 'All markets' }, { v: 'ml', label: 'Moneylines' }, { v: 'spread', label: 'Spreads' }, { v: 'total', label: 'Totals' }, { v: 'prop', label: 'Player props' }], onRecMkt: function (ev) { self.setState({ recMkt: ev.target.value }); },
+      recPerVal: recPer, recPerOpts: [{ v: 'week', label: 'Last 7 days' }, { v: 'month', label: 'Last 30 days' }, { v: 'season', label: 'Season' }], onRecPer: function (ev) { self.setState({ recPer: ev.target.value }); },
+      recWLP: allT.w + '-' + allT.l + '-' + allT.pu, recGradedStr: allT.n + ' graded pick' + (allT.n === 1 ? '' : 's'),
+      recHit: fmtPct(allT.hit), recExp: fmtPct(allT.exp),
+      recProfit: allT.n ? fmtMoney(allT.prof) : '—', recRoi: allT.n ? ((allT.prof / (10 * allT.n)) * 100).toFixed(1) + '%' : '—',
+      recProfitStyle: "font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: " + (allT.prof > 0 ? GREEN : allT.prof < 0 ? RED : TXT) + ';',
+      recDev: fmtDev(allT.dev), recDevW: fmtDev(allT.devW), recDevL: fmtDev(allT.devL),
+      recDevStyle: "font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: " + ((allT.dev || 0) > 0 ? GREEN : (allT.dev || 0) < 0 ? RED : TXT) + ';',
+      recPendingN: String(pendingP.length), recUpcomingN: String(upcomingP.length),
+      recEmpty: !gradedP.length, recByMkt: recByMkt, recRows: recRows, recPending: recPending, recPendingAny: recPending.length > 0,
       slotVal: slotSel, slotOpts: nflSlotOpts, onSlot: function (ev) { self.setState({ slot: ev.target.value, games: [] }); },
       cfSlotVal: cfSlotSel, cfSlotOpts: cfSlotOpts, onCfSlot: function (ev) { self.setState({ cfSlot: ev.target.value }); },
       cfTargetVal: String(st.cfTarget), cfTargetOpts: [{ v: 'safe', label: 'Safest' }, { v: '200', label: '+200' }, { v: '400', label: '+400' }, { v: '800', label: '+800' }, { v: '1500', label: '+1500' }, { v: '3000', label: '+3000' }, { v: '5000', label: '+5000' }],

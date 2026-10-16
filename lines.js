@@ -547,7 +547,7 @@
     return {
       nfl: { games: [], legs: [], mu: {}, inj: {}, screen: [], publicBoard: [], lineCheck: [], books: [], bookShort: [], bookDefault: 0, chip: 'NFL', count: 0 },
       cf: { games: [], legs: [], publicBoard: [], slate: [], chip: 'NCAAF', count: 0 },
-      status: 'loading', updated: null, source: '', booksAsOf: null, propsAsOf: null
+      status: 'loading', updated: null, source: '', booksAsOf: null, propsAsOf: null, picks: []
     };
   };
   root.BH = empty();
@@ -575,9 +575,10 @@
       soft(getJSON('data/props.json' + bust)),
       soft(getJSON('data/sgo-nfl.json' + bust)),
       soft(getJSON('data/sgo-cfb.json' + bust)),
+      soft(getJSON('data/picks.json' + bust)),
       soft(getJSON('data/splits.json' + bust)),
       soft(getJSON('data/meta.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], splits: r[4], meta: r[5] }; });
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {
@@ -586,6 +587,7 @@
         status: 'ok', source: feed.source,
         updated: feed.source === 'snapshot' && ex.meta && ex.meta.espn ? new Date(ex.meta.espn) : new Date(),
         booksAsOf: ex.books && ex.books.updated ? new Date(ex.books.updated) : null,
+        picks: ex.picks && ex.picks.picks ? ex.picks.picks : [], picksAsOf: ex.picks ? ex.picks.updated : null,
         propsAsOf: ex.sgo && ex.sgo.updated && ex.sgo.events && ex.sgo.events.length ? 'sgo:' + ex.sgo.updated : ex.props ? ex.props.asOf : null
       };
       root.BH = next;

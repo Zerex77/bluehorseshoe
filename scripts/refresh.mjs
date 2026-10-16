@@ -224,4 +224,10 @@ async function sgo(meta) {
 const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta), sgo(meta)]);
 results.forEach((r) => { if (r.status === 'rejected') { console.error(r.reason); meta.lastError = String(r.reason?.stack || r.reason).slice(0, 500); } });
 await writeFile('data/meta.json', JSON.stringify(meta));
+// Record and grade Horseshoe picks (scripts/track.mjs)
+try {
+  const { track } = await import('./track.mjs');
+  const t = await track();
+  if (t.errors.length) console.log('Tracker notes:', t.errors.slice(0, 5));
+} catch (e) { console.error('Tracker failed:', e); }
 if (results.every((r) => r.status === 'rejected')) process.exit(1);
