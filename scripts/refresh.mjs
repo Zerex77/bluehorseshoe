@@ -55,16 +55,18 @@ function slimInjuries(j) {
 async function espnBackup(meta) {
   const now = new Date();
   const end = new Date(now.getTime() + 6 * 864e5);
-  const [nfl, cfb, inj] = await Promise.all([
+  const [nfl, cfb, inj] = await Promise.allSettled([
     getJSON(ESPN + 'nfl/scoreboard'),
     getJSON(`${ESPN}college-football/scoreboard?groups=80&limit=400&dates=${ymd(now)}-${ymd(end)}`),
-    getJSON(ESPN + 'nfl/injuries').catch(() => null)
+    getJSON(ESPN + 'nfl/injuries')
   ]);
-  await writeFile('data/espn-nfl.json', JSON.stringify(slim(nfl.json)));
-  await writeFile('data/espn-cfb.json', JSON.stringify(slim(cfb.json)));
-  if (inj) await writeFile('data/espn-injuries.json', JSON.stringify(slimInjuries(inj.json)));
-  meta.espn = now.toISOString();
-  console.log(`ESPN backup: ${nfl.json.events?.length ?? 0} NFL, ${cfb.json.events?.length ?? 0} college games`);
+  const errs = [];
+  if (nfl.status === 'fulfilled') await writeFile('data/espn-nfl.json', JSON.stringify(slim(nfl.value.json))); else errs.push('nfl: ' + nfl.reason?.message);
+  if (cfb.status === 'fulfilled') await writeFile('data/espn-cfb.json', JSON.stringify(slim(cfb.value.json))); else errs.push('cfb: ' + cfb.reason?.message);
+  if (inj.status === 'fulfilled') await writeFile('data/espn-injuries.json', JSON.stringify(slimInjuries(inj.value.json))); else errs.push('injuries: ' + inj.reason?.message);
+  meta.espnErrors = errs;
+  if (nfl.status === 'fulfilled' || cfb.status === 'fulfilled') meta.espn = now.toISOString();
+  console.log(`ESPN backup: ${nfl.value?.json.events?.length ?? 0} NFL, ${cfb.value?.json.events?.length ?? 0} college games`, errs);
 }
 
 async function oddsApi(meta) {
@@ -99,6 +101,6 @@ async function oddsApi(meta) {
 
 const meta = await readJSON('data/meta.json', {});
 const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta)]);
-results.forEach((r) => { if (r.status === 'rejected') console.error(r.reason); });
+results.forEach((r) => { if (r.status === 'rejected') { console.error(r.reason); meta.lastError = String(r.reason?.stack || r.reason).slice(0, 500); } });
 await writeFile('data/meta.json', JSON.stringify(meta));
 if (results.every((r) => r.status === 'rejected')) process.exit(1);
