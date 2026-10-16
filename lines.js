@@ -113,7 +113,8 @@
         var det = [g(i, 'details.type'), g(i, 'details.detail')].filter(Boolean).join(', ');
         var row = { name: name, pos: pos, status: st, note: det || '' };
         byName[name] = row;
-        if (KEYPOS[pos]) list.push(row);
+        // Team-level flags: any QB status, other skill players only when out or doubtful (questionable backups are noise).
+        if (KEYPOS[pos] && (pos === 'QB' || st !== 'Questionable')) list.push(row);
       });
       list.sort(function (x, y) { return (KEYPOS[y.pos] * 10 + STATUS_RANK[y.status]) - (KEYPOS[x.pos] * 10 + STATUS_RANK[x.status]); });
       byTeam[t.displayName] = list;
@@ -205,7 +206,7 @@
         if (!have[lab]) {
           var pp = clamp(p + (toward ? bump : steam ? -bump : 0), 0.03, 0.97);
           legs.push({ g: e.id, k: 'line', mk: 'ml', label: lab, odds: ml, conf: clamp(Math.round(pp * 100) - (ti && ti.pos === 'QB' ? 8 : 0), 5, 92),
-            s: [pp >= 0.66 ? 1 : 0, side === 'h' ? 1 : 0, toward ? 1 : 0],
+            s: [pp >= 0.66 && ml >= -650 ? 1 : 0, side === 'h' ? 1 : 0, toward ? 1 : 0],
             note: T + ' ' + signed(side === 'a' ? o.aNow : -o.aNow) + ', no-vig ' + pct(p) + (toward ? ', ' + mvTxt : steam ? ', line moving away from them' : '') + (est ? '; price est. from spread' : '') });
           injMap[e.id + '|' + lab] = injEntry(ti, T);
         }
