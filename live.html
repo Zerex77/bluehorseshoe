@@ -228,7 +228,7 @@
     if (!m) return;
     try {
       var got = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))));
-      (got || []).forEach(function (s) { if (!slips.some(function (x) { return x.id === s.id; })) slips.push(s); });
+      (got || []).forEach(function (s) { var ix = slips.findIndex(function (x) { return x.id === s.id; }); if (ix === -1) slips.push(s); else slips[ix] = s; });
       save(KEY, slips);
     } catch (e) {}
     history.replaceState(null, '', location.pathname);
