@@ -105,6 +105,8 @@
   .hint code { color: var(--txt); }
   .chk { font-family: 'IBM Plex Mono', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 3px; max-height: 160px; overflow-y: auto; }
   .chk .ok { color: var(--green); } .chk .no { color: var(--amber); }
+  .shot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px; border: 1px dashed var(--line); border-radius: 8px; font-size: 12px; color: var(--mut); }
+  .shot.drag { border-color: var(--gold); color: var(--gold); }
   .acts { display: flex; gap: 8px; justify-content: flex-end; }
 
   body.m-ticker .scores, body.m-ticker .grid, body.m-ticker .empty { display: none; }
@@ -157,6 +159,11 @@
         <label>Name<input id="fName" placeholder="Friday night 3-legger"></label>
         <label>Stake ($)<input id="fStake" inputmode="decimal" placeholder="5"></label>
         <label>Odds (optional)<input id="fOdds" placeholder="+400"></label>
+      </div>
+      <div class="shot" id="shot" tabindex="0">
+        <button class="ctl" type="button" id="shotBtn">Read a Hard Rock screenshot</button>
+        <span id="shotMsg">or paste / drop the image here</span>
+        <input type="file" id="shotFile" accept="image/*" hidden>
       </div>
       <textarea id="fLegs" spellcheck="false" placeholder="Memphis ML&#10;Washington +3&#10;App State Coastal Under 48.5&#10;Bijan Robinson over 74.5 rush yds&#10;Puka Nacua 6+ receptions&#10;Ja'Marr Chase anytime TD"></textarea>
       <div class="hint">One leg per line. Name a team for sides and totals (<code>Purdue Under 50.5</code>). Props: <code>Player over 64.5 rush yds</code>, <code>Player 60+ rec yds</code>, <code>Player anytime TD</code>. Add a price at the end if you want (<code>Memphis ML -258</code>). Leave Odds blank to multiply the leg prices.</div>
@@ -232,6 +239,7 @@
     out.slice().forEach(function (x) {
       if (/state$/.test(x) && x.split(' ').length > 2) out.push(x.split(' ')[0] + ' state');
       if (x === 'appalachian state') out.push('app state', 'app st');
+      if (x === 'app state') out.push('appalachian state', 'appalachian st');
       if (/ st\.?$/.test(x)) out.push(x.replace(/ st\.?$/, ' state'));
     });
     return out.filter(function (x, i, arr) { return x.length >= 2 && arr.indexOf(x) === i; });
@@ -288,6 +296,62 @@
   ];
   function statOf(s) { s = s.toLowerCase(); for (var i = 0; i < STATS.length; i++) if (STATS[i][0].test(s)) return STATS[i][1]; return null; }
 
+  function lev(a, b) {
+    if (Math.abs(a.length - b.length) > 2) return 9;
+    var d = [], i, j;
+    for (i = 0; i <= a.length; i++) { d[i] = [i]; }
+    for (j = 1; j <= b.length; j++) d[0][j] = j;
+    for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+
+  // ---------- read a Hard Rock slip screenshot's text into legs
+  // Hard Rock lists each pick as a selection line ("Memphis", "Over 54.5") followed by an all-caps market line
+  // ("TO WIN", "TOTAL POINTS"), grouped under "Away @ Home" headers.
+  function hardRockText(raw) {
+    var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').trim(); }).filter(Boolean);
+    var out = { legs: [], stake: null, odds: null };
+    var groups = [], cur = null;
+    var isMarket = function (x) { return /^[A-Z][A-Z0-9 +&.'\-\/]{3,}$/.test(x) && /[A-Z]{2,}/.test(x) && !/^(BET|HARD ROCK|SGP|SGPMAX)$/.test(x); };
+    var junk = function (x) { return /qtr|quarter|half|final|go to event|\d+(st|nd|rd|th)\s*&|extrapoint|field goal|penalt|touchdown result|kickoff|timeout/i.test(x) || /^\W/.test(x); };
+    lines.forEach(function (x, i) {
+      var m;
+      if (out.odds == null && /parlay/i.test(x) && (m = /([+-]\d{3,6})\b/.exec(x))) out.odds = Number(m[1]);
+      if (out.stake == null && /wager/i.test(x)) {
+        var nx = (lines[i + 1] || '') + ' ' + x;
+        if ((m = /\$\s*([\d,]+(?:\.\d+)?)/.exec(nx))) out.stake = Number(m[1].replace(/,/g, ''));
+      }
+      var h = x.replace(/^[^A-Za-z]*([S$5][GOQ0@]P[:.]?\s*)?/i, '').replace(/\s*[+-]\d{2,6}\s*$/, '');
+      if (/\s@\s/.test(h) && !junk(h)) {
+        cur = { header: h, items: [] }; groups.push(cur); return;
+      }
+      if (isMarket(x) && i > 0) {
+        var sel = lines[i - 1];
+        if (!sel || junk(sel) || isMarket(sel)) return;
+        if (!cur) { cur = { header: '', items: [] }; groups.push(cur); }
+        cur.items.push({ sel: sel.replace(/\s+[+-]\d{3,6}$/, ''), mkt: x });
+      }
+    });
+    var STATWORDS = /(passing|rushing|receiving|reception|yards|yds|completions|attempts|touchdowns?|td|longest|carries|\+)/ig;
+    groups.forEach(function (g) {
+      var team = '';
+      g.items.forEach(function (it) { if (/TO WIN|MONEYLINE|SPREAD|HANDICAP/.test(it.mkt)) team = team || it.sel.replace(/\s+[+-]?\d+(\.\d+)?$/, ''); });
+      var ctx = team || g.header.split(/\s@\s/)[0];
+      g.items.forEach(function (it) {
+        var mk = it.mkt, sel = it.sel, t;
+        if (/TO WIN|MONEYLINE/.test(mk)) t = sel + ' ML';
+        else if (/SPREAD|HANDICAP|RUN LINE|PUCK LINE/.test(mk)) t = sel;
+        else if (/^TOTAL( POINTS)?$|GAME TOTAL/.test(mk)) t = ctx + ' ' + sel;
+        else if (/ANYTIME|TOUCHDOWN SCORER|TD SCORER/.test(mk)) t = sel + ' anytime TD';
+        else if (/^(over|under)\s/i.test(sel)) { var who = mk.replace(STATWORDS, ' ').replace(/\s+/g, ' ').trim(); t = (who ? who + ' ' : '') + sel + ' ' + mk.toLowerCase().replace(who.toLowerCase(), '').trim(); }
+        else t = sel + ' ' + mk.toLowerCase();
+        out.legs.push(t.replace(/\s+/g, ' ').trim());
+      });
+    });
+    return out;
+  }
+
   function findTeams(text) {
     var low = ' ' + text.toLowerCase().replace(/[^a-z0-9&'. ]/g, ' ') + ' ';
     var hits = [];
@@ -304,6 +368,22 @@
         });
       });
     });
+    if (!hits.length) {
+      // screenshots misread letters ("Woshington"), so allow a couple of typos on longer names
+      var words = low.trim().split(/\s+/);
+      Object.keys(games).forEach(function (id) {
+        var g = games[id];
+        ['a', 'h'].forEach(function (side) {
+          aliases(g[side]).forEach(function (al) {
+            if (al.length < 6) return;
+            var n = al.split(' ').length, tol = al.length >= 10 ? 2 : 1;
+            for (var i = 0; i + n <= words.length; i++) {
+              if (lev(words.slice(i, i + n).join(' '), al) <= tol) { hits.push({ g: id, side: side, len: al.length, at: low.indexOf(words[i]), al: al }); break; }
+            }
+          });
+        });
+      });
+    }
     hits.sort(function (x, y) { return y.len - x.len; });
     // drop hits contained inside a longer hit ("Penn" inside "Penn State")
     var keep = [];
@@ -733,6 +813,79 @@
     }).join('');
   }
   $('fLegs').addEventListener('input', check);
+
+  // ---------- screenshot import (text recognition runs in this browser, free)
+  var ocrLib = null;
+  function loadOcr() {
+    if (ocrLib) return ocrLib;
+    ocrLib = new Promise(function (res, rej) {
+      var sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+      sc.onload = function () { res(window.Tesseract); }; sc.onerror = function () { ocrLib = null; rej(new Error('load')); };
+      document.head.appendChild(sc);
+    });
+    return ocrLib;
+  }
+  function prepImage(file) {
+    return new Promise(function (res, rej) {
+      var img = new Image();
+      img.onload = function () {
+        var k = img.width < 900 ? 2 : 1;
+        var c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
+        var x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+        var d = x.getImageData(0, 0, c.width, c.height), px = d.data, sum = 0;
+        for (var i = 0; i < px.length; i += 4) sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+        var dark = sum / (px.length / 4) < 128;
+        for (var j = 0; j < px.length; j += 4) {
+          var v = 0.299 * px[j] + 0.587 * px[j + 1] + 0.114 * px[j + 2];
+          if (dark) v = 255 - v;
+          v = v < 150 ? 0 : 255;
+          px[j] = px[j + 1] = px[j + 2] = v;
+        }
+        x.putImageData(d, 0, 0);
+        URL.revokeObjectURL(img.src);
+        res(c);
+      };
+      img.onerror = rej;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  function readShot(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    var msg = $('shotMsg');
+    msg.textContent = 'Reading the slip… (first time takes a few seconds)';
+    Promise.all([loadOcr(), prepImage(file)]).then(function (r) {
+      var T = r[0];
+      return T.createWorker('eng').then(function (w) {
+        return w.setParameters({ tessedit_pageseg_mode: '4' }).then(function () { return w.recognize(r[1]); })
+          .then(function (out) { w.terminate(); return out.data.text; });
+      });
+    }).then(function (text) {
+      var got = hardRockText(text);
+      if (!got.legs.length) { msg.textContent = "Couldn't find any picks in that image. Try a sharper screenshot, or type the legs."; return; }
+      $('fLegs').value = got.legs.join('\n');
+      if (got.stake) $('fStake').value = got.stake;
+      if (got.odds) $('fOdds').value = (got.odds > 0 ? '+' : '') + got.odds;
+      if (/^Slip \d+$/.test($('fName').value)) $('fName').value = got.legs.length + '-leg parlay' + (got.odds ? ' ' + (got.odds > 0 ? '+' : '') + got.odds : '');
+      msg.textContent = 'Found ' + got.legs.length + ' legs. Check them below, fix anything misread, then Save.';
+      check();
+    }).catch(function () { msg.textContent = "Couldn't read that image right now. Type the legs instead."; });
+  }
+  $('shotBtn').onclick = function () { $('shotFile').click(); };
+  $('shotFile').onchange = function () { readShot(this.files[0]); this.value = ''; };
+  var shot = $('shot');
+  ['dragenter', 'dragover'].forEach(function (t) { shot.addEventListener(t, function (e) { e.preventDefault(); shot.classList.add('drag'); }); });
+  ['dragleave', 'drop'].forEach(function (t) { shot.addEventListener(t, function (e) { e.preventDefault(); shot.classList.remove('drag'); }); });
+  shot.addEventListener('drop', function (e) { readShot(e.dataTransfer.files[0]); });
+  $('dlg').addEventListener('paste', function (e) {
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    for (var i = 0; i < items.length; i++) if (items[i].type.indexOf('image') === 0) { e.preventDefault(); readShot(items[i].getAsFile()); return; }
+    var t = e.clipboardData && e.clipboardData.getData('text');
+    if (t && /hardrock\.bet|hardrock:\/\//i.test(t)) {
+      e.preventDefault();
+      $('shotMsg').textContent = "Hard Rock share links only carry bet ID numbers, not the picks. Share or screenshot the slip image instead.";
+    }
+  });
   $('add').onclick = function () { openEditor(null); };
   $('cancel').onclick = function () { $('dlg').close(); };
   $('del').onclick = function () { slips = slips.filter(function (s) { return s.id !== editing; }); save(KEY, slips); $('dlg').close(); render(); };
@@ -764,7 +917,7 @@
   applyPrefs();
   render();
   tick();
-  window.BHLive = { parseLeg: parseLeg, evalLeg: evalLeg, playerStat: playerStat, games: games, summaries: summaries, render: render, readGame: readGame };
+  window.BHLive = { hardRockText: hardRockText, parseLeg: parseLeg, evalLeg: evalLeg, playerStat: playerStat, games: games, summaries: summaries, render: render, readGame: readGame };
 })();
 </script>
 </body>
