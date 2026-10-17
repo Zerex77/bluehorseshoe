@@ -352,42 +352,50 @@
   }
 
   function hardRockText(raw) {
+    var DATE = /^.*?\b(today|tomorrow|tonight|mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s*\d{1,2}[:.]\d{2}\s*[ap]\.?m\.?\s*(e[sd]t|c[sd]t|m[sd]t|p[sd]t)?\s*/i;
     var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').trim(); }).filter(Boolean);
     var out = { legs: [], stake: null, odds: null };
     var groups = [], cur = null;
-    var isMarket = function (x) { return /^[A-Z][A-Z0-9 +&.'\-\/]{3,}$/.test(x) && /[A-Z]{2,}/.test(x) && !/^(BET|HARD ROCK|SGP|SGPMAX)$/.test(x); };
-    var junk = function (x) { return /qtr|quarter|half|final|go to event|\d+(st|nd|rd|th)\s*&|extrapoint|field goal|penalt|touchdown result|kickoff|timeout/i.test(x) || /^\W/.test(x); };
+    var isMarket = function (x) { return /^[A-Z][A-Z0-9 +&.'\-\/]{3,}$/.test(x) && /[A-Z]{2,}/.test(x) && !/^(BET|HARD ROCK|SGP|SGPMAX|PARLAY)$/.test(x) && !/(^|\s)[+-]\d/.test(x); };
+    var knownMarket = function (x) { return /^(TO WIN|MONEY ?LINE|(POINT )?SPREAD|TOTAL( POINTS)?|GAME TOTAL|ALT(ERNATE)? .*|.*(YARDS|RECEPTIONS|COMPLETIONS|ATTEMPTS)|ANYTIME.*|.*SCORER)$/.test(x); };
+    var junk = function (x) { return /qtr|quarter|half|final|go to event|\d+(st|nd|rd|th)\s*&|extrapoint|field goal|penalt|touchdown result|kickoff|timeout|wager|payout|parlay/i.test(x) || /^\W/.test(x); };
+    var isDate = function (x) { return DATE.test(x) && !x.replace(DATE, '').trim(); };
+    var matchup = function (x) { var m = /^(.+?)\s+(?:vs\.?|v\.?|@|at)\s+(.+)$/i.exec(x.replace(/^[^A-Za-z]+/, '')); return m && !isMarket(x) && !/[+-]\d/.test(x) ? m[1] + ' ' + m[2] : null; };
     lines.forEach(function (x, i) {
       var m;
       if (out.odds == null && /parlay/i.test(x) && (m = /([+-]\d{3,6})\b/.exec(x))) out.odds = Number(m[1]);
       if (out.stake == null && /wager/i.test(x)) {
-        var nx = (lines[i + 1] || '') + ' ' + x;
-        if ((m = /\$\s*([\d,]+(?:\.\d+)?)/.exec(nx))) out.stake = Number(m[1].replace(/,/g, ''));
+        // "$20  $6,989.30" sits on the next line: the wager is the first amount ($ often reads as S)
+        var nx = x.replace(/.*wager/i, '') + ' ' + (lines[i + 1] || '');
+        if ((m = /(?:^|\s)[$S5]?\s*(\d[\d,]*(?:\.\d+)?)/.exec(nx))) out.stake = Number(m[1].replace(/,/g, ''));
       }
       var h = x.replace(/^[^A-Za-z]*([S$5][GOQ0@]P[:.]?\s*)?/i, '').replace(/\s*[+-]\d{2,6}\s*$/, '');
-      if (/\s@\s/.test(h) && !junk(h)) {
+      if (/\s@\s/.test(h) && !junk(h) && !(i > 0 && isMarket(lines[i - 1]))) {
         cur = { header: h, items: [] }; groups.push(cur); return;
       }
       if (isMarket(x) && i > 0) {
-        var sel = lines[i - 1];
-        if (!sel || junk(sel) || isMarket(sel)) return;
+        var sel = lines[i - 1].replace(DATE, '').trim();   // a date line can get glued onto the pick
+        if (!sel || junk(sel) || knownMarket(sel) || isDate(lines[i - 1])) return;
         if (!cur) { cur = { header: '', items: [] }; groups.push(cur); }
-        cur.items.push({ sel: sel.replace(/\s+[+-]\d{3,6}$/, ''), mkt: x });
+        var om = /\s+([+-]\d{3,6})$/.exec(sel);
+        var mu = matchup(lines[i + 1] || '') || matchup(lines[i + 2] || '');
+        cur.items.push({ sel: om ? sel.slice(0, om.index) : sel, odds: om ? om[1] : '', mkt: x, matchup: mu });
       }
     });
     var STATWORDS = /(passing|rushing|receiving|reception|yards|yds|completions|attempts|touchdowns?|td|longest|carries|\+)/ig;
     groups.forEach(function (g) {
       var team = '';
       g.items.forEach(function (it) { if (/TO WIN|MONEYLINE|SPREAD|HANDICAP/.test(it.mkt)) team = team || it.sel.replace(/\s+[+-]?\d+(\.\d+)?$/, ''); });
-      var ctx = team || g.header.split(/\s@\s/)[0];
       g.items.forEach(function (it) {
         var mk = it.mkt, sel = it.sel, t;
+        // each pick's own "Team vs Team" line wins; same-game slips fall back to the group's teams
+        var ctx = it.matchup || (g.header ? team || g.header.split(/\s@\s/)[0] : '');
         if (/TO WIN|MONEYLINE/.test(mk)) t = sel + ' ML';
         else if (/SPREAD|HANDICAP|RUN LINE|PUCK LINE/.test(mk)) t = sel;
-        else if (/^TOTAL( POINTS)?$|GAME TOTAL/.test(mk)) t = ctx + ' ' + sel;
+        else if (/^TOTAL( POINTS)?$|GAME TOTAL/.test(mk)) t = (ctx ? ctx + ' ' : '') + sel;
         else if (/ANYTIME|TOUCHDOWN SCORER|TD SCORER/.test(mk)) t = sel + ' anytime TD';
         else t = propText(sel, mk) || (sel + ' ' + mk.toLowerCase());
-        out.legs.push(t.replace(/\s+/g, ' ').trim());
+        out.legs.push((t + (it.odds ? ' ' + it.odds : '')).replace(/\s+/g, ' ').trim());
       });
     });
     return out;
@@ -411,7 +419,7 @@
     });
     if (!hits.length) {
       // screenshots misread letters ("Woshington"), so allow a couple of typos on longer names
-      var words = low.trim().split(/\s+/);
+      var words = low.trim().split(/\s+/).filter(function (w) { return !/^(ml|moneyline|over|under|o|u|to|win|spread|total|points|pk|[\d.+-]+)$/.test(w); });
       Object.keys(games).forEach(function (id) {
         var g = games[id];
         ['a', 'h'].forEach(function (side) {

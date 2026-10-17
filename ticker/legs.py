@@ -141,7 +141,7 @@ def find_teams(text, games):
                     continue
                 hits.append({'g': gid, 'side': side, 'len': len(al), 'at': m.start(), 'al': al})
     if not hits:
-        words = low.split()
+        words = [w for w in low.split() if not re.match(r'^(ml|moneyline|over|under|o|u|to|win|spread|total|points|pk|[\d.+-]+)$', w)]
         for gid, g in games.items():
             for side in ('a', 'h'):
                 for al in aliases(g[side]):
