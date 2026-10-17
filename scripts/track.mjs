@@ -1,6 +1,9 @@
 // Horseshoe pick tracker. Runs in GitHub Actions after each refresh.
-// 1) Records every pick the Horseshoe signals on (same rules as the site), keeping the last pre-kickoff line.
-// 2) After games go final, grades each pick against the real result and records how far it landed from the line.
+// 1) Records every pick the Horseshoe signals on (same rules as the site). Each pick keeps the line it was first
+//    flagged at and follows the line until kickoff; it's graded at the closing (last pre-kickoff) line.
+// 2) One pick per game per market: when both sides (or a team's ML and spread) signal, only the stronger one counts.
+// 3) Closing line value: did the line keep moving our way between the first flag and kickoff?
+// 4) After games go final, grades each pick against the real result and records how far it landed from the line.
 import { readFile, writeFile } from 'node:fs/promises';
 
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/football/';
@@ -29,23 +32,46 @@ export async function track(log = console.log) {
   }
 
   // ---------- 1) record
+  // Older rows were keyed by label (which changes when the line moves); re-key them to the stable form.
+  const rank = (p) => (p.result ? 8 : 0) + (p.locked && p.active ? 4 : 0) + (p.active ? 2 : 0);
+  const winners = new Map();
+  for (const p of picks) {
+    const k = stableKey(p.sport, p.g, p) || p.key;
+    const cur = winners.get(k);
+    if (!cur || rank(p) > rank(cur) || (rank(p) === rank(cur) && (p.lastSeen || '') > (cur.lastSeen || ''))) winners.set(k, p);
+  }
+  picks.length = 0;
+  byKey.clear();
+  for (const [k, p] of winners) {
+    p.key = k;
+    if (p.firstLine === undefined) {
+      // flagged before this was tracked: games still to come start their closing-line clock now
+      if (p.locked) { p.firstLine = null; p.firstOdds = null; } else { p.firstLine = p.line; p.firstOdds = p.odds; p.firstLabel = p.label; }
+    }
+    picks.push(p); byKey.set(k, p);
+  }
+
   const seen = new Set();
   const record = (sport, l, label) => {
     const e = events[sport + ':' + l.g];
     if (!e || e.state !== 'pre') return;
-    const key = `${sport}|${l.g}|${label}`;
-    seen.add(key);
     const parsed = parseLeg(sport, l, label, e);
     if (!parsed) return;
+    const key = stableKey(sport, l.g, parsed);
+    seen.add(key);
     const p = l.p != null ? l.p : (1 / dec(l.odds)) * 0.955;
-    const row = byKey.get(key) || { key, sport, g: l.g, label, firstSeen: new Date(now).toISOString() };
+    let row = byKey.get(key);
+    if (!row) {
+      row = { key, sport, g: l.g, firstSeen: new Date(now).toISOString(), firstLine: parsed.line, firstOdds: l.odds, firstLabel: label };
+      byKey.set(key, row); picks.push(row);
+    }
     if (row.locked) return;
     Object.assign(row, parsed, {
-      date: e.date, game: e.short, away: e.a.shortDisplayName, home: e.h.shortDisplayName,
+      label, date: e.date, game: e.short, away: e.a.shortDisplayName, home: e.h.shortDisplayName,
       odds: l.odds, p: Math.round(p * 1000) / 1000, imp: Math.round((1 / dec(l.odds)) * 1000) / 1000,
-      conf: l.conf, s: l.s, note: l.note, lastSeen: new Date(now).toISOString(), active: true
+      conf: l.conf, s: l.s, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
+      ...moveOf(parsed, e)
     });
-    if (!byKey.has(key)) { byKey.set(key, row); picks.push(row); }
   };
   if (nflSb) {
     const nfl = T.buildNfl(nflSb, inj, { props, sgo });
@@ -67,9 +93,12 @@ export async function track(log = console.log) {
     if (p.locked) continue;
     const e = events[p.sport + ':' + p.g];
     const started = e ? e.state !== 'pre' : now > Date.parse(p.date);
-    if (started) { p.locked = true; p.lockedAt = new Date(now).toISOString(); }
-    else if (!seen.has(p.key)) p.active = false; // signal faded before kickoff
+    if (started) {
+      p.locked = true; p.lockedAt = new Date(now).toISOString();
+      p.closeLine = p.line; p.closeOdds = p.odds; p.clv = clvOf(p);
+    } else if (!seen.has(p.key)) p.active = false; // signal faded before kickoff
   }
+  dedupe(picks);
 
   // ---------- 2) grade
   const sbCache = {}, sumCache = {};
@@ -129,6 +158,60 @@ export async function track(log = console.log) {
   await writeFile('data/picks.json', JSON.stringify({ updated: new Date(now).toISOString(), picks: keep }));
   log(`Tracker: ${keep.length} picks on file, ${graded} graded this run${errors.length ? ', ' + errors.length + ' issues: ' + errors.slice(0, 3).join(' | ') : ''}`);
   return { graded, errors };
+}
+
+// One row per pick, no matter how the line moves: game + market + side (or player + stat for props).
+function stableKey(sport, g, p) {
+  if (!p || !p.market) return null;
+  if (p.market === 'prop') return `${sport}|${g}|prop|${normName(p.player)}|${p.what}|${p.side}`;
+  if (p.market === 'total') return `${sport}|${g}|total|${p.dir}`;
+  return `${sport}|${g}|${p.market}|${p.side}`;
+}
+
+// How far the market moved before we flagged it, and whether it was toward this pick.
+function moveOf(p, e) {
+  const o = e.odds;
+  if (!o) return {};
+  if (p.market === 'total' && o.tot != null && o.tOpen != null) {
+    const m = o.tot - o.tOpen;
+    return { move: Math.abs(m), moveToward: m === 0 ? null : (m > 0) === (p.dir === 'Over') };
+  }
+  if ((p.market === 'spread' || p.market === 'ml') && o.aNow != null && o.aOpen != null) {
+    const m = o.aOpen - o.aNow; // + = money on the away team
+    return { move: Math.abs(m), moveToward: m === 0 ? null : (m > 0) === (p.side === 'a') };
+  }
+  return {};
+}
+
+// Closing line value: positive pts = the line kept moving our way after we flagged it.
+function clvOf(p) {
+  if (p.firstLine == null || p.firstOdds == null) return null;
+  const impF = 1 / dec(p.firstOdds), impC = 1 / dec(p.odds);
+  let pts = null;
+  if (p.market === 'spread') pts = p.firstLine - p.line;
+  else if (p.market === 'total') pts = p.dir === 'Over' ? p.line - p.firstLine : p.firstLine - p.line;
+  else if (p.market === 'prop' && p.side !== 'yes') pts = p.line - p.firstLine;
+  const prob = Math.round((impC - impF) * 1000) / 10; // percentage points of implied win chance
+  const beat = pts ? (pts > 0 ? 'yes' : 'no') : prob > 0.5 ? 'yes' : prob < -0.5 ? 'no' : 'even';
+  return { pts: pts == null ? null : Math.round(pts * 10) / 10, prob, beat };
+}
+
+// One pick per game per market: a team's ML and spread, and both sides of a game, share one slot; totals have their own.
+// The pick with more signals wins the slot, then the bigger edge over the price.
+function dedupe(picks) {
+  const slot = (p) => p.market === 'prop' ? p.key : `${p.sport}|${p.g}|${p.market === 'total' ? 'total' : 'side'}`;
+  const score = (p) => (p.s ? p.s[0] + p.s[1] + p.s[2] : 0) * 10 + ((p.p || 0) - (p.imp || 0)) * 100 + (p.conf || 0) / 1000;
+  const best = {};
+  for (const p of picks) {
+    if (!p.active) continue;
+    const k = slot(p);
+    if (!best[k] || score(p) > score(best[k])) best[k] = p;
+  }
+  for (const p of picks) {
+    const b = best[slot(p)];
+    if (!p.active || !b || b === p) { delete p.dup; delete p.dupOf; }
+    else { p.dup = true; p.dupOf = b.key; }
+  }
 }
 
 function parseLeg(sport, l, label, e) {

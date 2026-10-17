@@ -944,7 +944,7 @@ button{font:inherit}
             <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
             <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
               <h1 style="margin: 0; font-size: 20px; font-weight: 700;">The Horseshoe's track record</h1>
-              <span style="font-size: 13px; color: #5B6472;">Every pick it signals on is locked at kickoff and graded after the final. Margin shows how far the result landed from the line.</span>
+              <span style="font-size: 13px; color: #5B6472;">Every pick it signals on is locked at kickoff and graded after the final, one pick per game per market. Margin shows how far the result landed from the line.</span>
             </div>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px 14px;">
@@ -964,10 +964,11 @@ button{font:inherit}
           <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recHit}}</span><span style="font-size: 11px; color: #6B7280;">Horseshoe expected {{recExp}}</span></div>
           <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Profit, $10 a pick</span><span style="{{recProfitStyle}}">{{recProfit}}</span><span style="font-size: 11px; color: #6B7280;">ROI {{recRoi}}</span></div>
           <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Avg margin vs line</span><span style="{{recDevStyle}}">{{recDev}}</span><span style="font-size: 11px; color: #6B7280;">wins {{recDevW}} · losses {{recDevL}}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Beat the closing line</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recClv}}</span><span style="font-size: 11px; color: #6B7280;">{{recClvSub}}</span></div>
           <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Waiting on results</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recPendingN}}</span><span style="font-size: 11px; color: #6B7280;">{{recUpcomingN}} more lock at kickoff</span></div>
         </div>
         <sc-if value="{{recEmpty}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No graded picks yet for this view. Picks are recorded every 15 minutes and graded within about 15 minutes of each final.</div>
+          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No graded picks yet for this view. Picks are recorded every 10 minutes and graded within about 10 minutes of each final.</div>
         </sc-if>
         <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
           <sc-for list="{{recByMkt}}" as="bm" hint-placeholder-count="4">
@@ -981,6 +982,25 @@ button{font:inherit}
             </div>
           </sc-for>
         </div>
+        <sc-if value="{{recBreakAny}}" hint-placeholder-val="{{ true }}">
+          <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">What's working</h2>
+          <span style="font-size: 12px; color: #5B6472; margin-top: -6px;">Small samples swing a lot. Patterns mean something after a few hundred picks; beating the closing line shows up sooner.</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 8px;">
+            <sc-for list="{{recBreak}}" as="bg" hint-placeholder-count="4">
+              <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">{{bg.title}}</span>
+                <sc-for list="{{bg.rows}}" as="br" hint-placeholder-count="2">
+                  <div style="display: flex; align-items: baseline; gap: 10px; font-size: 13px;">
+                    <span style="flex: 1; min-width: 0;">{{br.label}}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; min-width: 48px; text-align: right;">{{br.wlp}}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B7280; min-width: 48px; text-align: right;">{{br.hit}}</span>
+                    <span style="{{br.profitStyle}} min-width: 64px; text-align: right;">{{br.profit}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
         <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">Graded picks</h2>
         <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
           <sc-for list="{{recRows}}" as="rr" hint-placeholder-count="10">
@@ -1012,9 +1032,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016203828';</script>
-<script src="runtime.js?v=20261016203828"></script>
-<script src="lines.js?v=20261016203828"></script>
+<script>window.BH_VERSION='20261017164930';</script>
+<script src="runtime.js?v=20261017164930"></script>
+<script src="lines.js?v=20261017164930"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1842,7 +1862,7 @@ class Component extends DCLogic {
     var perCut = recPer === 'week' ? 7 : recPer === 'month' ? 30 : 400;
     var nowMs = Date.now();
     var inView = PK.filter(function (p) {
-      if (!p.active) return false;
+      if (!p.active || p.dup) return false; // one pick per game per market
       if (recSport !== 'all' && p.sport !== recSport) return false;
       if (recMkt !== 'all' && p.market !== recMkt) return false;
       return nowMs - Date.parse(p.date) < perCut * 864e5;
@@ -1872,6 +1892,44 @@ class Component extends DCLogic {
       var t = tally(gradedP.filter(function (p) { return p.market === k; }));
       return { label: mktNames2[k], n: String(t.n), wlp: t.w + '-' + t.l + '-' + t.pu, hit: fmtPct(t.hit), exp: fmtPct(t.exp), profit: t.n ? fmtMoney(t.prof) : '—', profitStyle: 'font-family: IBM Plex Mono, monospace; font-weight: 600; color: ' + (t.prof > 0 ? GREEN : t.prof < 0 ? RED : MUTED) + ';', dev: fmtDev(t.dev), has: t.n > 0 };
     }).filter(function (r) { return r.has || recMkt === 'all'; });
+    // ---- closing line value + what's working
+    var withClv = inView.filter(function (p) { return p.locked && p.clv && p.clv.beat !== 'even'; });
+    var clvBeat = withClv.filter(function (p) { return p.clv.beat === 'yes'; }).length;
+    var clvPts = inView.filter(function (p) { return p.locked && p.clv && p.clv.pts != null; });
+    var clvAvg = clvPts.length ? clvPts.reduce(function (a, p) { return a + p.clv.pts; }, 0) / clvPts.length : null;
+    var moveOfP = function (p) {
+      if (p.move != null) return { m: p.move, toward: p.moveToward };
+      var n = p.note || '', m;
+      if ((m = /moved ([\d.]+) \u2192 ([\d.]+)/.exec(n))) return { m: Math.abs(+m[2] - +m[1]), toward: true };
+      if ((m = /line moved ([\d.]+) (pts? )?toward/.exec(n))) return { m: +m[1], toward: true };
+      if ((m = /Opened ([+-]?[\d.]+), now ([+-]?[\d.]+)/.exec(n))) return { m: Math.abs(+m[2] - +m[1]), toward: true };
+      return { m: 0, toward: null };
+    };
+    var sigN = function (p) { return p.s ? p.s[0] + p.s[1] + p.s[2] : 0; };
+    var isFav = function (p) { return p.market === 'spread' ? p.line < 0 : p.market === 'ml' ? (p.odds || 0) < 0 : null; };
+    var bRow = function (label, arr) {
+      var t = tally(arr);
+      return { label: label, n: String(t.n), wlp: t.w + '-' + t.l + (t.pu ? '-' + t.pu : ''), hit: fmtPct(t.hit), profit: t.n ? fmtMoney(t.prof) : '—',
+        profitStyle: 'font-family: IBM Plex Mono, monospace; font-size: 13px; font-weight: 600; color: ' + (t.prof > 0 ? GREEN : t.prof < 0 ? RED : MUTED) + ';', has: t.n > 0 };
+    };
+    var bGroup = function (title, rows) { rows = rows.filter(function (r) { return r.has; }); return rows.length ? { title: title, rows: rows } : null; };
+    var gp = gradedP;
+    var recBreak = [
+      bGroup('Signals behind the pick', [3, 2, 1].map(function (k) { return bRow(k + ' of 3 signals', gp.filter(function (p) { return sigN(p) === k; })); })),
+      bGroup('Favorite or underdog', [bRow('Favorites', gp.filter(function (p) { return isFav(p) === true; })), bRow('Underdogs', gp.filter(function (p) { return isFav(p) === false; }))]),
+      bGroup('Totals', [bRow('Overs', gp.filter(function (p) { return p.market === 'total' && p.dir === 'Over'; })), bRow('Unders', gp.filter(function (p) { return p.market === 'total' && p.dir === 'Under'; }))]),
+      bGroup('Line movement before the pick', [
+        bRow('Steady', gp.filter(function (p) { return p.market !== 'prop' && moveOfP(p).m < 1; })),
+        bRow('Moved 1–2.5', gp.filter(function (p) { var m = moveOfP(p).m; return p.market !== 'prop' && m >= 1 && m < 3; })),
+        bRow('Moved 3+', gp.filter(function (p) { return p.market !== 'prop' && moveOfP(p).m >= 3; }))]),
+      bGroup('Closing line', [bRow('Beat the closing line', gp.filter(function (p) { return p.clv && p.clv.beat === 'yes'; })), bRow('Line moved against us', gp.filter(function (p) { return p.clv && p.clv.beat === 'no'; }))])
+    ].filter(Boolean);
+    var clvText = function (p) {
+      if (!p.clv) return '';
+      var f = p.market === 'ml' ? self.fmtOdds(p.firstOdds) + ' → ' + self.fmtOdds(p.closeOdds) : (p.firstLine + ' → ' + p.closeLine);
+      var v = p.clv.pts != null && p.clv.pts !== 0 ? (p.clv.pts > 0 ? '+' : '') + p.clv.pts + ' pts' : (p.clv.prob > 0 ? '+' : '') + p.clv.prob + '% win chance';
+      return ' · flagged ' + f + ' (' + (p.clv.beat === 'yes' ? 'beat close ' : p.clv.beat === 'no' ? 'close went against, ' : 'even, ') + v + ')';
+    };
     var unitOf = function (p) { return p.market === 'prop' ? (/yds|longest/.test(p.what) ? ' yds' : '') : ' pts'; };
     var whenOf = function (p) { try { return new Date(p.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' }); } catch (e) { return ''; } };
     var detailOf = function (p) {
@@ -1882,7 +1940,7 @@ class Component extends DCLogic {
     };
     var chipFor = function (r) { var c = r === 'win' ? [GREEN, '#EAF6EF'] : r === 'loss' ? [RED, '#FDEEEE'] : [MUTED, '#EEF0F3']; return 'flex-shrink: 0; min-width: 44px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; color: ' + c[0] + '; background: ' + c[1] + ';'; };
     var recRows = gradedP.slice().sort(function (a, b) { return Date.parse(b.gradedAt || b.date) - Date.parse(a.gradedAt || a.date); }).slice(0, 150).map(function (p) {
-      return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p), detail: detailOf(p), chip: p.result, chipStyle: chipFor(p.result),
+      return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p), detail: detailOf(p) + clvText(p), chip: p.result, chipStyle: chipFor(p.result),
         devStr: p.market === 'ml' ? '' : fmtDev(p.dev) + unitOf(p), devStyle: 'flex-shrink: 0; font-family: IBM Plex Mono, monospace; font-size: 13px; font-weight: 700; color: ' + ((p.dev || 0) > 0 ? GREEN : (p.dev || 0) < 0 ? RED : MUTED) + ';' };
     });
     var recPending = pendingP.sort(function (a, b) { return Date.parse(a.date) - Date.parse(b.date); }).slice(0, 60).map(function (p) { return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p) }; });
@@ -1923,7 +1981,9 @@ class Component extends DCLogic {
       recDev: fmtDev(allT.dev), recDevW: fmtDev(allT.devW), recDevL: fmtDev(allT.devL),
       recDevStyle: "font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: " + ((allT.dev || 0) > 0 ? GREEN : (allT.dev || 0) < 0 ? RED : TXT) + ';',
       recPendingN: String(pendingP.length), recUpcomingN: String(upcomingP.length),
-      recEmpty: !gradedP.length, recByMkt: recByMkt, recRows: recRows, recPending: recPending, recPendingAny: recPending.length > 0,
+      recEmpty: !gradedP.length, recByMkt: recByMkt, recBreak: recBreak, recBreakAny: recBreak.length > 0,
+      recClv: withClv.length ? Math.round(clvBeat / withClv.length * 100) + '%' : '—',
+      recClvSub: withClv.length ? clvBeat + ' of ' + withClv.length + ' locked picks' + (clvAvg != null ? ' · avg ' + fmtDev(clvAvg) + ' pts' : '') : 'starts with today\'s picks', recRows: recRows, recPending: recPending, recPendingAny: recPending.length > 0,
       slotVal: slotSel, slotOpts: nflSlotOpts, onSlot: function (ev) { self.setState({ slot: ev.target.value, games: [] }); },
       cfSlotVal: cfSlotSel, cfSlotOpts: cfSlotOpts, onCfSlot: function (ev) { self.setState({ cfSlot: ev.target.value }); },
       cfTargetVal: String(st.cfTarget), cfTargetOpts: [{ v: 'safe', label: 'Safest' }, { v: '200', label: '+200' }, { v: '400', label: '+400' }, { v: '800', label: '+800' }, { v: '1500', label: '+1500' }, { v: '3000', label: '+3000' }, { v: '5000', label: '+5000' }],
