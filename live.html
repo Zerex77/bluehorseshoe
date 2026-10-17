@@ -75,11 +75,30 @@
   .seg i.s-win, .seg i.s-good { background: var(--green); } .seg i.s-close { background: var(--amber); } .seg i.s-bad, .seg i.s-lost { background: var(--red); }
   .seg i.s-win { box-shadow: 0 0 6px var(--green); }
   .legs { display: flex; flex-direction: column; padding: 4px 0 6px; }
+  .gg + .gg { border-top: 1px solid var(--line); }
+  .gh { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 8px 12px 4px; font-family: 'IBM Plex Mono', monospace; font-size: calc(13px * var(--fs)); }
+  .gh .tm { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .gh .tm.r { justify-content: flex-end; }
+  .gh .ab { color: var(--mut); font-weight: 600; }
+  .gh b { font-size: calc(18px * var(--fs)); font-weight: 700; color: var(--mut); }
+  .gh b.up { color: var(--txt); }
+  .gh .gc { display: flex; flex-direction: column; align-items: center; font-size: calc(11px * var(--fs)); color: var(--mut); text-align: center; white-space: nowrap; }
+  .gh.in .gc { color: var(--red); font-weight: 600; }
+  .gh .gc em { font-style: normal; color: var(--red); font-weight: 700; }
+  .gh .gc small { color: var(--mut); font-weight: 400; font-size: calc(10px * var(--fs)); }
+  .ball { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); display: inline-block; }
+  .glg { width: calc(24px * var(--fs)); height: calc(24px * var(--fs)); object-fit: contain; flex-shrink: 0; }
+  .lg { width: calc(20px * var(--fs)); height: calc(20px * var(--fs)); object-fit: contain; flex-shrink: 0; display: inline-block; }
+  .lg.ph { border-radius: 50%; border: 1px dashed var(--grey); }
+  .lg.duo { position: relative; }
+  .mini { position: absolute; width: 70%; height: 70%; object-fit: contain; }
+  .duo .mini:first-child { left: 0; top: 0; } .duo .mini:last-child { right: 0; bottom: 0; }
+  .leg .lb { display: flex; align-items: center; gap: 8px; }
   .leg { display: grid; grid-template-columns: 14px 1fr auto; gap: 4px 10px; align-items: center; padding: 7px 12px; }
   .leg + .leg { border-top: 1px solid #18233C; }
   .leg .lb { font-weight: 600; font-size: calc(14px * var(--fs)); min-width: 0; overflow-wrap: anywhere; }
   .leg .rt { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: calc(14px * var(--fs)); text-align: right; white-space: nowrap; }
-  .leg .sub { grid-column: 2 / 4; display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: calc(12px * var(--fs)); color: var(--mut); min-width: 0; }
+  .leg .sub { grid-column: 2 / 4; padding-left: calc(28px * var(--fs)); display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: calc(12px * var(--fs)); color: var(--mut); min-width: 0; }
   .leg .sub span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .prog { flex: 0 0 70px; height: 4px; border-radius: 2px; background: #22304D; overflow: hidden; }
   .prog i { display: block; height: 100%; background: var(--blue); }
@@ -562,6 +581,63 @@
     var rate = w * pace + (1 - w) * Math.max(line, cur);
     return cur + (1 - f) * rate;
   }
+  function logoOf(t, sport) {
+    if (!t) return '';
+    if (t.logo) return t.logo;
+    if (t.logos && t.logos[0] && t.logos[0].href) return t.logos[0].href;
+    if (sport === 'nfl' && t.abbreviation) return 'https://a.espncdn.com/i/teamlogos/nfl/500/' + String(t.abbreviation).toLowerCase() + '.png';
+    if (t.id) return 'https://a.espncdn.com/i/teamlogos/ncaa/500/' + t.id + '.png';
+    return '';
+  }
+  function logoImg(t, sport, cls) {
+    var u = logoOf(t, sport);
+    return u ? '<img class="' + (cls || 'lg') + '" src="' + esc(u) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="' + (cls || 'lg') + '"></span>';
+  }
+  // which team a player is on, from the live box score
+  function playerTeam(sum, player) {
+    var groups = sum && sum.boxscore && sum.boxscore.players;
+    if (!Array.isArray(groups)) return null;
+    var want = normName(player), wantSq = want.replace(/ /g, ''), wantLast = want.split(' ').pop(), wantFirst = want.split(' ')[0];
+    for (var t = 0; t < groups.length; t++) {
+      var sts = groups[t].statistics || [];
+      for (var s2 = 0; s2 < sts.length; s2++) {
+        var ath = sts[s2].athletes || [];
+        for (var i = 0; i < ath.length; i++) {
+          var n = normName(ath[i].athlete && ath[i].athlete.displayName), sq = n.replace(/ /g, '');
+          if (!n) continue;
+          var parts = n.split(' ');
+          if (sq === wantSq || sq.indexOf(wantSq) === 0 || wantSq.indexOf(sq) === 0 ||
+              (parts[parts.length - 1] === wantLast && (want.split(' ').length === 1 || parts[0][0] === wantFirst[0]))) return groups[t].team || null;
+        }
+      }
+    }
+    return null;
+  }
+  function legLogo(l) {
+    var g = l.g && games[l.g];
+    if (!g) return '<span class="lg"></span>';
+    if (l.market === 'ml' || l.market === 'spread') return logoImg(g[l.side], g.sport);
+    if (l.market === 'total') return '<span class="lg duo">' + logoImg(g.a, g.sport, 'mini') + logoImg(g.h, g.sport, 'mini') + '</span>';
+    if (l.market === 'prop') {
+      var tm = summaries[g.id] && playerTeam(summaries[g.id].json, l.player);
+      if (tm) {
+        var full = String(tm.id) === String(g.a.id) ? g.a : String(tm.id) === String(g.h.id) ? g.h : tm;
+        return logoImg(full, g.sport);
+      }
+      return '<span class="lg ph" title="Team shows once he records a stat"></span>';
+    }
+    return '<span class="lg"></span>';
+  }
+  function gameHead(g) {
+    var live = g.state === 'in', pre = g.state === 'pre';
+    var aWin = !pre && g.as > g.hs, hWin = !pre && g.hs > g.as;
+    var pa = live && g.poss && String(g.a.id) === g.poss, ph = live && g.poss && String(g.h.id) === g.poss;
+    return '<div class="gh ' + g.state + '">' +
+      '<span class="tm">' + logoImg(g.a, g.sport, 'glg') + '<span class="ab">' + esc(abbr(g.a)) + '</span>' + (pa ? '<i class="ball"></i>' : '') + (pre ? '' : '<b class="' + (aWin ? 'up' : '') + '">' + g.as + '</b>') + '</span>' +
+      '<span class="gc">' + esc(clockStr(g)) + (live && g.rz ? ' <em>RZ</em>' : '') + (live && g.dd ? '<small>' + esc(g.dd) + '</small>' : '') + '</span>' +
+      '<span class="tm r">' + (pre ? '' : '<b class="' + (hWin ? 'up' : '') + '">' + g.hs + '</b>') + (ph ? '<i class="ball"></i>' : '') + '<span class="ab">' + esc(abbr(g.h)) + '</span>' + logoImg(g.h, g.sport, 'glg') + '</span>' +
+      '</div>';
+  }
   function teamName(t) { return t.location && t.location.length <= 16 ? t.location : (t.shortDisplayName || t.abbreviation); }
   function abbr(t) { return t.abbreviation || t.shortDisplayName; }
   function scoreLine(g) { return abbr(g.a) + ' ' + g.as + '–' + g.hs + ' ' + abbr(g.h); }
@@ -641,6 +717,21 @@
     if (p.side === 'yes') return p.player + (p.what === 'pass TDs' ? ' to throw a TD' : ' anytime TD');
     return p.player + ' ' + fmt(p.line) + ' ' + (SHORT[p.what] || p.what);
   }
+  // legs grouped by game, games in kickoff order, unmatched legs last
+  function byGame(legs) {
+    var order = [], map = {};
+    legs.forEach(function (l, i) {
+      var k = l.g && games[l.g] ? l.g : '_';
+      if (!map[k]) { map[k] = { g: k === '_' ? null : k, ix: [] }; order.push(map[k]); }
+      map[k].ix.push(i);
+    });
+    var rank = { in: 0, pre: 1, post: 2 };
+    return order.sort(function (x, y) {
+      if (!x.g) return 1; if (!y.g) return -1;
+      var a = games[x.g], b = games[y.g];
+      return (rank[a.state] - rank[b.state]) || (new Date(a.date) - new Date(b.date));
+    });
+  }
   function slipLegs(s) {
     return (s.legs || []).map(function (l) {
       var p = parseLeg(l.text, l);
@@ -685,10 +776,16 @@
         '<div class="sh"><span class="tag ' + st.k + '">' + st.t + '</span><span class="nm">' + esc(s.name || 'Slip') + '</span>' +
         '<span class="pay">' + (po.pay ? '<b>' + money(po.pay) + '</b><span>' + money(po.stake) + ' at ' + amer(po.d) + '</span>' : (po.d ? '<b>' + amer(po.d) + '</b><span>' + legs.length + ' legs</span>' : '<span>' + legs.length + ' legs</span>')) + '</span></div>' +
         '<div class="seg">' + evs.map(function (e) { return '<i class="' + e.cls + '"></i>'; }).join('') + '</div>' +
-        '<div class="legs">' + legs.map(function (l, i) {
-          var e = evs[i];
-          return '<div class="leg ' + e.cls + '"><span class="pip"></span><span class="lb">' + esc(l.label) + (l.odds ? ' <span class="mono" style="color:var(--mut);font-weight:500;font-size:.85em">' + (l.odds > 0 ? '+' : '') + l.odds + '</span>' : '') + '</span><span class="rt">' + esc(e.right) + '</span>' +
-            '<span class="sub">' + (e.prog != null ? '<span class="prog"><i style="width:' + Math.round(Math.max(0, Math.min(1, e.prog)) * 100) + '%"></i></span>' : '') + '<span>' + esc(e.sub) + '</span></span></div>';
+        '<div class="legs">' + byGame(legs).map(function (grp) {
+          var g = grp.g && games[grp.g];
+          return '<div class="gg">' + (g ? gameHead(g) : '') + grp.ix.map(function (i) {
+          var l = legs[i], e = evs[i];
+          var sub = e.sub || '';
+          if (g) { var b = scoreLine(g) + ' · ' + clockStr(g); sub = sub.replace(' · ' + b, '').replace(b + ' · ', '').replace(b, '').replace(abbr(g.a) + ' @ ' + abbr(g.h), '').replace(/^\s*·\s*|\s*·\s*$/g, ''); }
+          if (l.market === 'prop' && l.what) sub = sub.replace(l.what, '').replace(/^\s*·\s*|\s*·\s*$/g, '');
+          return '<div class="leg ' + e.cls + '"><span class="pip"></span><span class="lb">' + legLogo(l) + '<span>' + esc(l.label) + (l.odds ? ' <span class="mono" style="color:var(--mut);font-weight:500;font-size:.85em">' + (l.odds > 0 ? '+' : '') + l.odds + '</span>' : '') + '</span></span><span class="rt">' + esc(e.right) + '</span>' +
+            (sub || e.prog != null ? '<span class="sub">' + (e.prog != null ? '<span class="prog"><i style="width:' + Math.round(Math.max(0, Math.min(1, e.prog)) * 100) + '%"></i></span>' : '') + '<span>' + esc(sub) + '</span></span>' : '') + '</div>';
+          }).join('') + '</div>';
         }).join('') + '</div>' +
         '<div class="sf"><span class="need">' + won + ' of ' + legs.length + ' in' + (st.k === 'live' || st.k === 'pre' ? ' · ' + alive + ' to go' : '') + '</span>' +
         '<button class="icon" data-edit="' + s.id + '" type="button">Edit</button><button class="icon" data-del="' + s.id + '" type="button" aria-label="Remove slip">✕</button></div>' +
@@ -698,7 +795,7 @@
         '<span class="dt">' + won + '/' + legs.length + (po.pay ? ' · ' + money(po.pay) : '') + '</span></span>');
       legs.forEach(function (l, i) {
         var e = evs[i];
-        tick.push('<span class="ti ' + e.cls + '"><span class="pip"></span><b>' + esc(l.label) + '</b><span class="rt mono" style="font-weight:700">' + esc(e.right) + '</span>' +
+        tick.push('<span class="ti ' + e.cls + '"><span class="pip"></span>' + legLogo(l) + '<b>' + esc(l.label) + '</b><span class="rt mono" style="font-weight:700">' + esc(e.right) + '</span>' +
           (l.g && games[l.g] && games[l.g].state !== 'pre' ? '<span class="dt">' + esc(scoreLine(games[l.g]) + ' ' + clockStr(games[l.g])) + '</span>' : '') + '</span>');
       });
     });
