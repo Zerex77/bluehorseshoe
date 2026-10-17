@@ -309,6 +309,27 @@
   // ---------- read a Hard Rock slip screenshot's text into legs
   // Hard Rock lists each pick as a selection line ("Memphis", "Over 54.5") followed by an all-caps market line
   // ("TO WIN", "TOTAL POINTS"), grouped under "Away @ Home" headers.
+  // "ROMEO DOUBS - TO RECORD 50+ RECEIVING YARDS" + "Over 49.5"  ->  "Romeo Doubs over 49.5 rec yds"
+  function titleName(x) {
+    return String(x).toLowerCase().replace(/(^|[\s\-.])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); })
+      .replace(/\b([a-z]{1,2})'([a-z])/gi, function (m, a, b) { return a.charAt(0).toUpperCase() + a.slice(1) + "'" + b.toUpperCase(); })
+      .replace(/\b(Ii|Iii|Iv)\b/g, function (m) { return m.toUpperCase(); });
+  }
+  function cleanPlayer(x) {
+    return titleName(String(x).replace(/\s+[-–—]\s+.*$/, '').replace(/\b(to (record|score|have|throw)|alt(ernate)?|player|over|under|o\/u|receptions?|receiving|rushing|passing|pass|rush|yards|yds|touchdowns?|completions?|attempts|carries|longest|interceptions?|anytime)\b.*$/i, '')
+      .replace(/[\d+]+.*$/, '').replace(/\s+/g, ' ').trim());
+  }
+  function propText(sel, mk) {
+    var all = sel + ' ' + mk, what = statOf(all), m;
+    if (!what) return null;
+    var name = /^(over|under)\b/i.test(sel) ? cleanPlayer(mk) : cleanPlayer(sel) || cleanPlayer(mk);
+    var line = null;
+    if ((m = /\b(?:over|o)\s*([\d.]+)/i.exec(all))) line = Number(m[1]);
+    else if ((m = /(\d+(?:\.\d+)?)\s*\+/.exec(all))) line = Number(m[1]) - 0.5;
+    if (!name || line == null) return null;
+    return name + ' over ' + line + ' ' + what;
+  }
+
   function hardRockText(raw) {
     var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').trim(); }).filter(Boolean);
     var out = { legs: [], stake: null, odds: null };
@@ -344,8 +365,7 @@
         else if (/SPREAD|HANDICAP|RUN LINE|PUCK LINE/.test(mk)) t = sel;
         else if (/^TOTAL( POINTS)?$|GAME TOTAL/.test(mk)) t = ctx + ' ' + sel;
         else if (/ANYTIME|TOUCHDOWN SCORER|TD SCORER/.test(mk)) t = sel + ' anytime TD';
-        else if (/^(over|under)\s/i.test(sel)) { var who = mk.replace(STATWORDS, ' ').replace(/\s+/g, ' ').trim(); t = (who ? who + ' ' : '') + sel + ' ' + mk.toLowerCase().replace(who.toLowerCase(), '').trim(); }
-        else t = sel + ' ' + mk.toLowerCase();
+        else t = propText(sel, mk) || (sel + ' ' + mk.toLowerCase());
         out.legs.push(t.replace(/\s+/g, ' ').trim());
       });
     });
@@ -418,6 +438,7 @@
     else if (plus && statOf(plus[3])) { leg.market = 'prop'; leg.player = plus[1]; leg.line = Number(plus[2]) - 0.5; leg.what = statOf(plus[3]); leg.side = 'over'; }
     if (leg.market === 'prop') {
       leg.player = leg.player.replace(/\s*[\(\[].*?[\)\]]\s*/g, ' ').replace(/^.*?:\s*/, '').trim();
+      leg.player = cleanPlayer(leg.player) || titleName(leg.player);
       var ht = findTeams(text.replace(leg.player, ' '));
       leg.g = hint && hint.g ? String(hint.g) : (ht[0] && ht[0].g) || playerGame[squash(leg.player)] || null;
       return leg;
@@ -612,11 +633,19 @@
     return { cls: 's-unk', right: '?', sub: '' };
   }
 
+  var SHORT = { 'rec yds': 'rec. yds', 'rush yds': 'rush yds', 'pass yds': 'pass yds', 'receptions': 'receptions', 'rush + rec yds': 'rush+rec yds',
+    'pass + rush yds': 'pass+rush yds', 'pass TDs': 'pass TDs', 'completions': 'comp.', 'pass attempts': 'pass att.', 'rush attempts': 'carries',
+    'longest rush': 'long rush', 'longest reception': 'long rec.', 'interceptions thrown': 'INTs', 'TDs': 'TDs' };
+  function shortLabel(p) {
+    if (p.market !== 'prop') return p.text;
+    if (p.side === 'yes') return p.player + (p.what === 'pass TDs' ? ' to throw a TD' : ' anytime TD');
+    return p.player + ' ' + fmt(p.line) + ' ' + (SHORT[p.what] || p.what);
+  }
   function slipLegs(s) {
     return (s.legs || []).map(function (l) {
       var p = parseLeg(l.text, l);
       if (p.market === 'prop' && !p.g && playerGame[squash(p.player)]) p.g = playerGame[squash(p.player)];
-      p.label = l.label || p.text;
+      p.label = shortLabel(p);
       return p;
     });
   }
