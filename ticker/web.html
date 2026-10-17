@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Horseshoe Ticker</title>
+<style>
+  :root { --bg: #070D1A; --panel: #0F182B; --line: #22304D; --txt: #E8EEF9; --mut: #8A97B0; --blue: #3B82F6; --gold: #FFD166; --green: #2BD67B; --amber: #FFB020; --red: #FF5A5F; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font: 15px/1.4 system-ui, -apple-system, Segoe UI, sans-serif; overflow-x: hidden; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  h1 { font-size: 20px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .st { font-size: 13px; color: var(--mut); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .ok { border-color: var(--green); color: var(--green); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--mut); flex: 1 1 120px; }
+  input, textarea, select, button { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  textarea { min-height: 140px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; width: 100%; }
+  button { cursor: pointer; background: var(--panel); }
+  button.primary { background: var(--blue); border-color: var(--blue); font-weight: 600; }
+  .slip-h { display: flex; align-items: center; gap: 8px; }
+  .slip-h b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 4px; background: rgba(138,151,176,.15); color: var(--mut); }
+  .tag.live { color: var(--green); background: rgba(43,214,123,.15); } .tag.busted { color: var(--red); background: rgba(255,90,95,.15); } .tag.cashed { color: #04130A; background: var(--green); }
+  .leg { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
+  .leg span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .leg .r { font-family: ui-monospace, Menlo, monospace; font-weight: 700; white-space: nowrap; }
+  .c-win, .c-good { color: var(--green); } .c-close { color: var(--amber); } .c-bad, .c-lost { color: var(--red); } .c-pre, .c-unk, .c-push { color: var(--mut); }
+  .x { padding: 2px 8px; font-size: 12px; color: var(--mut); }
+</style>
+</head>
+<body>
+<main>
+  <h1><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#3B82F6" stroke-width="11" fill="none" stroke-linecap="round"/></svg>Horseshoe Ticker</h1>
+  <div class="st" id="st">Connecting…</div>
+  <div class="card ok" id="sent" hidden></div>
+
+  <div class="card">
+    <div class="row">
+      <label>Brightness <input type="range" id="br" min="10" max="100" step="5"></label>
+      <label>Scroll speed
+        <select id="sp"><option value="25">Slow</option><option value="40">Medium</option><option value="60">Fast</option><option value="85">Very fast</option></select>
+      </label>
+      <label>Alerts
+        <select id="al"><option value="1">Flash on hits and busts</option><option value="0">Off</option></select>
+      </label>
+    </div>
+  </div>
+
+  <div id="slips" style="display:flex;flex-direction:column;gap:10px"></div>
+
+  <details class="card">
+    <summary style="cursor:pointer;font-weight:600">Add a slip by hand</summary>
+    <div class="row">
+      <label>Name<input id="fn" placeholder="Sunday props"></label>
+      <label>Stake ($)<input id="fs" inputmode="decimal" placeholder="5"></label>
+      <label>Odds<input id="fo" placeholder="+600"></label>
+    </div>
+    <textarea id="fl" placeholder="Memphis ML&#10;Purdue Under 50.5&#10;Romeo Doubs over 49.5 rec yds&#10;Josh Jacobs anytime TD"></textarea>
+    <div class="row"><button class="primary" id="add" type="button">Add to ticker</button><span class="st">Tip: the Live page on bluehorseshoebet.com can read a Hard Rock screenshot, then use More → Send to LED ticker.</span></div>
+  </details>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function post(path, body) { return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+
+  // slips sent from the website arrive in the link: /import#s=<data>
+  var m = /#s=([^&]+)/.exec(location.hash);
+  if (m) {
+    try {
+      var slips = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))));
+      post('/api/slips', { slips: slips, mode: 'replace' }).then(function (r) {
+        $('sent').hidden = false;
+        $('sent').textContent = '✓ Sent ' + r.count + ' slip' + (r.count === 1 ? '' : 's') + ' to the ticker.';
+        load();
+      });
+    } catch (e) { $('sent').hidden = false; $('sent').textContent = "That link didn't contain any slips."; }
+    history.replaceState(null, '', '/');
+  }
+
+  var cfgLoaded = false;
+  function load() {
+    fetch('/api/state').then(function (r) { return r.json(); }).then(function (s) {
+      $('st').textContent = s.status + ' · ' + s.slips.length + ' slip' + (s.slips.length === 1 ? '' : 's') + ' on the ticker · ' + (s.config.panels * 64) + '×32 panel';
+      if (!cfgLoaded) {
+        cfgLoaded = true;
+        $('br').value = s.config.brightness;
+        var sp = String(s.config.speed); if (![].some.call($('sp').options, function (o) { return o.value === sp; })) { var o = document.createElement('option'); o.value = sp; o.textContent = sp + ' px/s'; $('sp').appendChild(o); }
+        $('sp').value = sp; $('al').value = s.config.alerts ? '1' : '0';
+      }
+      $('slips').innerHTML = s.snap.map(function (sl) {
+        return '<div class="card"><div class="slip-h"><span class="tag ' + sl.status + '">' + { live: 'LIVE', busted: 'BUSTED', cashed: 'CASHED', pre: 'UPCOMING' }[sl.status] + '</span><b>' + esc(sl.name) + '</b>' +
+          '<span class="st">' + sl.won + '/' + sl.n + (sl.pay ? ' · $' + sl.pay.toFixed(2) : '') + '</span><button class="x" data-rm="' + esc(sl.id) + '" type="button">Remove</button></div>' +
+          sl.legs.map(function (l) { return '<div class="leg"><span>' + esc(l.label) + '</span><span class="r c-' + l.cls + '">' + esc(l.right) + '</span></div>'; }).join('') + '</div>';
+      }).join('') || '<div class="st">No slips yet. Send them from the Live page on bluehorseshoebet.com (More → Send to LED ticker), or add one below.</div>';
+    }).catch(function () { $('st').textContent = "Can't reach the ticker."; });
+  }
+  $('slips').addEventListener('click', function (e) { var b = e.target.closest('[data-rm]'); if (b) post('/api/remove', { id: b.dataset.rm }).then(load); });
+  $('br').onchange = function () { post('/api/config', { brightness: Number(this.value) }); };
+  $('sp').onchange = function () { post('/api/config', { speed: Number(this.value) }); };
+  $('al').onchange = function () { post('/api/config', { alerts: this.value === '1' }); };
+  $('add').onclick = function () {
+    var legs = $('fl').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    if (!legs.length) return;
+    var odds = $('fo').value.replace(/[^\d+-]/g, '');
+    post('/api/slips', { mode: 'merge', slips: [{ id: Math.random().toString(36).slice(2, 9), name: $('fn').value || 'Slip', stake: Number($('fs').value) || 0, odds: odds ? Number(odds) : null, legs: legs.map(function (t) { return { text: t }; }) }] })
+      .then(function () { $('fl').value = ''; $('fn').value = ''; setTimeout(load, 1500); });
+  };
+  load();
+  setInterval(load, 10000);
+})();
+</script>
+</body>
+</html>

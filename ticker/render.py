@@ -1,0 +1,290 @@
+"""Draws ticker items (PIL images, 32px tall) for the LED strip."""
+import io
+import os
+import re
+import threading
+
+from PIL import Image, ImageDraw, ImageFont
+
+H = 32
+COL = {
+    'win': (43, 214, 123), 'good': (43, 214, 123), 'close': (255, 176, 32), 'bad': (255, 70, 75),
+    'lost': (255, 70, 75), 'push': (150, 160, 180), 'pre': (130, 140, 165), 'unk': (130, 140, 165),
+}
+WHITE = (235, 240, 250)
+DIM = (120, 130, 155)
+GOLD = (255, 200, 60)
+BLUE = (60, 130, 246)
+RED = (255, 70, 75)
+SEP = (40, 52, 80)
+
+FONT_DIRS = ['/usr/share/fonts/truetype/dejavu', '/usr/share/fonts/dejavu', os.path.dirname(__file__)]
+
+
+def _font(name, size):
+    for d in FONT_DIRS:
+        p = os.path.join(d, name)
+        if os.path.exists(p):
+            return ImageFont.truetype(p, size)
+    return ImageFont.load_default()
+
+
+F_BIG = _font('DejaVuSansCondensed-Bold.ttf', 14)
+F_SMALL = _font('DejaVuSansCondensed-Bold.ttf', 10)
+F_SCORE = _font('DejaVuSansCondensed-Bold.ttf', 12)
+F_FLASH = _font('DejaVuSansCondensed-Bold.ttf', 20)
+
+
+def _draw(img):
+    d = ImageDraw.Draw(img)
+    d.fontmode = '1'  # crisp pixels, no blur on LEDs
+    return d
+
+
+def text_w(font, s):
+    return int(math_ceil(font.getlength(s)))
+
+
+def math_ceil(x):
+    i = int(x)
+    return i if i == x else i + 1
+
+
+def ascii_safe(s):
+    return (str(s).replace('—', '-').replace('–', '-').replace('−', '-').replace('·', '-')
+            .replace('✓', '').replace('’', "'"))
+
+
+# ---------------------------------------------------------------- logos
+class Logos:
+    def __init__(self, fetch_bytes, cache_dir):
+        self.fetch = fetch_bytes
+        self.dir = cache_dir
+        os.makedirs(cache_dir, exist_ok=True)
+        self.mem = {}
+        self.pending = set()
+        self.lock = threading.Lock()
+
+    @staticmethod
+    def url(team, sport):
+        if not team:
+            return None
+        if team.get('logo'):
+            return team['logo']
+        if team.get('logos'):
+            return team['logos'][0].get('href')
+        if sport == 'nfl' and team.get('abbreviation'):
+            return 'https://a.espncdn.com/i/teamlogos/nfl/500/%s.png' % team['abbreviation'].lower()
+        if team.get('id'):
+            return 'https://a.espncdn.com/i/teamlogos/ncaa/500/%s.png' % team['id']
+        return None
+
+    def get(self, team, sport, size):
+        """Logo image or None. Downloads in the background the first time."""
+        u = self.url(team, sport)
+        if not u:
+            return None
+        key = (u, size)
+        if key in self.mem:
+            return self.mem[key]
+        fn = os.path.join(self.dir, re.sub(r'[^a-zA-Z0-9]+', '_', u)[-80:])
+        if os.path.exists(fn):
+            try:
+                im = Image.open(fn).convert('RGBA')
+                im.thumbnail((size, size), Image.LANCZOS)
+                # lift very dark logos so they show on black LEDs
+                self.mem[key] = im
+                return im
+            except Exception:
+                pass
+        with self.lock:
+            if u in self.pending:
+                return None
+            self.pending.add(u)
+
+        def work():
+            try:
+                data = self.fetch(u)
+                Image.open(io.BytesIO(data)).verify()
+                with open(fn, 'wb') as f:
+                    f.write(data)
+            except Exception:
+                pass
+            finally:
+                with self.lock:
+                    self.pending.discard(u)
+        threading.Thread(target=work, daemon=True).start()
+        return None
+
+
+def _paste_logo(img, logo, x, y, size):
+    if logo is None:
+        return
+    ox = x + (size - logo.width) // 2
+    oy = y + (size - logo.height) // 2
+    img.paste(logo, (ox, oy), logo)
+
+
+# ---------------------------------------------------------------- items
+def item_slip(slip):
+    """Slip header: horseshoe + name on top, progress / payout under it."""
+    name = ascii_safe(slip['name']).upper()
+    st = slip['status']
+    tag = {'live': 'LIVE', 'busted': 'BUSTED', 'cashed': 'CASHED', 'pre': 'UPCOMING'}[st]
+    bits = ['%d/%d IN' % (slip['won'], slip['n'])]
+    if slip.get('pay'):
+        bits.append('$' + format(slip['pay'], ',.0f') if slip['pay'] >= 100 else '$%.2f' % slip['pay'])
+    elif slip.get('price'):
+        bits.append(slip['price'])
+    line2 = '  '.join(bits)
+    tag_col = {'live': COL['win'], 'busted': RED, 'cashed': GOLD, 'pre': DIM}[st]
+    w = 26 + max(text_w(F_BIG, name), text_w(F_SMALL, tag) + 6 + text_w(F_SMALL, line2)) + 14
+    img = Image.new('RGB', (w, H))
+    d = _draw(img)
+    # horseshoe mark
+    d.arc((3, 2, 21, 26), 0, 180, fill=BLUE, width=4)
+    d.line((4, 2, 4, 14), fill=BLUE, width=4)
+    d.line((20, 2, 20, 14), fill=BLUE, width=4)
+    d.text((26, 1), name, font=F_BIG, fill=GOLD)
+    d.text((26, 19), tag, font=F_SMALL, fill=tag_col)
+    d.text((26 + text_w(F_SMALL, tag) + 6, 19), line2, font=F_SMALL, fill=WHITE)
+    d.line((w - 4, 4, w - 4, H - 5), fill=SEP)
+    return img
+
+
+def item_game(g, logos):
+    """Score bug: two rows (away / home) with logos, then the clock."""
+    clock = ascii_safe(_clock(g))
+    rows = [(g['a'], g['as']), (g['h'], g['hs'])]
+    pre = g['state'] == 'pre'
+    ab_w = max(text_w(F_SCORE, _ab(t)) for t, _ in rows)
+    sc_w = 0 if pre else max(text_w(F_SCORE, str(s)) for _, s in rows)
+    c1, c2 = _clock_lines(g, clock)
+    cw = max(text_w(F_SMALL, c1), text_w(F_SMALL, c2))
+    w = 2 + 14 + 3 + ab_w + (5 + sc_w if not pre else 0) + 8 + cw + 12
+    img = Image.new('RGB', (w, H))
+    d = _draw(img)
+    lead = None if pre or g['as'] == g['hs'] else (0 if g['as'] > g['hs'] else 1)
+    for i, (t, s) in enumerate(rows):
+        y = 1 + i * 16
+        _paste_logo(img, logos.get(t, g['sport'], 14), 2, y, 14)
+        d.text((19, y), _ab(t), font=F_SCORE, fill=WHITE if lead in (None, i) else DIM)
+        if not pre:
+            d.text((19 + ab_w + 5 + sc_w - text_w(F_SCORE, str(s)), y), str(s), font=F_SCORE, fill=WHITE if lead in (None, i) else DIM)
+        if g['state'] == 'in' and g.get('poss') and str(t.get('id')) == g['poss']:
+            d.rectangle((19 + ab_w + 1, y + 6, 19 + ab_w + 2, y + 7), fill=GOLD)
+    cx = 19 + ab_w + (5 + sc_w if not pre else 0) + 8
+    ccol = RED if g['state'] == 'in' else DIM
+    d.text((cx, 4), c1, font=F_SMALL, fill=ccol)
+    d.text((cx, 18), c2, font=F_SMALL, fill=RED if g.get('rz') and g['state'] == 'in' else DIM)
+    d.line((w - 4, 4, w - 4, H - 5), fill=SEP)
+    return img
+
+
+def item_leg(row, game, logos):
+    """Leg: team logo, label on top, status + detail underneath."""
+    col = COL.get(row['cls'], DIM)
+    label = ascii_safe(row['label'])
+    if row.get('odds'):
+        label_odds = ' %+d' % row['odds']
+    else:
+        label_odds = ''
+    right = ascii_safe(row['right']).upper()
+    sub = ascii_safe(row.get('sub') or '')
+    if game:
+        # the score bug already shows the score and clock
+        sub = re.sub(r'^[A-Z0-9&.]+ \d+-\d+ [A-Z0-9&.]+ ?', '', sub)
+        sub = sub.replace(_clock(game), '').strip(' -')
+    lw = text_w(F_BIG, label) + (text_w(F_SMALL, label_odds) + 2 if label_odds else 0)
+    l2 = right + ('  ' + sub if sub else '')
+    has_bar = row.get('prog') is not None and row['cls'] not in ('win', 'lost')
+    w2 = text_w(F_SMALL, l2) + (34 if has_bar else 0)
+    x0 = 4 + 22 + 4
+    w = x0 + max(lw, w2) + 14
+    img = Image.new('RGB', (w, H))
+    d = _draw(img)
+    # status pip down the left edge
+    d.rectangle((0, 3, 1, H - 4), fill=col)
+    logo = None
+    if row.get('team') and game:
+        logo = logos.get(row['team'], game['sport'], 22)
+    if logo is not None:
+        _paste_logo(img, logo, 4, 5, 22)
+    elif row.get('market') == 'total' and game:
+        a = logos.get(game['a'], game['sport'], 14)
+        h = logos.get(game['h'], game['sport'], 14)
+        _paste_logo(img, a, 4, 3, 14)
+        _paste_logo(img, h, 12, 14, 14)
+    else:
+        d.ellipse((7, 8, 22, 23), outline=SEP)
+    d.text((x0, 1), label, font=F_BIG, fill=WHITE)
+    if label_odds:
+        d.text((x0 + text_w(F_BIG, label) + 2, 4), label_odds, font=F_SMALL, fill=DIM)
+    y2 = 19
+    x = x0
+    if has_bar:
+        p = max(0.0, min(1.0, row['prog']))
+        d.rectangle((x, y2 + 4, x + 29, y2 + 6), fill=SEP)
+        if p > 0:
+            d.rectangle((x, y2 + 4, x + max(1, int(29 * p)), y2 + 6), fill=col)
+        x += 34
+    d.text((x, y2), right, font=F_SMALL, fill=col)
+    if sub:
+        d.text((x + text_w(F_SMALL, right + '  '), y2), sub, font=F_SMALL, fill=DIM)
+    d.line((w - 4, 4, w - 4, H - 5), fill=SEP)
+    return img
+
+
+def item_idle(text='BLUE HORSESHOE'):
+    s = ascii_safe(text)
+    w = 26 + text_w(F_BIG, s) + 40
+    img = Image.new('RGB', (w, H))
+    d = _draw(img)
+    d.arc((3, 4, 21, 28), 0, 180, fill=BLUE, width=4)
+    d.line((4, 4, 4, 16), fill=BLUE, width=4)
+    d.line((20, 4, 20, 16), fill=BLUE, width=4)
+    d.text((26, 8), s, font=F_BIG, fill=DIM)
+    return img
+
+
+def flash_frame(width, text, kind, on):
+    """Full-width alert. kind: win / lost / cashed. on toggles the blink."""
+    text = ascii_safe(text).upper()
+    if kind == 'cashed':
+        bg, fg = (GOLD, (10, 10, 10)) if on else ((10, 10, 10), GOLD)
+    elif kind == 'win':
+        bg, fg = ((0, 0, 0), COL['win']) if on else (COL['win'], (0, 0, 0))
+    else:
+        bg, fg = ((0, 0, 0), RED) if on else ((40, 0, 0), RED)
+    font = F_FLASH
+    while text_w(font, text) > width - 8 and font.size > 11:
+        font = _font('DejaVuSansCondensed-Bold.ttf', font.size - 1)
+    img = Image.new('RGB', (width, H), bg)
+    d = _draw(img)
+    tw = text_w(font, text)
+    asc, desc = font.getmetrics()
+    d.text(((width - tw) // 2, (H - asc - desc) // 2 + 1), text, font=font, fill=fg)
+    d.rectangle((0, 0, width - 1, H - 1), outline=fg)
+    return img
+
+
+def _ab(t):
+    return ascii_safe(t.get('abbreviation') or t.get('shortDisplayName') or '?')
+
+
+def _clock(g):
+    from legs import clock_str
+    return clock_str(g)
+
+
+def _clock_lines(g, clock):
+    if g['state'] == 'in':
+        m = re.match(r'^(\d+:\d+)\s*-\s*(.+)$', clock)
+        if m:
+            q = m.group(2).replace('1st', 'Q1').replace('2nd', 'Q2').replace('3rd', 'Q3').replace('4th', 'Q4')
+            return q, m.group(1) if not (g.get('rz')) else m.group(1) + ' RZ'
+        return clock[:10], ('RZ' if g.get('rz') else '')
+    if g['state'] == 'post':
+        return 'FINAL', ''
+    parts = clock.split(' ')
+    return parts[0], parts[1] if len(parts) > 1 else ''
