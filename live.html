@@ -263,7 +263,14 @@
       if (x === 'app state') out.push('appalachian state', 'appalachian st');
       if (/ st\.?$/.test(x)) out.push(x.replace(/ st\.?$/, ' state'));
     });
-    return out.filter(function (x, i, arr) { return x.length >= 2 && arr.indexOf(x) === i; });
+    // match the way leg text is cleaned: "Miami (OH)" -> "miami oh", plus "miami ohio"
+    out.slice().forEach(function (x) {
+      var c = x.replace(/[^a-z0-9&'. ]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (c !== x) out.push(c);
+      var m = /^(.+?) \((oh|fl|pa)\)/.exec(x);
+      if (m) out.push(m[1] + ' ' + { oh: 'ohio', fl: 'florida', pa: 'pennsylvania' }[m[2]]);
+    });
+    return out.filter(function (x, i, arr) { return x.length >= 2 && arr.indexOf(x) === i && !/[()]/.test(x); });
   }
   function fetchBoards() {
     var now = new Date(), days = [ymd(now)];
@@ -402,7 +409,7 @@
   }
 
   function findTeams(text) {
-    var low = ' ' + text.toLowerCase().replace(/[^a-z0-9&'. ]/g, ' ') + ' ';
+    var low = ' ' + text.toLowerCase().replace(/[^a-z0-9&'. ]/g, ' ').replace(/\s+/g, ' ') + ' ';
     var hits = [];
     Object.keys(games).forEach(function (id) {
       var g = games[id];

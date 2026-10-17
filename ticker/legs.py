@@ -110,9 +110,16 @@ def aliases(t):
             out += ['appalachian state', 'appalachian st']
         if re.search(r' st\.?$', x):
             out.append(re.sub(r' st\.?$', ' state', x))
+    for x in list(out):
+        c = re.sub(r'\s+', ' ', re.sub(r"[^a-z0-9&'. ]", ' ', x)).strip()
+        if c != x:
+            out.append(c)
+        m = re.match(r'^(.+?) \((oh|fl|pa)\)', x)
+        if m:
+            out.append(m.group(1) + ' ' + {'oh': 'ohio', 'fl': 'florida', 'pa': 'pennsylvania'}[m.group(2)])
     seen, res = set(), []
     for x in out:
-        if len(x) >= 2 and x not in seen:
+        if len(x) >= 2 and x not in seen and '(' not in x:
             seen.add(x)
             res.append(x)
     return res
@@ -128,7 +135,7 @@ def team_name(t):
 
 
 def find_teams(text, games):
-    low = ' ' + re.sub(r"[^a-z0-9&'. ]", ' ', text.lower()) + ' '
+    low = ' ' + re.sub(r'\s+', ' ', re.sub(r"[^a-z0-9&'. ]", ' ', text.lower())) + ' '
     hits = []
     for gid, g in games.items():
         for side in ('a', 'h'):
