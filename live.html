@@ -715,6 +715,9 @@
     'pass + rush yds': 'pass+rush yds', 'pass TDs': 'pass TDs', 'completions': 'comp.', 'pass attempts': 'pass att.', 'rush attempts': 'carries',
     'longest rush': 'long rush', 'longest reception': 'long rec.', 'interceptions thrown': 'INTs', 'TDs': 'TDs' };
   function shortLabel(p) {
+    var g = p.g && games[p.g];
+    if (g && p.side && p.market === 'spread') return teamName(g[p.side]) + ' ' + (p.line ? sgn(p.line) : 'PK');
+    if (g && p.side && p.market === 'ml') return teamName(g[p.side]) + ' ML';
     if (p.market !== 'prop') return p.text;
     if (p.side === 'yes') return p.player + (p.what === 'pass TDs' ? ' to throw a TD' : ' anytime TD');
     return p.player + ' ' + fmt(p.line) + ' ' + (SHORT[p.what] || p.what);

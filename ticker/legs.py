@@ -272,7 +272,15 @@ def parse_leg(raw, games, hint=None, player_game=None):
     return leg
 
 
-def short_label(p):
+def short_label(p, games=None):
+    g = (games or {}).get(p.get('g')) if p.get('g') else None
+    if g and p.get('side') and p.get('market') == 'spread':
+        return '%s %s' % (team_name(g[p['side']]), sgn(p['line']) if p['line'] else 'PK')
+    if g and p.get('side') and p.get('market') == 'ml':
+        return team_name(g[p['side']]) + ' ML'
+    if p.get('market') == 'total':
+        t = re.sub(r'^.*?\b(?=[A-Za-z][A-Za-z .&\']*\s+(over|under)\b)', '', p['text'], flags=re.I) if re.search(r'\d.*\b(over|under)\b', p['text'], re.I) else p['text']
+        return t
     if p.get('market') != 'prop':
         return p['text']
     if p.get('side') == 'yes':
@@ -575,7 +583,7 @@ class Board:
             p = parse_leg(l.get('text', ''), self.games, l, self.player_game)
             if p.get('market') == 'prop' and not p.get('g') and self.player_game.get(squash(p['player'])):
                 p['g'] = self.player_game[squash(p['player'])]
-            p['label'] = short_label(p)
+            p['label'] = short_label(p, self.games)
             p['sport'] = l.get('sport')
             out.append(p)
         return out
