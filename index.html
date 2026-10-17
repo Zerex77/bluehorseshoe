@@ -45,6 +45,7 @@ button{font:inherit}
         <button type="button" onClick="{{nflTop.pick}}" aria-current="{{nflTop.current}}" style="{{nflTop.style}}">NFL</button>
         <button type="button" onClick="{{collegeTab.pick}}" aria-current="{{collegeTab.current}}" style="{{collegeTab.style}}">College</button>
         <button type="button" onClick="{{recordTab.pick}}" aria-current="{{recordTab.current}}" style="{{recordTab.style}}">Track record</button>
+        <a href="live.html" target="bhlive" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #111827; text-decoration: none;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Live</a>
       </nav>
       <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; padding: 6px 0;">
         <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6472;">{{chipText}}</span>
@@ -162,6 +163,7 @@ button{font:inherit}
               <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                 <button type="button" onClick="{{toggleAll}}" style="min-height: 34px; padding: 0 12px; background: #FFFFFF; color: #111827; border: 1px solid #D5DAE1; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{toggleAllLabel}}</button>
                 <button type="button" onClick="{{toggleBuild}}" aria-expanded="{{buildOpen}}" style="min-height: 34px; padding: 0 12px; background: #FFFFFF; color: #111827; border: 1px solid #D5DAE1; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{buildLabel}}</button>
+                <button type="button" onClick="{{watchNfl}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #0F1B3D; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button>
                 <a href="https://www.hardrock.bet/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #1D5FD6; color: #FFFFFF; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none;">Open Hard Rock Bet
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3h7v7M13 3L4 12" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 </a>
@@ -696,6 +698,8 @@ button{font:inherit}
               </sc-for>
             </div>
 
+            <div style="display: flex; justify-content: flex-end;"><button type="button" onClick="{{watchCf}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #0F1B3D; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button></div>
+
             <div style="display: flex; flex-direction: column; gap: 6px;">
               <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Next up if you want to swap a leg</span>
               <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
@@ -1008,9 +1012,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261016174341';</script>
-<script src="runtime.js?v=20261016174341"></script>
-<script src="lines.js?v=20261016174341"></script>
+<script>window.BH_VERSION='20261016203828';</script>
+<script src="runtime.js?v=20261016203828"></script>
+<script src="lines.js?v=20261016203828"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1037,6 +1041,20 @@ class Component extends DCLogic {
   }
   fmtOdds(o) { return o > 0 ? '+' + o : String(o); }
 
+  watchLive(name, legs, stake, decT) {
+    if (!legs.length) return;
+    var KEY = 'bh.live.slips', list = [];
+    try { list = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
+    var sig = legs.map(function (l) { return l.text; }).join('|');
+    var same = list.filter(function (x) { return (x.legs || []).map(function (l) { return l.text; }).join('|') === sig; })[0];
+    if (!same) {
+      var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      list.push({ id: Math.random().toString(36).slice(2, 9), name: name + ' · ' + t, stake: stake,
+        odds: decT && decT > 1 ? (decT >= 2 ? Math.round((decT - 1) * 100) : Math.round(-100 / (decT - 1))) : null, legs: legs });
+      try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+    }
+    window.open('live.html', 'bhlive');
+  }
   renderVals() {
     var self = this;
     var st = this.state;
@@ -1971,6 +1989,8 @@ class Component extends DCLogic {
       legsHint: N ? N + ' exactly' : 'auto',
 
       ticket: ticketRows,
+      watchNfl: function () { self.watchLive('NFL Horseshoe ticket', ticket.map(function (l) { return { text: l.label, g: l.g, sport: 'nfl', odds: l.odds }; }), st.stake, hasTicket ? decTotal : null); },
+      watchCf: function () { self.watchLive('College Horseshoe ticket', cfTicket.map(function (t) { return { text: t.c.label, g: t.c.g, sport: 'cfb', odds: t.c.odds }; }), st.stake, cfTicket.length ? cfDec : null); },
       bench: bench.map(function (l) { return { label: l.label, game: gameMap[l.g].label, conf: l.conf + (meetsBar(l) ? '' : ' · below the Horseshoe bar'), oddsStr: self.fmtOdds(l.odds) }; }),
       toggleAll: function () { self.setState({ allOpen: !st.allOpen, open: {} }); },
       toggleAllLabel: st.allOpen ? 'Collapse all' : 'Expand all',

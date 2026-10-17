@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blue Horseshoe Live</title>
+<link rel="icon" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070D1A; --panel: #0F182B; --panel2: #15213A; --line: #22304D;
+    --txt: #E8EEF9; --mut: #8A97B0; --blue: #3B82F6; --gold: #FFD166;
+    --green: #2BD67B; --amber: #FFB020; --red: #FF5A5F; --grey: #5B6782;
+    --fs: 1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--txt); font-family: 'IBM Plex Sans', system-ui, sans-serif; overflow-x: hidden; }
+  body.large { --fs: 1.3; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  button, select, input, textarea { font: inherit; color: inherit; }
+
+  /* top bar */
+  .bar { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; text-decoration: none; color: var(--txt); }
+  .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 0 rgba(255,90,95,.7); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,90,95,.6); } 70% { box-shadow: 0 0 0 8px rgba(255,90,95,0); } 100% { box-shadow: 0 0 0 0 rgba(255,90,95,0); } }
+  .spacer { flex: 1 1 auto; }
+  .ctl { height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel2); cursor: pointer; font-size: 13px; }
+  .ctl.primary { background: var(--blue); border-color: var(--blue); font-weight: 600; }
+  .stamp { font-size: 12px; color: var(--mut); }
+
+  /* ticker */
+  .ticker { position: relative; overflow: hidden; background: #050A14; border-bottom: 1px solid var(--line); height: calc(46px * var(--fs)); display: flex; align-items: center; }
+  .ticker .lab { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; padding: 0 12px; background: var(--gold); color: #0B1220; font-weight: 700; font-size: calc(12px * var(--fs)); letter-spacing: .08em; }
+  .track { display: inline-flex; white-space: nowrap; will-change: transform; animation: scroll linear infinite; }
+  .ticker:hover .track { animation-play-state: paused; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .ti { display: inline-flex; align-items: center; gap: 8px; padding: 0 18px; font-size: calc(15px * var(--fs)); border-right: 1px solid #1A2540; }
+  .ti .sn { color: var(--gold); font-weight: 700; font-size: calc(12px * var(--fs)); letter-spacing: .06em; text-transform: uppercase; }
+  .ti .dt { color: var(--mut); font-family: 'IBM Plex Mono', monospace; font-size: calc(13px * var(--fs)); }
+  .pip { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--grey); }
+  .s-win .pip, .pip.s-win { background: var(--green); }
+  .s-good .pip, .pip.s-good { background: var(--green); }
+  .s-close .pip, .pip.s-close { background: var(--amber); }
+  .s-bad .pip, .pip.s-bad { background: var(--red); }
+  .s-lost .pip, .pip.s-lost { background: var(--red); }
+  .s-push .pip, .pip.s-push { background: var(--mut); }
+
+  /* score strip */
+  .scores { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+  .sc { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: calc(13px * var(--fs)); }
+  .sc b { font-weight: 700; }
+  .sc .st { color: var(--mut); font-size: calc(11px * var(--fs)); }
+  .sc.live .st { color: var(--red); }
+  .sc .rz { color: var(--red); font-weight: 700; font-size: 10px; }
+
+  /* slips */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(340px * var(--fs))), 1fr)); gap: 12px; padding: 12px 16px 24px; }
+  .slip { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .slip.busted { opacity: .55; }
+  .slip.cashed { border-color: var(--green); box-shadow: 0 0 0 1px var(--green) inset; }
+  .sh { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--panel2); }
+  .sh .nm { font-weight: 700; font-size: calc(15px * var(--fs)); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sh .tag { font-size: calc(11px * var(--fs)); font-weight: 700; letter-spacing: .08em; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+  .tag.live { background: rgba(43,214,123,.15); color: var(--green); }
+  .tag.busted { background: rgba(255,90,95,.15); color: var(--red); }
+  .tag.cashed { background: var(--green); color: #04130A; }
+  .tag.pre { background: rgba(138,151,176,.15); color: var(--mut); }
+  .sh .pay { margin-left: auto; text-align: right; flex-shrink: 0; }
+  .sh .pay b { display: block; font-family: 'IBM Plex Mono', monospace; font-size: calc(17px * var(--fs)); color: var(--gold); }
+  .sh .pay span { font-size: calc(11px * var(--fs)); color: var(--mut); }
+  .seg { display: flex; gap: 3px; padding: 8px 12px 0; }
+  .seg i { flex: 1; height: 5px; border-radius: 3px; background: var(--grey); }
+  .seg i.s-win, .seg i.s-good { background: var(--green); } .seg i.s-close { background: var(--amber); } .seg i.s-bad, .seg i.s-lost { background: var(--red); }
+  .seg i.s-win { box-shadow: 0 0 6px var(--green); }
+  .legs { display: flex; flex-direction: column; padding: 4px 0 6px; }
+  .leg { display: grid; grid-template-columns: 14px 1fr auto; gap: 4px 10px; align-items: center; padding: 7px 12px; }
+  .leg + .leg { border-top: 1px solid #18233C; }
+  .leg .lb { font-weight: 600; font-size: calc(14px * var(--fs)); min-width: 0; overflow-wrap: anywhere; }
+  .leg .rt { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: calc(14px * var(--fs)); text-align: right; white-space: nowrap; }
+  .leg .sub { grid-column: 2 / 4; display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: calc(12px * var(--fs)); color: var(--mut); min-width: 0; }
+  .leg .sub span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .prog { flex: 0 0 70px; height: 4px; border-radius: 2px; background: #22304D; overflow: hidden; }
+  .prog i { display: block; height: 100%; background: var(--blue); }
+  .s-win .rt, .s-good .rt { color: var(--green); } .s-close .rt { color: var(--amber); } .s-bad .rt, .s-lost .rt { color: var(--red); } .s-pre .rt, .s-push .rt, .s-unk .rt { color: var(--mut); }
+  .s-win .prog i, .s-good .prog i { background: var(--green); } .s-close .prog i { background: var(--amber); } .s-bad .prog i, .s-lost .prog i { background: var(--red); }
+  .sf { display: flex; align-items: center; gap: 6px; padding: 6px 12px 10px; margin-top: auto; }
+  .sf .need { font-size: calc(12px * var(--fs)); color: var(--mut); }
+  .icon { margin-left: auto; height: 26px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--line); background: transparent; color: var(--mut); cursor: pointer; font-size: 12px; }
+  .icon + .icon { margin-left: 0; }
+
+  /* empty + editor */
+  .empty { margin: 40px auto; max-width: 560px; text-align: center; color: var(--mut); padding: 0 16px; line-height: 1.5; }
+  .empty h2 { color: var(--txt); margin: 0 0 6px; font-size: 20px; }
+  dialog { background: var(--panel); color: var(--txt); border: 1px solid var(--line); border-radius: 10px; padding: 0; width: min(560px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  .dlg { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
+  .dlg h3 { margin: 0; font-size: 16px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--mut); flex: 1 1 120px; }
+  .dlg input, .dlg textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 14px; }
+  .dlg textarea { min-height: 190px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; resize: vertical; }
+  .hint { font-size: 12px; color: var(--mut); line-height: 1.5; }
+  .hint code { color: var(--txt); }
+  .chk { font-family: 'IBM Plex Mono', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 3px; max-height: 160px; overflow-y: auto; }
+  .chk .ok { color: var(--green); } .chk .no { color: var(--amber); }
+  .acts { display: flex; gap: 8px; justify-content: flex-end; }
+
+  body.m-ticker .scores, body.m-ticker .grid, body.m-ticker .empty { display: none; }
+  body.m-ticker .ticker { height: calc(64px * var(--fs)); }
+  body.m-ticker .ti { font-size: calc(19px * var(--fs)); }
+  body.m-slips .ticker { display: none; }
+  @media (max-width: 600px) { .stamp { width: 100%; order: 9; } }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <a class="brand" href="./"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#3B82F6" stroke-width="11" fill="none" stroke-linecap="round"/></svg>Blue Horseshoe <span class="dot" aria-hidden="true"></span> <span style="color:var(--gold)">LIVE</span></a>
+    <span class="spacer"></span>
+    <select id="mode" class="ctl" aria-label="View">
+      <option value="both">Ticker + slips</option>
+      <option value="ticker">Ticker only</option>
+      <option value="slips">Slips only</option>
+    </select>
+    <select id="size" class="ctl" aria-label="Text size">
+      <option value="normal">Normal text</option>
+      <option value="large">Large text</option>
+    </select>
+    <select id="speed" class="ctl" aria-label="Ticker speed">
+      <option value="slow">Slow ticker</option>
+      <option value="med" selected>Medium ticker</option>
+      <option value="fast">Fast ticker</option>
+    </select>
+    <select id="more" class="ctl" aria-label="More" style="max-width: 120px;">
+      <option value="">More…</option>
+      <option value="share">Copy link to these slips</option>
+      <option value="full">Full screen</option>
+      <option value="clear">Remove finished slips</option>
+    </select>
+    <button id="add" class="ctl primary" type="button">+ Add slip</button>
+    <span id="stamp" class="stamp mono">Loading…</span>
+  </div>
+
+  <div class="ticker" id="ticker" aria-live="off"><span class="lab">MY SLIPS</span><div class="track" id="track"></div></div>
+  <div class="scores" id="scores"></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>
+    <h2>No slips yet</h2>
+    Tap <b>+ Add slip</b> and paste your legs, one per line, or use <b>Watch live</b> on any Horseshoe ticket. Keep this page open on your second monitor and it updates every 20 seconds.
+  </div>
+
+  <dialog id="dlg">
+    <form class="dlg" method="dialog" id="form">
+      <h3 id="dlgTitle">Add a slip</h3>
+      <div class="row">
+        <label>Name<input id="fName" placeholder="Friday night 3-legger"></label>
+        <label>Stake ($)<input id="fStake" inputmode="decimal" placeholder="5"></label>
+        <label>Odds (optional)<input id="fOdds" placeholder="+400"></label>
+      </div>
+      <textarea id="fLegs" spellcheck="false" placeholder="Memphis ML&#10;Washington +3&#10;App State Coastal Under 48.5&#10;Bijan Robinson over 74.5 rush yds&#10;Puka Nacua 6+ receptions&#10;Ja'Marr Chase anytime TD"></textarea>
+      <div class="hint">One leg per line. Name a team for sides and totals (<code>Purdue Under 50.5</code>). Props: <code>Player over 64.5 rush yds</code>, <code>Player 60+ rec yds</code>, <code>Player anytime TD</code>. Add a price at the end if you want (<code>Memphis ML -258</code>). Leave Odds blank to multiply the leg prices.</div>
+      <div class="chk" id="chk"></div>
+      <div class="acts">
+        <button class="ctl" value="cancel" type="button" id="cancel">Cancel</button>
+        <button class="ctl" type="button" id="del" hidden>Delete slip</button>
+        <button class="ctl primary" type="button" id="save">Save slip</button>
+      </div>
+    </form>
+  </dialog>
+
+<script>
+(function () {
+  'use strict';
+  var ESPN = 'https://site.api.espn.com/apis/site/v2/sports/football/';
+  var KEY = 'bh.live.slips', PREF = 'bh.live.prefs';
+  var REFRESH = 20000;
+
+  function load(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+  function dec(am) { am = Number(am); if (!am) return null; return am > 0 ? 1 + am / 100 : 1 + 100 / -am; }
+  function amer(d) { if (!d || d <= 1) return '—'; return d >= 2 ? '+' + Math.round((d - 1) * 100) : String(Math.round(-100 / (d - 1))); }
+  function money(n) { return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function ymd(d) { return d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, ''); }
+  var normName = function (x) { return String(x || '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); };
+  var squash = function (x) { return normName(x).replace(/ /g, ''); };
+
+  var slips = load(KEY, []);
+  var prefs = load(PREF, { mode: 'both', size: 'normal', speed: 'med' });
+  var games = {};          // id -> game record
+  var summaries = {};      // id -> {t, json}
+  var playerGame = {};     // squashed player -> game id
+  var lastScan = {};       // game id -> time of last summary scan for unresolved players
+
+  // ---------- import from hash (share link)
+  (function () {
+    var m = /#s=([^&]+)/.exec(location.hash);
+    if (!m) return;
+    try {
+      var got = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))));
+      (got || []).forEach(function (s) { if (!slips.some(function (x) { return x.id === s.id; })) slips.push(s); });
+      save(KEY, slips);
+    } catch (e) {}
+    history.replaceState(null, '', location.pathname);
+  })();
+
+  // ---------- ESPN
+  function getJSON(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
+
+  function readGame(ev, sport) {
+    var c = ev.competitions && ev.competitions[0];
+    if (!c) return null;
+    var h = c.competitors.filter(function (x) { return x.homeAway === 'home'; })[0];
+    var a = c.competitors.filter(function (x) { return x.homeAway === 'away'; })[0];
+    if (!h || !a) return null;
+    var stt = c.status || ev.status || {};
+    var sit = c.situation || {};
+    return {
+      id: String(ev.id), sport: sport, date: ev.date,
+      state: (stt.type && stt.type.state) || 'pre',
+      detail: (stt.type && (stt.type.shortDetail || stt.type.detail)) || '',
+      period: stt.period || 0, clock: stt.displayClock || '0:00',
+      a: a.team, h: h.team, as: Number(a.score) || 0, hs: Number(h.score) || 0,
+      poss: sit.possession ? String(sit.possession) : null, rz: !!sit.isRedZone, dd: sit.shortDownDistanceText || sit.downDistanceText || ''
+    };
+  }
+  function aliases(t) {
+    var out = [t.displayName, t.shortDisplayName, t.location, t.name, t.nickname, t.abbreviation].filter(Boolean).map(function (x) { return String(x).toLowerCase(); });
+    // "Appalachian State" also answers to "App State"; "Coastal Carolina" to "Coastal"
+    out.slice().forEach(function (x) {
+      if (/state$/.test(x) && x.split(' ').length > 2) out.push(x.split(' ')[0] + ' state');
+      if (x === 'appalachian state') out.push('app state', 'app st');
+      if (/ st\.?$/.test(x)) out.push(x.replace(/ st\.?$/, ' state'));
+    });
+    return out.filter(function (x, i, arr) { return x.length >= 2 && arr.indexOf(x) === i; });
+  }
+  function fetchBoards() {
+    var now = new Date(), days = [ymd(now)];
+    var hr = Number(now.toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }));
+    if (hr < 6) days.push(ymd(new Date(now.getTime() - 864e5)));
+    var reqs = [getJSON(ESPN + 'nfl/scoreboard').then(function (j) { return ['nfl', j]; })];
+    days.forEach(function (d) {
+      reqs.push(getJSON(ESPN + 'college-football/scoreboard?groups=80&limit=300&dates=' + d).then(function (j) { return ['cfb', j]; }));
+      reqs.push(getJSON(ESPN + 'college-football/scoreboard?groups=81&limit=300&dates=' + d).then(function (j) { return ['cfb', j]; }));
+    });
+    // games named in saved slips that may be on other days (NFL week) are fetched by id below
+    return Promise.allSettled(reqs).then(function (res) {
+      var ok = 0;
+      res.forEach(function (r) {
+        if (r.status !== 'fulfilled') return;
+        ok++;
+        (r.value[1].events || []).forEach(function (ev) { var g = readGame(ev, r.value[0]); if (g) games[g.id] = g; });
+      });
+      if (!ok) throw new Error('feeds down');
+    });
+  }
+  function fetchSummary(g) {
+    var path = (g.sport === 'nfl' ? 'nfl' : 'college-football') + '/summary?event=' + g.id;
+    return getJSON(ESPN + path).then(function (j) {
+      summaries[g.id] = { t: Date.now(), json: j };
+      // a game not on today's boards (e.g. saved from the site) gets its status from the summary
+      var comp = j.header && j.header.competitions && j.header.competitions[0];
+      if (comp && (g.offBoard || !games[g.id])) {
+        var rec = readGame({ id: g.id, date: comp.date, competitions: [comp] }, g.sport);
+        if (rec) { rec.offBoard = !!g.offBoard; games[g.id] = rec; }
+      }
+      return j;
+    });
+  }
+
+  // ---------- parse legs
+  var STATS = [
+    [/\b(pass(ing)?\s*\+\s*rush(ing)?)\b/, 'pass + rush yds'],
+    [/\b(rush(ing)?\s*\+\s*rec(eiving)?|scrimmage)\b/, 'rush + rec yds'],
+    [/\b(pass(ing)?\s*(td|tds|touchdowns?))\b/, 'pass TDs'],
+    [/\b(pass(ing)?\s*(yds|yards)?|py)\b/, 'pass yds'],
+    [/\b(completions?|comp)\b/, 'completions'],
+    [/\b(pass(ing)?\s*att(empt)?s?|attempts)\b/, 'pass attempts'],
+    [/\b(longest\s*rush|long\s*rush)\b/, 'longest rush'],
+    [/\b(longest\s*(rec|reception|catch)|long\s*rec)\b/, 'longest reception'],
+    [/\b(rush(ing)?\s*att(empt)?s?|carries)\b/, 'rush attempts'],
+    [/\b(rush(ing)?\s*(yds|yards)?|ry)\b/, 'rush yds'],
+    [/\b(receptions?|catches|recs)\b/, 'receptions'],
+    [/\b(rec(eiving)?\s*(yds|yards)?)\b/, 'rec yds'],
+    [/\b(ints?|interceptions?)\b/, 'interceptions thrown']
+  ];
+  function statOf(s) { s = s.toLowerCase(); for (var i = 0; i < STATS.length; i++) if (STATS[i][0].test(s)) return STATS[i][1]; return null; }
+
+  function findTeams(text) {
+    var low = ' ' + text.toLowerCase().replace(/[^a-z0-9&'. ]/g, ' ') + ' ';
+    var hits = [];
+    Object.keys(games).forEach(function (id) {
+      var g = games[id];
+      ['a', 'h'].forEach(function (side) {
+        aliases(g[side]).forEach(function (al) {
+          var short = al.length <= 4 && al === String(g[side].abbreviation || '').toLowerCase();
+          var re = new RegExp('(^|[^a-z])' + al.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=$|[^a-z])');
+          var m = re.exec(low);
+          if (!m) return;
+          if (short && !new RegExp('\\b' + al + '\\b', 'i').test(text)) return;
+          hits.push({ g: id, side: side, len: al.length, at: m.index, al: al });
+        });
+      });
+    });
+    hits.sort(function (x, y) { return y.len - x.len; });
+    // drop hits contained inside a longer hit ("Penn" inside "Penn State")
+    var keep = [];
+    hits.forEach(function (h) {
+      if (keep.some(function (k) { return h.at >= k.at && h.at + h.len <= k.at + k.len + 1 && k.al !== h.al; })) return;
+      if (keep.some(function (k) { return k.g === h.g && k.side === h.side; })) return;
+      keep.push(h);
+    });
+    return keep;
+  }
+
+  function parseLeg(raw, hint) {
+    var text = String(raw).trim().replace(/\s+/g, ' ');
+    var odds = null, m;
+    // a trailing price like -110 / +350 / (−258); spreads never reach 100
+    if ((m = /\s*(?:@|odds)?\s*\(?\s*([+\-−]\d{3,5})\s*\)?\s*$/i.exec(text)) && text.slice(0, m.index).trim()) {
+      var pv = Number(m[1].replace('−', '-'));
+      if (Math.abs(pv) >= 100) { odds = pv; text = text.slice(0, m.index).trim(); }
+    }
+    var leg = { raw: String(raw).trim(), text: text, odds: odds };
+    if (hint && hint.odds != null && leg.odds == null) leg.odds = hint.odds;
+    var low = text.toLowerCase();
+
+    // player props
+    var yes = /^(.*?)\s+(anytime\s*(td|touchdown)|atd|to score( a)?( td| touchdown)?|any time td|td scorer)$/i.exec(text);
+    var thr = /^(.*?)\s+(to throw( a)? (td|touchdown)|1\+ pass(ing)? td)$/i.exec(text);
+    var over = /^(.*?)\s+(?:over|o)\s*([\d.]+)\s+(.+)$/i.exec(text);
+    var plus = /^(.*?)\s+(\d+(?:\.\d+)?)\+\s*(.+)$/i.exec(text);
+    if (thr) { leg.market = 'prop'; leg.player = thr[1]; leg.what = 'pass TDs'; leg.line = 0.5; leg.side = 'yes'; }
+    else if (yes) { leg.market = 'prop'; leg.player = yes[1]; leg.what = 'TDs'; leg.line = 0.5; leg.side = 'yes'; }
+    else if (over && statOf(over[3])) { leg.market = 'prop'; leg.player = over[1]; leg.line = Number(over[2]); leg.what = statOf(over[3]); leg.side = 'over'; }
+    else if (plus && statOf(plus[3])) { leg.market = 'prop'; leg.player = plus[1]; leg.line = Number(plus[2]) - 0.5; leg.what = statOf(plus[3]); leg.side = 'over'; }
+    if (leg.market === 'prop') {
+      leg.player = leg.player.replace(/\s*[\(\[].*?[\)\]]\s*/g, ' ').replace(/^.*?:\s*/, '').trim();
+      var ht = findTeams(text.replace(leg.player, ' '));
+      leg.g = hint && hint.g ? String(hint.g) : (ht[0] && ht[0].g) || playerGame[squash(leg.player)] || null;
+      return leg;
+    }
+
+    if (hint && hint.g && !games[hint.g]) { leg.g = String(hint.g); leg.market = 'pending'; return leg; }
+    var teams = hint && hint.g && games[hint.g] ? findTeams(text).filter(function (t) { return t.g === String(hint.g); }) : findTeams(text);
+    if (hint && hint.g && !teams.length && games[hint.g]) teams = [{ g: String(hint.g), side: null }];
+    if ((m = /(?:^|\s)(over|under|o|u)\s*([\d.]+)(?=\s|$)/i.exec(low))) {
+      leg.market = 'total'; leg.dir = /^o/i.test(m[1]) ? 'over' : 'under'; leg.line = Number(m[2]);
+      if (teams[0]) leg.g = teams[0].g;
+      return leg;
+    }
+    if (!teams.length) { leg.market = null; return leg; }
+    var t = teams[0];
+    leg.g = t.g; leg.side = t.side;
+    if ((m = /(^|\s)([+-]\s*\d+(?:\.\d+)?|pk|pick'?em|pick)(\s|$)/i.exec(text)) && !/\b(ml|moneyline)\b/i.test(low)) {
+      var v = /^p/i.test(m[2]) ? 0 : Number(m[2].replace(/\s/g, ''));
+      if (Math.abs(v) < 70) { leg.market = 'spread'; leg.line = v; return leg; }
+    }
+    leg.market = 'ml'; leg.line = 0;
+    return leg;
+  }
+
+  // ---------- live stats
+  function playerStat(sum, player, what) {
+    var groups = sum && sum.boxscore && sum.boxscore.players;
+    if (!Array.isArray(groups)) return undefined;
+    var want = normName(player), wantSq = want.replace(/ /g, ''), wantLast = want.split(' ').pop(), wantFirst = want.split(' ')[0];
+    function isHim(name) {
+      var n = normName(name), sq = n.replace(/ /g, '');
+      if (!n) return false;
+      if (sq === wantSq || sq.indexOf(wantSq) === 0 || wantSq.indexOf(sq) === 0) return true;
+      var parts = n.split(' '), last = parts[parts.length - 1];
+      if (last !== wantLast) return false;
+      return want.split(' ').length === 1 || parts[0][0] === wantFirst[0];
+    }
+    var seen = false;
+    function get(cat, keysWanted) {
+      for (var t = 0; t < groups.length; t++) {
+        var sts = groups[t].statistics || [];
+        for (var s = 0; s < sts.length; s++) {
+          var st = sts[s];
+          if (st.name !== cat) continue;
+          var keys = (st.keys || st.labels || []).map(function (k) { return String(k).toLowerCase(); });
+          var ath = st.athletes || [];
+          for (var i = 0; i < ath.length; i++) {
+            if (!isHim(ath[i].athlete && ath[i].athlete.displayName)) continue;
+            seen = true;
+            for (var kw = 0; kw < keysWanted.length; kw++) {
+              var ix = keys.indexOf(keysWanted[kw]);
+              if (ix === -1) ix = keys.findIndex(function (k) { return k.indexOf(keysWanted[kw]) === 0; });
+              if (ix !== -1) {
+                var raw = String(ath[i].stats[ix] || '0');
+                if (raw.indexOf('/') !== -1) { var pr = raw.split('/').map(Number); return keysWanted[kw] === 'att' ? pr[1] : pr[0]; }
+                return Number(raw.replace(/[^\d.-]/g, '')) || 0;
+              }
+            }
+            return 0;
+          }
+        }
+      }
+      return undefined;
+    }
+    var n = function (v) { return v == null ? 0 : v; };
+    var v;
+    switch (what) {
+      case 'pass yds': v = get('passing', ['passingyards', 'yds']); break;
+      case 'pass TDs': v = get('passing', ['passingtouchdowns', 'td']); break;
+      case 'interceptions thrown': v = get('passing', ['interceptions', 'int']); break;
+      case 'completions': v = get('passing', ['completions/passingattempts', 'c/att', 'completions']); break;
+      case 'rush yds': v = get('rushing', ['rushingyards', 'yds']); break;
+      case 'rush attempts': v = get('rushing', ['rushingattempts', 'car']); break;
+      case 'longest rush': v = get('rushing', ['longrushing', 'long']); break;
+      case 'rec yds': v = get('receiving', ['receivingyards', 'yds']); break;
+      case 'receptions': v = get('receiving', ['receptions', 'rec']); break;
+      case 'longest reception': v = get('receiving', ['longreception', 'long']); break;
+      case 'rush + rec yds': { var r1 = get('rushing', ['rushingyards', 'yds']), c1 = get('receiving', ['receivingyards', 'yds']); v = (r1 === undefined && c1 === undefined) ? undefined : n(r1) + n(c1); break; }
+      case 'pass + rush yds': { var r2 = get('passing', ['passingyards', 'yds']), c2 = get('rushing', ['rushingyards', 'yds']); v = (r2 === undefined && c2 === undefined) ? undefined : n(r2) + n(c2); break; }
+      case 'TDs': { var r3 = get('rushing', ['rushingtouchdowns', 'td']), c3 = get('receiving', ['receivingtouchdowns', 'td']); v = (r3 === undefined && c3 === undefined) ? undefined : n(r3) + n(c3); break; }
+    }
+    if (what === 'pass attempts') {
+      // attempts live in the "C/ATT" pair
+      var pa = undefined;
+      groups.forEach(function (tm) { (tm.statistics || []).forEach(function (st) {
+        if (st.name !== 'passing') return;
+        var keys = (st.keys || st.labels || []).map(function (k) { return String(k).toLowerCase(); });
+        var ix = keys.findIndex(function (k) { return k.indexOf('completions') === 0 || k === 'c/att'; });
+        (st.athletes || []).forEach(function (a) { if (ix !== -1 && isHim(a.athlete && a.athlete.displayName)) pa = Number(String(a.stats[ix]).split('/')[1]) || 0; });
+      }); });
+      v = pa;
+    }
+    if (v === undefined && seen) v = 0;
+    return v;
+  }
+  function anyPlayerIn(sum, player) {
+    var groups = sum && sum.boxscore && sum.boxscore.players;
+    if (!Array.isArray(groups)) return false;
+    return ['passing', 'rushing', 'receiving'].some(function (c) {
+      return playerStat(sum, player, c === 'passing' ? 'pass yds' : c === 'rushing' ? 'rush yds' : 'rec yds') !== undefined;
+    });
+  }
+
+  // fraction of regulation played
+  function frac(g) {
+    if (g.state === 'post') return 1;
+    if (g.state !== 'in') return 0;
+    if (/half/i.test(g.detail)) return 0.5;
+    var p = Math.min(g.period || 1, 5);
+    if (p > 4) return 1;
+    var cm = /(\d+):(\d+)/.exec(g.clock || '');
+    var left = cm ? Number(cm[1]) + Number(cm[2]) / 60 : 0;
+    if (/end/i.test(g.detail)) left = 0;
+    return Math.max(0, Math.min(1, ((p - 1) * 15 + (15 - left)) / 60));
+  }
+  function proj(cur, line, f) {
+    if (f <= 0) return line;
+    if (f >= 1) return cur;
+    var pace = cur / f;
+    var w = Math.min(1, f * 1.4); // trust the pace more as the game goes on
+    var rate = w * pace + (1 - w) * Math.max(line, cur);
+    return cur + (1 - f) * rate;
+  }
+  function teamName(t) { return t.location && t.location.length <= 16 ? t.location : (t.shortDisplayName || t.abbreviation); }
+  function abbr(t) { return t.abbreviation || t.shortDisplayName; }
+  function scoreLine(g) { return abbr(g.a) + ' ' + g.as + '–' + g.hs + ' ' + abbr(g.h); }
+  function clockStr(g) {
+    if (g.state === 'pre') return new Date(g.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+    if (g.state === 'post') return 'Final';
+    return g.detail || ('Q' + g.period + ' ' + g.clock);
+  }
+  function fmt(n) { return (Math.round(n * 10) / 10).toString(); }
+  function sgn(n) { n = Math.round(n * 10) / 10; return (n > 0 ? '+' : '') + n; }
+
+  // Evaluate one leg -> {cls, right, sub, prog}
+  function evalLeg(leg) {
+    var g = leg.g && games[leg.g];
+    if (!leg.market) return { cls: 's-unk', right: '?', sub: "Can't match this leg to a game today" };
+    if (leg.market === 'pending' || (!g && leg.g)) return { cls: 's-pre', right: '…', sub: 'Loading game info' };
+    if (!g) {
+      if (leg.market === 'prop') return { cls: 's-pre', right: 'Waiting', sub: 'Looking for ' + leg.player + ' once games start' };
+      return { cls: 's-unk', right: '?', sub: "Game not found on today's board" };
+    }
+    var f = frac(g), live = g.state === 'in', done = g.state === 'post';
+    var base = scoreLine(g) + ' · ' + clockStr(g);
+    if (g.state === 'pre' && leg.market !== 'prop') return { cls: 's-pre', right: clockStr(g), sub: abbr(g.a) + ' @ ' + abbr(g.h) };
+    var R = {};
+    if (leg.market === 'ml' || leg.market === 'spread') {
+      var mine = leg.side === 'a' ? g.as : g.hs, opp = leg.side === 'a' ? g.hs : g.as;
+      var m = mine - opp + (leg.market === 'spread' ? leg.line : 0);
+      if (done) { R.cls = m > 0 ? 's-win' : m < 0 ? 's-lost' : (leg.market === 'ml' ? 's-push' : 's-push'); R.right = m > 0 ? 'WON' : m < 0 ? 'LOST' : 'PUSH'; }
+      else {
+        var safe = 3 + 7 * (1 - f);
+        R.cls = m >= safe ? 's-good' : m > -safe ? 's-close' : 's-bad';
+        R.right = leg.market === 'ml' ? (m > 0 ? 'Up ' + m : m < 0 ? 'Down ' + -m : 'Tied') : (m > 0 ? 'Covering ' + sgn(m) : m < 0 ? 'Short ' + fmt(-m) : 'On the number');
+      }
+      R.sub = base;
+      R.prog = null;
+      return R;
+    }
+    if (leg.market === 'total') {
+      var pts = g.as + g.hs, pj = proj(pts, leg.line, f);
+      if (leg.dir === 'over') {
+        if (pts > leg.line) return { cls: 's-win', right: 'HIT ' + pts, sub: base, prog: 1 };
+        if (done) return { cls: pts === leg.line ? 's-push' : 's-lost', right: pts === leg.line ? 'PUSH' : 'LOST ' + pts, sub: base, prog: pts / leg.line };
+        var d = pj - leg.line;
+        return { cls: d > 4 ? 's-good' : d > -4 ? 's-close' : 's-bad', right: pts + ' / ' + fmt(leg.line), sub: base + ' · pace ' + Math.round(pj), prog: pts / leg.line };
+      } else {
+        if (pts > leg.line) return { cls: 's-lost', right: 'LOST ' + pts, sub: base, prog: 1 };
+        if (done) return { cls: pts === leg.line ? 's-push' : 's-win', right: pts === leg.line ? 'PUSH' : 'WON ' + pts, sub: base, prog: pts / leg.line };
+        var d2 = leg.line - pj;
+        return { cls: d2 > 4 ? 's-good' : d2 > -4 ? 's-close' : 's-bad', right: pts + ' / ' + fmt(leg.line), sub: base + ' · pace ' + Math.round(pj), prog: pts / leg.line };
+      }
+    }
+    if (leg.market === 'prop') {
+      if (g.state === 'pre') return { cls: 's-pre', right: clockStr(g), sub: leg.what + ' · ' + abbr(g.a) + ' @ ' + abbr(g.h) };
+      var sum = summaries[g.id] && summaries[g.id].json;
+      var cur = sum ? playerStat(sum, leg.player, leg.what) : undefined;
+      if (cur === undefined || cur === null) {
+        if (done) return { cls: 's-unk', right: 'No stats', sub: leg.player + ' not in the box score · ' + base };
+        return { cls: 's-close', right: '0 / ' + fmt(leg.line + 0.5), sub: leg.what + ' · no stats yet · ' + base, prog: 0 };
+      }
+      var need = leg.line;
+      if (cur > need) return { cls: 's-win', right: 'HIT ' + cur, sub: leg.what + ' · ' + base, prog: 1 };
+      if (done) return { cls: 's-lost', right: 'LOST ' + cur, sub: leg.what + ' · ' + base, prog: cur / (need + 0.5) };
+      var pj2 = proj(cur, need, f);
+      var ratio = pj2 / (need + 0.5);
+      var cls = leg.side === 'yes' ? (f > 0.85 ? 's-bad' : 's-close') : ratio >= 1.08 ? 's-good' : ratio >= 0.85 ? 's-close' : 's-bad';
+      var tgt = leg.side === 'yes' ? '1' : fmt(need + 0.5).replace(/\.0$/, '');
+      return { cls: cls, right: cur + ' / ' + tgt, sub: leg.what + (leg.side === 'yes' ? '' : ' · pace ' + Math.round(pj2)) + ' · ' + base, prog: cur / (need + 0.5) };
+    }
+    return { cls: 's-unk', right: '?', sub: '' };
+  }
+
+  function slipLegs(s) {
+    return (s.legs || []).map(function (l) {
+      var p = parseLeg(l.text, l);
+      if (p.market === 'prop' && !p.g && playerGame[squash(p.player)]) p.g = playerGame[squash(p.player)];
+      p.label = l.label || p.text;
+      return p;
+    });
+  }
+  function slipStatus(legs, evs) {
+    var lost = evs.some(function (e) { return e.cls === 's-lost'; });
+    var won = evs.filter(function (e) { return e.cls === 's-win' || e.cls === 's-push'; }).length;
+    var anyLive = legs.some(function (l) { var g = l.g && games[l.g]; return g && g.state === 'in'; });
+    if (lost) return { k: 'busted', t: 'BUSTED' };
+    if (won === legs.length && legs.length) return { k: 'cashed', t: 'CASHED' };
+    if (anyLive || won) return { k: 'live', t: 'LIVE' };
+    return { k: 'pre', t: 'UPCOMING' };
+  }
+  function payoutOf(s, legs) {
+    var stake = Number(s.stake) || 0;
+    var d = s.odds ? dec(s.odds) : null;
+    if (!d) {
+      var all = legs.every(function (l) { return l.odds; });
+      if (all && legs.length) { d = 1; legs.forEach(function (l) { d *= dec(l.odds); }); }
+    }
+    return { d: d, stake: stake, pay: d && stake ? stake * d : null };
+  }
+
+  // ---------- render
+  var $ = function (id) { return document.getElementById(id); };
+  var lastTickerHTML = '';
+  function render() {
+    var gridH = '', tick = [], gameIds = {};
+    slips.forEach(function (s) {
+      var legs = slipLegs(s);
+      var evs = legs.map(evalLeg);
+      var st = slipStatus(legs, evs);
+      var po = payoutOf(s, legs);
+      var won = evs.filter(function (e) { return e.cls === 's-win' || e.cls === 's-push'; }).length;
+      var alive = evs.filter(function (e) { return e.cls !== 's-lost' && e.cls !== 's-win' && e.cls !== 's-push'; }).length;
+      legs.forEach(function (l) { if (l.g) gameIds[l.g] = 1; });
+      gridH += '<section class="slip ' + st.k + '">' +
+        '<div class="sh"><span class="tag ' + st.k + '">' + st.t + '</span><span class="nm">' + esc(s.name || 'Slip') + '</span>' +
+        '<span class="pay">' + (po.pay ? '<b>' + money(po.pay) + '</b><span>' + money(po.stake) + ' at ' + amer(po.d) + '</span>' : (po.d ? '<b>' + amer(po.d) + '</b><span>' + legs.length + ' legs</span>' : '<span>' + legs.length + ' legs</span>')) + '</span></div>' +
+        '<div class="seg">' + evs.map(function (e) { return '<i class="' + e.cls + '"></i>'; }).join('') + '</div>' +
+        '<div class="legs">' + legs.map(function (l, i) {
+          var e = evs[i];
+          return '<div class="leg ' + e.cls + '"><span class="pip"></span><span class="lb">' + esc(l.label) + (l.odds ? ' <span class="mono" style="color:var(--mut);font-weight:500;font-size:.85em">' + (l.odds > 0 ? '+' : '') + l.odds + '</span>' : '') + '</span><span class="rt">' + esc(e.right) + '</span>' +
+            '<span class="sub">' + (e.prog != null ? '<span class="prog"><i style="width:' + Math.round(Math.max(0, Math.min(1, e.prog)) * 100) + '%"></i></span>' : '') + '<span>' + esc(e.sub) + '</span></span></div>';
+        }).join('') + '</div>' +
+        '<div class="sf"><span class="need">' + won + ' of ' + legs.length + ' in' + (st.k === 'live' || st.k === 'pre' ? ' · ' + alive + ' to go' : '') + '</span>' +
+        '<button class="icon" data-edit="' + s.id + '" type="button">Edit</button><button class="icon" data-del="' + s.id + '" type="button" aria-label="Remove slip">✕</button></div>' +
+        '</section>';
+
+      tick.push('<span class="ti"><span class="sn">' + esc(s.name || 'Slip') + '</span><span class="tag ' + st.k + '" style="font-size:.7em;padding:1px 5px;border-radius:3px;font-weight:700">' + st.t + '</span>' +
+        '<span class="dt">' + won + '/' + legs.length + (po.pay ? ' · ' + money(po.pay) : '') + '</span></span>');
+      legs.forEach(function (l, i) {
+        var e = evs[i];
+        tick.push('<span class="ti ' + e.cls + '"><span class="pip"></span><b>' + esc(l.label) + '</b><span class="rt mono" style="font-weight:700">' + esc(e.right) + '</span>' +
+          (l.g && games[l.g] && games[l.g].state !== 'pre' ? '<span class="dt">' + esc(scoreLine(games[l.g]) + ' ' + clockStr(games[l.g])) + '</span>' : '') + '</span>');
+      });
+    });
+    $('grid').innerHTML = gridH;
+    $('empty').hidden = !!slips.length;
+
+    var th = tick.join('');
+    if (!th) th = '<span class="ti"><span class="dt">Add a slip to start the ticker</span></span>';
+    if (th !== lastTickerHTML) {
+      lastTickerHTML = th;
+      var tr = $('track');
+      tr.innerHTML = th;
+      var one = Math.max(1, tr.scrollWidth), reps = Math.max(1, Math.ceil((window.innerWidth + 200) / one));
+      var unit = new Array(reps + 1).join(th);
+      tr.innerHTML = unit + unit;
+      var w = tr.scrollWidth / 2;
+      var pxs = { slow: 45, med: 80, fast: 130 }[prefs.speed] || 80;
+      tr.style.animationDuration = Math.max(12, w / pxs) + 's';
+    }
+
+    var sc = Object.keys(gameIds).map(function (id) { return games[id]; }).filter(Boolean)
+      .sort(function (x, y) { var r = { in: 0, pre: 1, post: 2 }; return (r[x.state] - r[y.state]) || (new Date(x.date) - new Date(y.date)); })
+      .map(function (g) {
+        var pa = g.poss && String(g.a.id) === g.poss ? ' ◂' : '', ph = g.poss && String(g.h.id) === g.poss ? ' ◂' : '';
+        return '<span class="sc ' + (g.state === 'in' ? 'live' : '') + '"><span>' + esc(abbr(g.a)) + ' <b>' + (g.state === 'pre' ? '' : g.as) + '</b>' + pa + '</span><span>' + esc(abbr(g.h)) + ' <b>' + (g.state === 'pre' ? '' : g.hs) + '</b>' + ph + '</span>' +
+          (g.rz ? '<span class="rz">RZ</span>' : '') + '<span class="st">' + esc(clockStr(g)) + (g.state === 'in' && g.dd ? ' · ' + esc(g.dd) : '') + '</span></span>';
+      }).join('');
+    $('scores').innerHTML = sc;
+    $('scores').style.display = sc && prefs.mode !== 'ticker' ? '' : 'none';
+  }
+
+  // ---------- refresh loop
+  var busy = false, nextAt = 0;
+  function needSummaries() {
+    var want = {}, now = Date.now();
+    slips.forEach(function (s) {
+      slipLegs(s).forEach(function (l) {
+        if (l.g) {
+          var g = games[l.g];
+          if (!g) { want[l.g] = { id: l.g, sport: guessSport(s, l), offBoard: true }; return; }
+          if (l.market === 'prop' && g.state !== 'pre') want[l.g] = g;
+          return;
+        }
+        if (l.market !== 'prop') return;
+        // player we haven't placed yet: look through started games, each at most every 2 minutes
+        Object.keys(games).forEach(function (id) {
+          var g = games[id];
+          if (g.state === 'pre' || want[id]) return;
+          if (lastScan[id] && now - lastScan[id] < 120000) return;
+          want[id] = g; lastScan[id] = now;
+        });
+      });
+    });
+    return Object.keys(want).map(function (k) { return want[k]; }).filter(function (g) {
+      var sm = summaries[g.id];
+      if (!sm) return true;
+      if (g.state === 'post' && !g.offBoard) return now - sm.t > 600000;
+      return now - sm.t > (g.offBoard ? 60000 : 15000);
+    }).slice(0, 40);
+  }
+  function guessSport(s, l) { return (l && l.sport) || s.sport || 'nfl'; }
+  function resolvePlayers() {
+    slips.forEach(function (s) {
+      slipLegs(s).forEach(function (l) {
+        if (l.market !== 'prop' || l.g) return;
+        var key = squash(l.player);
+        if (playerGame[key]) return;
+        Object.keys(summaries).some(function (id) {
+          if (anyPlayerIn(summaries[id].json, l.player)) { playerGame[key] = id; return true; }
+          return false;
+        });
+      });
+    });
+  }
+  function tick() {
+    if (busy) return;
+    busy = true;
+    fetchBoards().catch(function () { $('stamp').textContent = 'Scores feed unavailable, retrying…'; })
+      .then(function () {
+        var list = needSummaries();
+        return Promise.allSettled(list.map(fetchSummary));
+      })
+      .then(function () { resolvePlayers(); render(); $('stamp').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }); })
+      .finally(function () { busy = false; nextAt = Date.now() + REFRESH; });
+  }
+  setInterval(function () { if (Date.now() >= nextAt && !document.hidden) tick(); }, 1000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
+  window.addEventListener('storage', function (e) { if (e.key === KEY) { slips = load(KEY, []); tick(); } });
+
+  // ---------- controls
+  function applyPrefs() {
+    document.body.classList.toggle('m-ticker', prefs.mode === 'ticker');
+    document.body.classList.toggle('m-slips', prefs.mode === 'slips');
+    document.body.classList.toggle('large', prefs.size === 'large');
+    $('mode').value = prefs.mode; $('size').value = prefs.size; $('speed').value = prefs.speed;
+    lastTickerHTML = '';
+    save(PREF, prefs);
+  }
+  $('mode').onchange = function () { prefs.mode = this.value; applyPrefs(); render(); };
+  $('size').onchange = function () { prefs.size = this.value; applyPrefs(); render(); };
+  $('speed').onchange = function () { prefs.speed = this.value; applyPrefs(); render(); };
+  $('more').onchange = function () {
+    var v = this.value; this.value = '';
+    if (v === 'full') { var el = document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen || function () {}).call(el); }
+    if (v === 'share') {
+      var data = btoa(unescape(encodeURIComponent(JSON.stringify(slips)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      var url = location.origin + location.pathname + '#s=' + data;
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { $('stamp').textContent = 'Link copied. Open it on any screen.'; }, function () { prompt('Copy this link', url); });
+    }
+    if (v === 'clear') {
+      slips = slips.filter(function (s) { var legs = slipLegs(s), evs = legs.map(evalLeg), st = slipStatus(legs, evs); return st.k === 'live' || st.k === 'pre'; });
+      save(KEY, slips); render();
+    }
+  };
+
+  var editing = null;
+  function openEditor(s) {
+    editing = s ? s.id : null;
+    $('dlgTitle').textContent = s ? 'Edit slip' : 'Add a slip';
+    $('fName').value = s ? s.name || '' : 'Slip ' + (slips.length + 1);
+    $('fStake').value = s ? (s.stake || '') : (load(PREF, {}).lastStake || '5');
+    $('fOdds').value = s && s.odds ? (s.odds > 0 ? '+' + s.odds : s.odds) : '';
+    $('fLegs').value = s ? s.legs.map(function (l) { return l.text; }).join('\n') : '';
+    $('del').hidden = !s;
+    check();
+    $('dlg').showModal();
+  }
+  function check() {
+    var lines = $('fLegs').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    var prev = editing && slips.filter(function (s) { return s.id === editing; })[0];
+    $('chk').innerHTML = lines.map(function (t) {
+      var hint = prev && prev.legs.filter(function (l) { return l.text === t; })[0];
+      var p = parseLeg(t, hint);
+      var g = p.g && games[p.g];
+      var ok = p.market && (g || p.market === 'prop');
+      var what = !p.market ? "can't read this one" :
+        p.market === 'prop' ? 'prop · ' + p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : 'over ' + p.line + ' ' + p.what) + (g ? ' · ' + abbr(g.a) + ' @ ' + abbr(g.h) : ' · game found at kickoff') :
+        !g ? 'no game found today' :
+        (p.market === 'total' ? p.dir + ' ' + p.line : p.market === 'ml' ? teamName(g[p.side]) + ' ML' : teamName(g[p.side]) + ' ' + sgn(p.line)) + ' · ' + abbr(g.a) + ' @ ' + abbr(g.h);
+      return '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '! ') + esc(t) + ' → ' + esc(what) + '</span>';
+    }).join('');
+  }
+  $('fLegs').addEventListener('input', check);
+  $('add').onclick = function () { openEditor(null); };
+  $('cancel').onclick = function () { $('dlg').close(); };
+  $('del').onclick = function () { slips = slips.filter(function (s) { return s.id !== editing; }); save(KEY, slips); $('dlg').close(); render(); };
+  $('save').onclick = function () {
+    var lines = $('fLegs').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    if (!lines.length) { $('fLegs').focus(); return; }
+    var prev = editing && slips.filter(function (s) { return s.id === editing; })[0];
+    var oddsTxt = $('fOdds').value.replace(/[^\d+-]/g, '');
+    var s = {
+      id: editing || uid(), name: $('fName').value.trim() || 'Slip', stake: Number($('fStake').value.replace(/[^\d.]/g, '')) || 0,
+      odds: oddsTxt ? Number(oddsTxt) : null,
+      legs: lines.map(function (t) {
+        var old = prev && prev.legs.filter(function (l) { return l.text === t; })[0];
+        if (old) return old;
+        var p = parseLeg(t);
+        return { text: t, g: p.g || null, sport: p.g && games[p.g] ? games[p.g].sport : null };
+      })
+    };
+    var pf = load(PREF, prefs); pf.lastStake = s.stake; prefs.lastStake = s.stake; save(PREF, prefs);
+    if (prev) slips = slips.map(function (x) { return x.id === s.id ? s : x; }); else slips.push(s);
+    save(KEY, slips); $('dlg').close(); tick(); render();
+  };
+  $('grid').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.edit) openEditor(slips.filter(function (s) { return s.id === t.dataset.edit; })[0]);
+    if (t.dataset.del) { slips = slips.filter(function (s) { return s.id !== t.dataset.del; }); save(KEY, slips); render(); }
+  });
+
+  applyPrefs();
+  render();
+  tick();
+  window.BHLive = { parseLeg: parseLeg, evalLeg: evalLeg, playerStat: playerStat, games: games, summaries: summaries, render: render, readGame: readGame };
+})();
+</script>
+</body>
+</html>
