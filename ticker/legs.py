@@ -176,9 +176,10 @@ STATS = [
     (r'\b(pass(ing)?\s*\+\s*rush(ing)?)\b', 'pass + rush yds'),
     (r'\b(rush(ing)?\s*\+\s*rec(eiving)?|scrimmage)\b', 'rush + rec yds'),
     (r'\b(pass(ing)?\s*(td|tds|touchdowns?))\b', 'pass TDs'),
-    (r'\b(pass(ing)?\s*(yds|yards)?|py)\b', 'pass yds'),
-    (r'\b(completions?|comp)\b', 'completions'),
-    (r'\b(pass(ing)?\s*att(empt)?s?|attempts)\b', 'pass attempts'),
+    # completions / attempts before yards: "passing completions" must not read as pass yards
+    (r'\b(completions?|comp|cmp)\b', 'completions'),
+    (r'\b(pass(ing)?\s*att(empt)?s?)\b', 'pass attempts'),
+    (r'\b(pass(ing)?\s*(yds|yards)?|py)\b(?!\s*(att|comp|cmp))', 'pass yds'),
     (r'\b(longest\s*rush|long\s*rush)\b', 'longest rush'),
     (r'\b(longest\s*(rec|reception|catch)|long\s*rec)\b', 'longest reception'),
     (r'\b(rush(ing)?\s*att(empt)?s?|carries)\b', 'rush attempts'),
@@ -186,6 +187,7 @@ STATS = [
     (r'\b(receptions?|catches|recs)\b', 'receptions'),
     (r'\b(rec(eiving)?\s*(yds|yards)?)\b', 'rec yds'),
     (r'\b(ints?|interceptions?)\b', 'interceptions thrown'),
+    (r'\battempts\b', 'pass attempts'),
 ]
 SHORT = {'rec yds': 'rec. yds', 'rush yds': 'rush yds', 'pass yds': 'pass yds', 'receptions': 'receptions',
          'rush + rec yds': 'rush+rec yds', 'pass + rush yds': 'pass+rush yds', 'pass TDs': 'pass TDs',

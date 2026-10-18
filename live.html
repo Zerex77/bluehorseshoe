@@ -311,16 +311,18 @@
     [/\b(pass(ing)?\s*\+\s*rush(ing)?)\b/, 'pass + rush yds'],
     [/\b(rush(ing)?\s*\+\s*rec(eiving)?|scrimmage)\b/, 'rush + rec yds'],
     [/\b(pass(ing)?\s*(td|tds|touchdowns?))\b/, 'pass TDs'],
-    [/\b(pass(ing)?\s*(yds|yards)?|py)\b/, 'pass yds'],
-    [/\b(completions?|comp)\b/, 'completions'],
-    [/\b(pass(ing)?\s*att(empt)?s?|attempts)\b/, 'pass attempts'],
+    // completions / attempts before yards: "passing completions" must not read as pass yards
+    [/\b(completions?|comp|cmp)\b/, 'completions'],
+    [/\b(pass(ing)?\s*att(empt)?s?)\b/, 'pass attempts'],
+    [/\b(pass(ing)?\s*(yds|yards)?|py)\b(?!\s*(att|comp|cmp))/, 'pass yds'],
     [/\b(longest\s*rush|long\s*rush)\b/, 'longest rush'],
     [/\b(longest\s*(rec|reception|catch)|long\s*rec)\b/, 'longest reception'],
     [/\b(rush(ing)?\s*att(empt)?s?|carries)\b/, 'rush attempts'],
     [/\b(rush(ing)?\s*(yds|yards)?|ry)\b/, 'rush yds'],
     [/\b(receptions?|catches|recs)\b/, 'receptions'],
     [/\b(rec(eiving)?\s*(yds|yards)?)\b/, 'rec yds'],
-    [/\b(ints?|interceptions?)\b/, 'interceptions thrown']
+    [/\b(ints?|interceptions?)\b/, 'interceptions thrown'],
+    [/\battempts\b/, 'pass attempts']
   ];
   function statOf(s) { s = s.toLowerCase(); for (var i = 0; i < STATS.length; i++) if (STATS[i][0].test(s)) return STATS[i][1]; return null; }
 
