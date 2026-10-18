@@ -127,6 +127,70 @@
   }
 
   // ---------- NFL
+  // ---------- what the track record has taught us so far, plus kickoff wind
+  // Small, labeled nudges to the Horseshoe chance (p). Logged on each pick as l.tilt so the record can show whether they help.
+  //  - spreads where the line moved 1-2.5 pts toward the team: the "sweet spot" (+1.5%)
+  //  - those spreads at 7 points or less: +1%
+  //  - lines that already moved 3-4.5 pts toward us: mostly priced in (-1%)
+  //  - unders after the total dropped 3-4.5 pts: priced in (-3%)
+  //  - wind 15+ mph at an outdoor kickoff: unders +3% (20+ mph: +5%), overs the reverse
+  function tiltLegs(legs, evById, wx, nfl) {
+    var W = (wx && wx.games) || {};
+    var sideOf = function (e, label) {
+      var low = String(label).toLowerCase();
+      var hit = null;
+      ['a', 'h'].forEach(function (sd) {
+        var t = sd === 'a' ? e.a : e.h;
+        [t.location, t.shortDisplayName, t.displayName, t.name].forEach(function (n) { if (!hit && n && low.indexOf(String(n).toLowerCase() + ' ') === 0) hit = sd; });
+      });
+      return hit;
+    };
+    var hasTotal = {};
+    legs.forEach(function (l) {
+      if (l.alt || l.k === 'prop') return;
+      var e = evById[l.g], o = e && e.odds;
+      if (!o) return;
+      var kind = l.mk || l.k, adj = 0, why = [];
+      if (kind === 'spread') {
+        var sd = sideOf(e, l.label);
+        if (sd && o.aOpen != null && o.aNow != null) {
+          var m = o.aOpen - o.aNow, am = Math.abs(m), toward = m !== 0 && (m > 0) === (sd === 'a');
+          var line = sd === 'a' ? o.aNow : -o.aNow;
+          if (toward && am >= 1 && am < 3) { adj += 0.015; why.push('sweet-spot move'); }
+          if (toward && am >= 1 && am < 3 && Math.abs(line) <= 7) { adj += 0.01; why.push('short spread'); }
+          if (toward && am >= 3 && am < 5) { adj -= 0.01; why.push('big move, mostly priced in'); }
+        }
+      }
+      if (kind === 'total') {
+        hasTotal[l.g] = 1;
+        var under = /^under/i.test(l.label), tm = o.tot != null && o.tOpen != null ? o.tot - o.tOpen : 0;
+        if (under && tm <= -3 && tm > -5) { adj -= 0.03; why.push('total already dropped ' + Math.abs(tm)); }
+        var w = W[l.g];
+        if (w && !w.indoor && w.wind >= 15) {
+          var k = w.wind >= 20 ? 0.05 : 0.03;
+          adj += under ? k : -k;
+          why.push('wind ' + Math.round(w.wind) + ' mph at kickoff');
+        }
+      }
+      if (!adj) return;
+      l.p = clamp((l.p == null ? imp(l.odds) * 0.955 : l.p) + adj, 0.01, 0.97);
+      l.conf = clamp(Math.round((l.conf || 50) + adj * 100), 5, 95);
+      l.tilt = Math.round(adj * 1000) / 1000;
+      if (why.length) l.note = (l.note ? l.note + '; ' : '') + why.join(', ');
+    });
+    // Strong wind with no total on the board yet: offer the Under (below the Horseshoe bar, but there to pick).
+    Object.keys(W).forEach(function (gid) {
+      var w = W[gid], e = evById[gid];
+      if (!w || w.indoor || w.wind < 18 || hasTotal[gid] || !e || e.state !== 'pre' || !e.odds || e.odds.tot == null) return;
+      var o = e.odds, iO = imp(o.oOdds), iU = imp(o.uOdds), k = w.wind >= 20 ? 0.05 : 0.03;
+      var pu = clamp(iU / (iO + iU) + k, 0.01, 0.97);
+      var leg = { g: gid, label: 'Under ' + o.tot, odds: o.uOdds, p: pu, conf: Math.round(pu * 100), s: [0, 0, 0], tilt: k, wxOnly: true,
+        note: 'Wind ' + Math.round(w.wind) + ' mph at kickoff' + (w.gust ? ', gusts ' + Math.round(w.gust) : '') };
+      if (nfl) { leg.k = 'line'; leg.mk = 'total'; } else leg.k = 'total';
+      legs.push(leg);
+    });
+  }
+
   function buildNfl(json, injJson, extra) {
     var inj = readInjuries(injJson || {});
     var events = (g(json, 'events') || []).map(readEvent).filter(Boolean);
@@ -342,6 +406,9 @@
       var sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
       l.p = clamp(imp(l.odds) * 0.955 + sig * 0.012, 0.01, 0.97);
     });
+    var nflById = {};
+    events.forEach(function (e) { nflById[e.id] = e; });
+    tiltLegs(legs, nflById, extra.weather, true);
     // Public splits (if posted) for live games only.
     var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
     // Multi-book Line check from the Odds API snapshot.
@@ -504,6 +571,7 @@
         legs.push({ g: s.id, k: 'total', label: 'Over ' + o.tot, odds: o.oOdds, p: iO / (iO + iU), conf: Math.round(iO / (iO + iU) * 100), s: [0, 0, 0], note: 'Over on the board, no Horseshoe signal' });
       }
     });
+    tiltLegs(legs, byId, extra.weather, false);
     slate.sort(function (x, y) { return x.date < y.date ? -1 : x.date > y.date ? 1 : 0; });
     var names = {};
     slate.forEach(function (s) { names[s.a + (s.n ? ' vs ' : ' @ ') + s.h] = 1; });
@@ -577,8 +645,9 @@
       soft(getJSON('data/sgo-cfb.json' + bust)),
       soft(getJSON('data/picks.json' + bust)),
       soft(getJSON('data/splits.json' + bust)),
-      soft(getJSON('data/meta.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6] }; });
+      soft(getJSON('data/meta.json' + bust)),
+      soft(getJSON('data/weather.json' + bust))
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {

@@ -18,10 +18,10 @@ const normName = (x) => String(x || '').toLowerCase().replace(/\b(jr|sr|ii|iii|i
 const T = globalThis.BHLines._test;
 
 export async function track(log = console.log) {
-  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store] = await Promise.all([
+  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather] = await Promise.all([
     readJSON('data/espn-nfl.json', null), readJSON('data/espn-cfb.json', null), readJSON('data/espn-injuries.json', null),
     readJSON('data/props.json', null), readJSON('data/sgo-nfl.json', null), readJSON('data/sgo-cfb.json', null),
-    readJSON('data/picks.json', { picks: [] })
+    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null)
   ]);
   const now = Date.now();
   const picks = store.picks || [];
@@ -70,11 +70,12 @@ export async function track(log = console.log) {
       label, date: e.date, game: e.short, away: e.a.shortDisplayName, home: e.h.shortDisplayName,
       odds: l.odds, p: Math.round(p * 1000) / 1000, imp: Math.round((1 / dec(l.odds)) * 1000) / 1000,
       conf: l.conf, s: l.s, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
+      tilt: l.tilt || 0, wind: weather && weather.games && weather.games[l.g] && !weather.games[l.g].indoor ? Math.round(weather.games[l.g].wind) : null,
       ...moveOf(parsed, e)
     });
   };
   if (nflSb) {
-    const nfl = T.buildNfl(nflSb, inj, { props, sgo });
+    const nfl = T.buildNfl(nflSb, inj, { props, sgo, weather });
     for (const l of nfl.legs) {
       if (l.alt) continue;
       const sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
@@ -82,7 +83,7 @@ export async function track(log = console.log) {
     }
   }
   if (cfbSb) {
-    const cf = T.buildCollege(cfbSb, { sgoCfb });
+    const cf = T.buildCollege(cfbSb, { sgoCfb, weather });
     for (const l of cf.legs) {
       if (l.alt) continue;
       const sig = l.s[0] + l.s[1] + l.s[2];

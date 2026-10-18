@@ -68,6 +68,17 @@ async function espnBackup(meta) {
     getJSON(ESPN + 'nfl/injuries')
   ]);
   const errs = [];
+  // Venues for the kickoff-wind check (weather() below).
+  meta._venues = [];
+  for (const [sport, r] of [['nfl', nfl], ['cfb', cfb]]) {
+    if (r.status !== 'fulfilled') continue;
+    for (const ev of r.value.json.events || []) {
+      const c = (ev.competitions || [])[0] || {};
+      const v = c.venue || {};
+      if ((ev.status?.type?.state || 'pre') !== 'pre') continue;
+      meta._venues.push({ id: ev.id, sport, date: ev.date, venueId: v.id, venue: v.fullName, city: v.address?.city, state: v.address?.state, indoor: !!v.indoor });
+    }
+  }
   if (nfl.status === 'fulfilled') await writeFile('data/espn-nfl.json', JSON.stringify(slim(nfl.value.json))); else errs.push('nfl: ' + nfl.reason?.message);
   if (cfb.status === 'fulfilled') await writeFile('data/espn-cfb.json', JSON.stringify(slim(cfb.value.json))); else errs.push('cfb: ' + cfb.reason?.message);
   if (inj.status === 'fulfilled') await writeFile('data/espn-injuries.json', JSON.stringify(slimInjuries(inj.value.json))); else errs.push('injuries: ' + inj.reason?.message);
@@ -215,6 +226,51 @@ async function sgoLeague(meta, league, file, everyMin, maxEvents) {
 }
 
 const meta = await readJSON('data/meta.json', {});
+
+// ---------- Kickoff weather (Open-Meteo, free, no key). Wind matters for totals; domes are skipped.
+// Updates every hour for games kicking off in the next 48 hours. Stadium coordinates are cached in data/venues.json.
+const WX_EVERY_MIN = 55;
+const STATES = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
+async function weather(meta) {
+  if (meta.wxAt && Date.now() - Date.parse(meta.wxAt) < WX_EVERY_MIN * 60e3) return;
+  const venues = (meta._venues || []).filter((v) => Date.parse(v.date) - Date.now() < 48 * 3600e3 && Date.parse(v.date) > Date.now() - 3600e3);
+  const cache = await readJSON('data/venues.json', {});
+  const out = { updated: new Date().toISOString(), games: {} };
+  const fx = {};
+  for (const v of venues) {
+    if (v.indoor) { out.games[v.id] = { indoor: true, venue: v.venue }; continue; }
+    const key = v.venueId || `${v.city}|${v.state}`;
+    if (!cache[key] && v.city) {
+      try {
+        const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v.city)}&count=10&country_code=US`).then((r) => r.json());
+        const want = STATES[v.state] || v.state;
+        const hit = (g.results || []).find((x) => x.admin1 === want) || (g.results || [])[0];
+        if (hit) cache[key] = { lat: hit.latitude, lon: hit.longitude, city: v.city, state: v.state };
+      } catch {}
+    }
+    const c = cache[key];
+    if (!c) continue;
+    const fk = `${c.lat},${c.lon}`;
+    if (!fx[fk]) {
+      fx[fk] = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=wind_speed_10m,wind_gusts_10m,precipitation,temperature_2m&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=UTC&forecast_days=3`)
+        .then((r) => r.json()).catch(() => null);
+    }
+    const f = await fx[fk];
+    const times = f?.hourly?.time || [];
+    // middle of the game: kickoff + 1.5h, rounded to the hour
+    const mid = new Date(Date.parse(v.date) + 90 * 60e3); mid.setUTCMinutes(0, 0, 0);
+    const ix = times.indexOf(mid.toISOString().slice(0, 13) + ':00');
+    if (ix === -1) continue;
+    const h = f.hourly;
+    out.games[v.id] = { wind: h.wind_speed_10m[ix], gust: h.wind_gusts_10m[ix], precip: h.precipitation[ix], temp: h.temperature_2m[ix], venue: v.venue };
+  }
+  await writeFile('data/venues.json', JSON.stringify(cache));
+  await writeFile('data/weather.json', JSON.stringify(out));
+  meta.wxAt = out.updated;
+  const windy = Object.values(out.games).filter((g) => g.wind >= 15).length;
+  console.log(`Weather: ${Object.keys(out.games).length} games, ${windy} with 15+ mph wind`);
+}
+
 // College alt lines: one pull Friday and one Saturday (Eastern), to stay inside the free 2,500 events a month.
 async function sgo(meta) {
   await sgoLeague(meta, 'NFL', 'data/sgo-nfl.json', SGO_EVERY_MIN, 30);
@@ -222,6 +278,8 @@ async function sgo(meta) {
   if (['Fri', 'Sat'].includes(day)) await sgoLeague(meta, 'NCAAF', 'data/sgo-cfb.json', 20 * 60, 70);
 }
 const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta), sgo(meta)]);
+try { await weather(meta); } catch (e) { console.error('Weather failed:', e.message); }
+delete meta._venues;
 results.forEach((r) => { if (r.status === 'rejected') { console.error(r.reason); meta.lastError = String(r.reason?.stack || r.reason).slice(0, 500); } });
 await writeFile('data/meta.json', JSON.stringify(meta));
 // Record and grade Horseshoe picks (scripts/track.mjs)
