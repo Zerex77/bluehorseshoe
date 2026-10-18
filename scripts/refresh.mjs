@@ -76,7 +76,7 @@ async function espnBackup(meta) {
       const c = (ev.competitions || [])[0] || {};
       const v = c.venue || {};
       if ((ev.status?.type?.state || 'pre') !== 'pre') continue;
-      meta._venues.push({ id: ev.id, sport, date: ev.date, venueId: v.id, venue: v.fullName, city: v.address?.city, state: v.address?.state, indoor: !!v.indoor });
+      meta._venues.push({ id: ev.id, sport, date: ev.date, venueId: v.id, venue: v.fullName, city: v.address?.city, state: v.address?.state, country: v.address?.country, indoor: !!v.indoor });
     }
   }
   if (nfl.status === 'fulfilled') await writeFile('data/espn-nfl.json', JSON.stringify(slim(nfl.value.json))); else errs.push('nfl: ' + nfl.reason?.message);
@@ -239,12 +239,14 @@ async function weather(meta) {
   const fx = {};
   for (const v of venues) {
     if (v.indoor) { out.games[v.id] = { indoor: true, venue: v.venue }; continue; }
-    const key = v.venueId || `${v.city}|${v.state}`;
+    const us = !v.country || /^(usa?|united states)/i.test(v.country);
+    const key = (v.venueId || `${v.city}|${v.state}`) + (us ? '' : ':' + v.country); // London, Mexico City, etc.
     if (!cache[key] && v.city) {
       try {
-        const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v.city)}&count=10&country_code=US`).then((r) => r.json());
+        const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(v.city)}&count=10${us ? '&country_code=US' : ''}`).then((r) => r.json());
         const want = STATES[v.state] || v.state;
-        const hit = (g.results || []).find((x) => x.admin1 === want) || (g.results || [])[0];
+        const res = g.results || [];
+        const hit = us ? (res.find((x) => x.admin1 === want) || res[0]) : (res.slice().sort((a, b) => (b.population || 0) - (a.population || 0))[0]);
         if (hit) cache[key] = { lat: hit.latitude, lon: hit.longitude, city: v.city, state: v.state };
       } catch {}
     }
