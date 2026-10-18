@@ -347,8 +347,8 @@
         var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
         if (pr.side === 'yes' && !YES[pr.stat]) return;
         var label = pr.side === 'yes' ? pr.player + ' ' + YES[pr.stat] : pr.player + ' ' + pr.side + ' ' + pr.line + ' ' + pr.what;
-        // Hard Rock doesn't offer alternate lines on longest reception, so only the main line is used.
-        if (pr.alt && pr.stat === 'receiving_longestReception') return;
+        // Hard Rock doesn't offer alternate lines on longest reception, rush or completion, so only the main line is used.
+        if (pr.alt && /longest/i.test(pr.stat)) return;
         if (pr.alt) {
           // Alternate prop line: only used to feather a parlay toward its target price.
           var ap = imp(pr.odds) * 0.955;
