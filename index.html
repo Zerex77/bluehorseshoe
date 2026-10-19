@@ -1032,9 +1032,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261019090623';</script>
-<script src="runtime.js?v=20261019090623"></script>
-<script src="lines.js?v=20261019090623"></script>
+<script>window.BH_VERSION='20261019190337';</script>
+<script src="runtime.js?v=20261019190337"></script>
+<script src="lines.js?v=20261019190337"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1826,7 +1826,7 @@ class Component extends DCLogic {
       return /^Over /.test(l.label) || (l.k === 'prop' && (/ over /.test(l.label) || /anytime TD/.test(l.label)));
     }).map(function (l) { return ovRow(l, false, gameMap); }).sort(function (a, b) { return b.score - a.score; });
     var ovMkt = st.ovMkt || 'all';
-    var nflOvList = nflOvAll.filter(function (r) { return ovMkt === 'all' || (ovMkt === 'game' ? r.l.k !== 'prop' : r.l.k === 'prop'); });
+    var nflOvList = nflOvAll.filter(function (r) { return !(r.l.k === 'prop' && r.l.held === 'questionable') && (ovMkt === 'all' || (ovMkt === 'game' ? r.l.k !== 'prop' : r.l.k === 'prop')); }); // no questionable players in Horseshoe Overs
     // One over per player stat (best value line), one game total per game
     var ovKey = function (l) { return l.k === 'prop' ? (l.pk || l.label) : l.g + '|total'; };
     var nflOvTop = ovBuild(nflOvList, 20, ovKey);

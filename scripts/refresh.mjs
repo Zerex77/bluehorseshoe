@@ -43,7 +43,7 @@ function slimInjuries(j) {
   return {
     injuries: (j.injuries || []).map((t) => ({
       displayName: t.displayName,
-      injuries: (t.injuries || []).filter((i) => ['Out', 'Doubtful', 'Questionable'].includes(i.status)).map((i) => ({
+      injuries: (t.injuries || []).filter((i) => ['Out', 'Doubtful', 'Questionable'].includes(i.status) || /injured reserve|physically unable|pup|suspend|non-football|reserve/i.test(i.status || '')).map((i) => ({
         status: i.status,
         athlete: { displayName: i.athlete?.displayName, position: { abbreviation: i.athlete?.position?.abbreviation } },
         details: { type: i.details?.type, detail: i.details?.detail }

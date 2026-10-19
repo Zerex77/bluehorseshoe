@@ -101,18 +101,24 @@
   // ---------- injuries
   var KEYPOS = { QB: 4, RB: 3, WR: 2, TE: 2 };
   var STATUS_RANK = { Out: 3, Doubtful: 2, Questionable: 1 };
+  // ESPN also lists players as Injured Reserve, PUP, Suspended, etc. Those players are out too.
+  var OUT_LIKE = /injured reserve|^ir\b|physically unable|pup|suspend|non-football|nfi|reserve|commissioner/i;
+  // "Deebo Samuel Sr." and "Deebo Samuel" are the same player.
+  var injKey = function (n) { return String(n || '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, ''); };
   function readInjuries(json) {
     var byTeam = {}, byName = {};
     (g(json, 'injuries') || []).forEach(function (t) {
       var list = [];
       (t.injuries || []).forEach(function (i) {
         var st = i.status || '';
+        if (!STATUS_RANK[st] && OUT_LIKE.test(st)) st = 'Out';
         if (!STATUS_RANK[st]) return;
         var pos = g(i, 'athlete.position.abbreviation') || '';
         var name = g(i, 'athlete.displayName') || '';
         var det = [g(i, 'details.type'), g(i, 'details.detail')].filter(Boolean).join(', ');
         var row = { name: name, pos: pos, status: st, note: det || '' };
         byName[name] = row;
+        byName[injKey(name)] = row;
         // Team-level flags: any QB status, other skill players only when out or doubtful (questionable backups are noise).
         if (KEYPOS[pos] && (pos === 'QB' || st !== 'Questionable')) list.push(row);
       });
@@ -356,7 +362,7 @@
           Object.keys(pb).forEach(function (k) { if (Math.abs(pb[k][0] - med) > Math.max(2.5, med * 0.2)) delete pb[k]; }); // drop alt-line outliers
           propRows.push({ label: pr.player + ' ' + pr.what, game: e.short, kind: /yds|longest/.test(pr.what) ? 'yds' : 'rec', books: pb });
         }
-        var who = inj.byName[pr.player];
+        var who = inj.byName[pr.player] || inj.byName[injKey(pr.player)];
         if (who && (who.status === 'Out' || who.status === 'Doubtful')) return;
         var YES = { touchdowns: 'anytime TD', defense_sacks: 'to record a sack', passing_interceptions: 'to throw an interception', passing_touchdowns: 'to throw a TD', fieldGoals_made: 'to make a field goal', receiving_yards: 'to record a catch', rushing_attempts: 'to record a rush' };
         if (pr.side === 'yes' && !YES[pr.stat]) return;
@@ -376,10 +382,13 @@
         if (lean && lean.game && lean.game !== e.short) lean = null; // a lean is for one matchup, not the player's next game
         if (lean && Math.abs(lean.line - pr.line) > Math.max(1.5, lean.line * 0.1)) lean = null; // line moved too far from the lean
         var qd = who && who.status === 'Questionable' ? -6 : 0;
-        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds, p: p, // narrative leans went 2-5 in Wk 1: they still flag the prop, but no longer raise its chance
-          conf: clamp((lean ? Math.max(lean.conf, Math.round(p * 100)) : Math.round(p * 100)) + qd, 5, 90),
-          s: lean ? lean.s : [p >= 0.58 ? 1 : 0, 0, 0],
-          note: (lean ? lean.note + '; ' : '') + 'books give it ' + pct(p) + ' (vig removed)' + sgoStamp });
+        // Questionable players can still be picked, but never as a Horseshoe pick, and their chance is marked down.
+        var qHold = who && who.status === 'Questionable';
+        var pq = qHold ? Math.max(0.01, p - 0.04) : p;
+        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds, p: pq, // narrative leans went 2-5 in Wk 1: they still flag the prop, but no longer raise its chance
+          conf: clamp((lean ? Math.max(lean.conf, Math.round(pq * 100)) : Math.round(pq * 100)) + qd, 5, 90),
+          s: qHold ? [0, 0, 0] : lean ? lean.s : [p >= 0.58 ? 1 : 0, 0, 0], held: qHold ? 'questionable' : undefined,
+          note: (qHold ? 'Questionable' + (who.note ? ' (' + who.note + ')' : '') + '; ' : '') + (lean ? lean.note + '; ' : '') + 'books give it ' + pct(pq) + ' (vig removed)' + sgoStamp });
         injMap[e.id + '|' + label] = who ? [who.name, who.status, who.pos + (who.note ? ' · ' + who.note : '')] : [pr.player, 'No designation', ''];
       });
       var seenAlt = {};
