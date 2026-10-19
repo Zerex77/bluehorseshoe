@@ -69,7 +69,7 @@ export async function track(log = console.log) {
     Object.assign(row, parsed, {
       label, date: e.date, game: e.short, away: e.a.shortDisplayName, home: e.h.shortDisplayName,
       odds: l.odds, p: Math.round(p * 1000) / 1000, imp: Math.round((1 / dec(l.odds)) * 1000) / 1000,
-      conf: l.conf, s: l.s, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
+      conf: l.conf, s: l.sOrig || l.s, held: l.held || null, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
       tilt: l.tilt || 0, wind: weather && weather.games && weather.games[l.g] && !weather.games[l.g].indoor ? Math.round(weather.games[l.g].wind) : null,
       ...moveOf(parsed, e)
     });
@@ -78,7 +78,8 @@ export async function track(log = console.log) {
     const nfl = T.buildNfl(nflSb, inj, { props, sgo, weather });
     for (const l of nfl.legs) {
       if (l.alt) continue;
-      const sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
+      const s0 = l.sOrig || l.s; // held legs keep their original checks so we can see how the rules do
+      const sig = s0 ? s0[0] + s0[1] + s0[2] : 0;
       if (sig >= 2) record('nfl', l, l.label);
     }
   }
@@ -86,7 +87,8 @@ export async function track(log = console.log) {
     const cf = T.buildCollege(cfbSb, { sgoCfb, weather });
     for (const l of cf.legs) {
       if (l.alt) continue;
-      const sig = l.s[0] + l.s[1] + l.s[2];
+      const s0 = l.sOrig || l.s;
+      const sig = s0[0] + s0[1] + s0[2];
       if (sig >= (l.k === 'ml' ? 2 : 1)) record('cfb', l, l.label);
     }
   }
@@ -204,13 +206,13 @@ function dedupe(picks) {
   const score = (p) => (p.s ? p.s[0] + p.s[1] + p.s[2] : 0) * 10 + ((p.p || 0) - (p.imp || 0)) * 100 + (p.conf || 0) / 1000;
   const best = {};
   for (const p of picks) {
-    if (!p.active) continue;
+    if (!p.active || p.held) continue;
     const k = slot(p);
     if (!best[k] || score(p) > score(best[k])) best[k] = p;
   }
   for (const p of picks) {
     const b = best[slot(p)];
-    if (!p.active || !b || b === p) { delete p.dup; delete p.dupOf; }
+    if (!p.active || p.held || !b || b === p) { delete p.dup; delete p.dupOf; }
     else { p.dup = true; p.dupOf = b.key; }
   }
 }

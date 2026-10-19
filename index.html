@@ -1032,9 +1032,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261017201821';</script>
-<script src="runtime.js?v=20261017201821"></script>
-<script src="lines.js?v=20261017201821"></script>
+<script>window.BH_VERSION='20261019090623';</script>
+<script src="runtime.js?v=20261019090623"></script>
+<script src="lines.js?v=20261019090623"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1862,7 +1862,7 @@ class Component extends DCLogic {
     var perCut = recPer === 'week' ? 7 : recPer === 'month' ? 30 : 400;
     var nowMs = Date.now();
     var inView = PK.filter(function (p) {
-      if (!p.active || p.dup) return false; // one pick per game per market
+      if (!p.active || p.dup || p.held) return false; // one pick per game per market; held legs aren't Horseshoe picks
       if (recSport !== 'all' && p.sport !== recSport) return false;
       if (recMkt !== 'all' && p.market !== recMkt) return false;
       return nowMs - Date.parse(p.date) < perCut * 864e5;
@@ -1922,6 +1922,7 @@ class Component extends DCLogic {
         bRow('Steady', gp.filter(function (p) { return p.market !== 'prop' && moveOfP(p).m < 1; })),
         bRow('Moved 1–2.5', gp.filter(function (p) { var m = moveOfP(p).m; return p.market !== 'prop' && m >= 1 && m < 3; })),
         bRow('Moved 3+', gp.filter(function (p) { return p.market !== 'prop' && moveOfP(p).m >= 3; }))]),
+      bGroup('Rules check (held legs are not counted above)', [bRow('Held by the rules', PK.filter(function (p) { return p.held && p.active && (p.result === 'win' || p.result === 'loss' || p.result === 'push') && (recSport === 'all' || p.sport === recSport) && nowMs - Date.parse(p.date) < perCut * 864e5; }))]),
       bGroup('Lessons applied (since Oct 17)', [bRow('Boosted picks', gp.filter(function (p) { return p.tilt > 0; })), bRow('Trimmed picks', gp.filter(function (p) { return p.tilt < 0; })), bRow('Totals in 15+ mph wind', gp.filter(function (p) { return p.market === 'total' && p.wind >= 15; }))]),
       bGroup('Closing line', [bRow('Beat the closing line', gp.filter(function (p) { return p.clv && p.clv.beat === 'yes'; })), bRow('Line moved against us', gp.filter(function (p) { return p.clv && p.clv.beat === 'no'; }))])
     ].filter(Boolean);

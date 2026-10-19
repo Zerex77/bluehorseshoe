@@ -146,32 +146,46 @@
       return hit;
     };
     var hasTotal = {};
+    // A held leg drops below the Horseshoe bar: it isn't a Horseshoe pick and isn't counted on the record,
+    // but it still shows (and can fill a slip) when its game is picked. Its original checks are kept in sOrig.
+    var hold = function (l, why) { l.held = why; l.sOrig = l.s; l.s = [0, 0, 0]; };
     legs.forEach(function (l) {
       if (l.alt || l.k === 'prop') return;
       var e = evById[l.g], o = e && e.odds;
       if (!o) return;
       var kind = l.mk || l.k, adj = 0, why = [];
+      var sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
       if (kind === 'spread') {
         var sd = sideOf(e, l.label);
         if (sd && o.aOpen != null && o.aNow != null) {
           var m = o.aOpen - o.aNow, am = Math.abs(m), toward = m !== 0 && (m > 0) === (sd === 'a');
           var line = sd === 'a' ? o.aNow : -o.aNow;
-          if (toward && am >= 1 && am < 3) { adj += 0.015; why.push('sweet-spot move'); }
-          if (toward && am >= 1 && am < 3 && Math.abs(line) <= 7) { adj += 0.01; why.push('short spread'); }
-          if (toward && am >= 3 && am < 5) { adj -= 0.01; why.push('big move, mostly priced in'); }
+          var sweet = toward && am >= 1 && am < 3;
+          // Wk 1 (Oct 16-18): spreads after a 1-2.5 pt move went 17-7; after 3-4.5 pts, 6-9.
+          if (sweet) { adj += 0.025; why.push('sweet-spot move'); }
+          if (toward && am >= 3 && am < 5 && sig) hold(l, 'line already moved ' + am + ' pts, mostly priced in');
+          // Home underdogs 9-4, home favorites 6-7.
+          if (sd === 'h' && line > 0) { adj += 0.01; why.push('home dog'); }
+          if (sd === 'h' && line < 0 && !sweet) { adj -= 0.015; why.push('home favorite tax'); }
         }
       }
       if (kind === 'total') {
         hasTotal[l.g] = 1;
         var under = /^under/i.test(l.label), tm = o.tot != null && o.tOpen != null ? o.tot - o.tOpen : 0;
-        if (under && tm <= -3 && tm > -5) { adj -= 0.03; why.push('total already dropped ' + Math.abs(tm)); }
-        var w = W[l.g];
-        if (w && !w.indoor && w.wind >= 15) {
+        var shaded = l.s && l.s[1] === 1, atm = Math.abs(tm);
+        var w = W[l.g], windy = w && !w.indoor && w.wind >= 15;
+        // Unders after a 3-4.5 pt drop went 4-8: the move is priced in.
+        if (under && tm <= -3 && tm > -5 && !windy && sig) hold(l, 'total already dropped ' + atm);
+        // Totals backed only by line movement (no book shading, move under 5, no wind) went 15-19; with shading, 6-3.
+        else if (!shaded && atm < 5 && !windy && !nfl) { adj -= 0.015; why.push('movement only, no book shading'); }
+        if (!under && tm >= 1 && tm < 3 && !shaded) { adj -= 0.01; why.push('small rise, no shading'); }
+        if (windy) {
           var k = w.wind >= 20 ? 0.05 : 0.03;
           adj += under ? k : -k;
           why.push('wind ' + Math.round(w.wind) + ' mph at kickoff');
         }
       }
+      if (l.held) l.note = (l.note ? l.note + '; ' : '') + 'held: ' + l.held;
       if (!adj) return;
       l.p = clamp((l.p == null ? imp(l.odds) * 0.955 : l.p) + adj, 0.01, 0.97);
       l.conf = clamp(Math.round((l.conf || 50) + adj * 100), 5, 95);
@@ -318,7 +332,7 @@
     var leanMap = {};
     ((extra.props || {}).legs || []).forEach(function (p) {
       var m = /^(.*) (over|under) ([\d.]+) (.*)$/.exec(p.label);
-      if (m && p.s && p.s[0] + p.s[1] + p.s[2] >= 2) leanMap[m[1] + '|' + m[4] + '|' + m[2]] = { s: p.s, conf: p.conf, note: p.note, line: Number(m[3]) };
+      if (m && p.s && p.s[0] + p.s[1] + p.s[2] >= 2) leanMap[m[1] + '|' + m[4] + '|' + m[2]] = { s: p.s, conf: p.conf, note: p.note, line: Number(m[3]), game: p.game };
     });
     ((extra.sgo || {}).events || []).forEach(function (ev) {
       var e = byTeams[ev.away + '|' + ev.home];
@@ -359,9 +373,10 @@
         }
         var p = fairP(pr.fair, pr.odds);
         var lean = leanMap[pr.player + '|' + pr.what + '|' + pr.side];
+        if (lean && lean.game && lean.game !== e.short) lean = null; // a lean is for one matchup, not the player's next game
         if (lean && Math.abs(lean.line - pr.line) > Math.max(1.5, lean.line * 0.1)) lean = null; // line moved too far from the lean
         var qd = who && who.status === 'Questionable' ? -6 : 0;
-        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds, p: Math.min(0.97, p + (lean ? 0.03 : 0)),
+        legs.push({ g: e.id, k: 'prop', c: pr.c, pk: e.id + '|' + pr.player + '|' + pr.stat, label: label, odds: pr.odds, p: p, // narrative leans went 2-5 in Wk 1: they still flag the prop, but no longer raise its chance
           conf: clamp((lean ? Math.max(lean.conf, Math.round(p * 100)) : Math.round(p * 100)) + qd, 5, 90),
           s: lean ? lean.s : [p >= 0.58 ? 1 : 0, 0, 0],
           note: (lean ? lean.note + '; ' : '') + 'books give it ' + pct(p) + ' (vig removed)' + sgoStamp });
