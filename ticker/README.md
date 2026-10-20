@@ -17,6 +17,8 @@ Scrolls your bet slips across a row of LED panels on a Raspberry Pi, graded live
    curl -sSL https://bluehorseshoebet.com/ticker/install.sh | sudo bash
    ```
    It installs everything, names the Pi `bhticker`, starts the ticker on every boot, and reboots once.
+   Using a Seengreat / WatangTech "RGB Matrix Adapter Board" instead of the Adafruit bonnet? Run it as
+   `curl -sSL https://bluehorseshoebet.com/ticker/install.sh | sudo BOARD=regular bash`
 5. On the website's Live page: **More → Send to LED ticker**. Or open http://bhticker.local:8080 on any phone or computer on your Wi-Fi.
 
 ## Settings

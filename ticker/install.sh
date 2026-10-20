@@ -54,6 +54,25 @@ else
   [ -f "$DATA/config.json" ] || echo "{\"gpio_slowdown\": $SLOW}" > "$DATA/config.json"
 fi
 
+# Which adapter board is on the Pi. Adafruit bonnet/HAT (default) or a board wired like hzeller's "regular" pinout
+# (Seengreat / WatangTech RGB Matrix Adapter Board, Electrodragon, etc.):  curl ... | sudo BOARD=regular bash
+if [ -n "$BOARD" ]; then
+  case "$BOARD" in
+    regular|seengreat|watangtech) MAP=regular ;;
+    adafruit|adafruit-hat|bonnet) MAP=adafruit-hat ;;
+    adafruit-pwm|adafruit-hat-pwm) MAP=adafruit-hat-pwm ;;
+    *) MAP="$BOARD" ;;
+  esac
+  python3 - "$DATA/config.json" "$MAP" <<'PY'
+import json, sys, os
+p, m = sys.argv[1], sys.argv[2]
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['hardware_mapping'] = m
+json.dump(c, open(p, 'w'))
+PY
+  echo "-- Adapter board pinout: $MAP"
+fi
+
 echo "-- Naming this Pi bhticker (http://bhticker.local:8080)"
 if [ "$(hostname)" != "bhticker" ]; then
   OLD=$(hostname)
