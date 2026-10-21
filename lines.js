@@ -140,6 +140,12 @@
   //  - lines that already moved 3-4.5 pts toward us: mostly priced in (-1%)
   //  - unders after the total dropped 3-4.5 pts: priced in (-3%)
   //  - wind 15+ mph at an outdoor kickoff: unders +3% (20+ mph: +5%), overs the reverse
+  // Oct 21 update, from 120 graded picks (Oct 16-20). Small samples, so these are nudges, not verdicts:
+  //  - home underdogs on the spread: +1.5% (was +1%)
+  //  - college dogs getting 14+: +1%; college favorites laying 14+: -1.5%
+  //  - college moneyline favorites: -2%
+  //  - college totals on movement alone (no book shading, no wind): held, no longer Horseshoe picks
+  //  - college totals the books are shading: +1%
   function tiltLegs(legs, evById, wx, nfl) {
     var W = (wx && wx.games) || {};
     var sideOf = function (e, label) {
@@ -170,11 +176,17 @@
           // Wk 1 (Oct 16-18): spreads after a 1-2.5 pt move went 17-7; after 3-4.5 pts, 6-9.
           if (sweet) { adj += 0.025; why.push('sweet-spot move'); }
           if (toward && am >= 3 && am < 5 && sig) hold(l, 'line already moved ' + am + ' pts, mostly priced in');
-          // Home underdogs 9-4, home favorites 6-7.
-          if (sd === 'h' && line > 0) { adj += 0.01; why.push('home dog'); }
+          // Home underdogs 9-4, home favorites 6-7. Through Oct 20: college home dogs 8-3, so the nudge goes up a notch.
+          if (sd === 'h' && line > 0) { adj += 0.015; why.push('home dog'); }
           if (sd === 'h' && line < 0 && !sweet) { adj -= 0.015; why.push('home favorite tax'); }
+          // Through Oct 20: college dogs getting 14+ went 4-0, college favorites laying 14+ went 4-5.
+          if (!nfl && line >= 14) { adj += 0.01; why.push('big college dog'); }
+          if (!nfl && line <= -14) { adj -= 0.015; why.push('laying 14+ in college'); }
         }
       }
+      // Through Oct 20: college moneyline favorites hit 59% when the Horseshoe expected 71% (10-7, -$35 at $10),
+      // while college dogs on the moneyline went 7-7 for a profit. Favorites pay heavy juice, so they get marked down.
+      if (kind === 'ml' && !nfl && l.odds < 0) { adj -= 0.02; why.push('college ML favorite tax'); }
       if (kind === 'total') {
         hasTotal[l.g] = 1;
         var under = /^under/i.test(l.label), tm = o.tot != null && o.tOpen != null ? o.tot - o.tOpen : 0;
@@ -182,8 +194,10 @@
         var w = W[l.g], windy = w && !w.indoor && w.wind >= 15;
         // Unders after a 3-4.5 pt drop went 4-8: the move is priced in.
         if (under && tm <= -3 && tm > -5 && !windy && sig) hold(l, 'total already dropped ' + atm);
-        // Totals backed only by line movement (no book shading, move under 5, no wind) went 15-19; with shading, 6-3.
-        else if (!shaded && atm < 5 && !windy && !nfl) { adj -= 0.015; why.push('movement only, no book shading'); }
+        // College totals backed only by line movement (no book shading, move under 5, no wind) went 16-20 through Oct 20,
+        // even after a markdown; with book shading, 6-3. Movement-only college totals are now held: shown, not Horseshoe picks.
+        else if (!shaded && atm < 5 && !windy && !nfl) { if (sig) hold(l, 'movement only, no book shading'); else { adj -= 0.015; why.push('movement only, no book shading'); } }
+        if (shaded && !nfl && !l.held) { adj += 0.01; why.push('books shading it'); }
         if (!under && tm >= 1 && tm < 3 && !shaded) { adj -= 0.01; why.push('small rise, no shading'); }
         if (windy) {
           var k = w.wind >= 20 ? 0.05 : 0.03;

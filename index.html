@@ -1103,9 +1103,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261021173500';</script>
-<script src="runtime.js?v=20261021173500"></script>
-<script src="lines.js?v=20261021173500"></script>
+<script>window.BH_VERSION='20261021174500';</script>
+<script src="runtime.js?v=20261021174500"></script>
+<script src="lines.js?v=20261021174500"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -2038,7 +2038,7 @@ class Component extends DCLogic {
         bRow('Moved 1–2.5', gp.filter(function (p) { var m = moveOfP(p).m; return p.market !== 'prop' && m >= 1 && m < 3; })),
         bRow('Moved 3+', gp.filter(function (p) { return p.market !== 'prop' && moveOfP(p).m >= 3; }))]),
       bGroup('Rules check (held legs are not counted above)', [bRow('Held by the rules', PK.filter(function (p) { return p.held && p.active && (p.result === 'win' || p.result === 'loss' || p.result === 'push') && (recSport === 'all' || p.sport === recSport) && nowMs - Date.parse(p.date) < perCut * 864e5; }))]),
-      bGroup('Lessons applied (since Oct 17)', [bRow('Boosted picks', gp.filter(function (p) { return p.tilt > 0; })), bRow('Trimmed picks', gp.filter(function (p) { return p.tilt < 0; })), bRow('Totals in 15+ mph wind', gp.filter(function (p) { return p.market === 'total' && p.wind >= 15; }))]),
+      bGroup('Lessons applied (since Oct 17, updated Oct 21)', [bRow('Boosted picks', gp.filter(function (p) { return p.tilt > 0; })), bRow('Trimmed picks', gp.filter(function (p) { return p.tilt < 0; })), bRow('Totals in 15+ mph wind', gp.filter(function (p) { return p.market === 'total' && p.wind >= 15; }))]),
       bGroup('Closing line', [bRow('Beat the closing line', gp.filter(function (p) { return p.clv && p.clv.beat === 'yes'; })), bRow('Line moved against us', gp.filter(function (p) { return p.clv && p.clv.beat === 'no'; }))])
     ].filter(Boolean);
     var clvText = function (p) {
