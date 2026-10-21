@@ -132,6 +132,42 @@
     return [row.name, row.status, row.pos + (row.note ? ' · ' + row.note : '') + (team ? ' (' + team + ')' : '')];
   }
 
+
+  // ---------- the Horseshoe verdict: one score, one rating, one pick per slot, used by every section and the track record
+  // score  = value against the price (Horseshoe chance x payout) x3, plus a little credit for likelihood, signals and a public fade.
+  // conf   = that score as a 5-95 rating (drives the horseshoes and confidence bars everywhere).
+  // bar    = passes the Horseshoe's checks (NFL: 2 of 3 signals; college: 1, moneylines 2; or a fade-the-public spot), not held.
+  // pick   = the best bar-passing line in its slot. A game has one "side" slot (both teams' moneylines and spreads),
+  //          one total slot, and each player prop line is its own slot. Everything else in the slot points at the pick.
+  function decOf(o) { return o > 0 ? 1 + o / 100 : 1 + 100 / -o; }
+  function slotOf(l, nfl) {
+    if (l.k === 'prop') return 'p|' + (l.pk || l.label);
+    var kind = nfl ? l.mk : l.k;
+    return l.g + '|' + (kind === 'total' ? 'total' : 'side');
+  }
+  function rateLegs(legs, nfl) {
+    legs.forEach(function (l) {
+      var sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
+      var kind = nfl ? (l.k === 'prop' ? 'prop' : l.mk) : l.k;
+      var need = nfl ? 2 : (kind === 'ml' ? 2 : 1);
+      var ev = l.p * decOf(l.odds) - 1;
+      var base = ev * 3 + (l.p - 0.5) * 0.6 + sig * 0.02 + (l.fade ? 0.02 : 0);
+      l.ev = Math.round(ev * 10000) / 10000;
+      l.bar = !l.held && !l.alt && (sig >= need || !!l.fade);
+      l.score = Math.round((base - (l.bar ? 0 : 1)) * 10000) / 10000;
+      l.conf = clamp(Math.round(50 + base * 100), 5, 95);
+      l.slot = slotOf(l, nfl);
+      delete l.pick; delete l.slotPick;
+    });
+    var best = {};
+    legs.forEach(function (l) { if (l.bar && (!best[l.slot] || l.score > best[l.slot].score)) best[l.slot] = l; });
+    legs.forEach(function (l) {
+      var b = best[l.slot];
+      l.pick = !!(b && b === l);
+      if (b && b !== l) l.slotPick = b.label;
+    });
+  }
+
   // ---------- NFL
   // ---------- what the track record has taught us so far, plus kickoff wind
   // Small, labeled nudges to the Horseshoe chance (p). Logged on each pick as l.tilt so the record can show whether they help.
@@ -449,6 +485,7 @@
     var nflById = {};
     events.forEach(function (e) { nflById[e.id] = e; });
     tiltLegs(legs, nflById, extra.weather, true);
+    rateLegs(legs, true);
     // Public splits (if posted) for live games only.
     var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
     // Multi-book Line check from the Odds API snapshot.
@@ -614,8 +651,33 @@
     tiltLegs(legs, byId, extra.weather, false);
     slate.sort(function (x, y) { return x.date < y.date ? -1 : x.date > y.date ? 1 : 0; });
     var names = {};
-    slate.forEach(function (s) { names[s.a + (s.n ? ' vs ' : ' @ ') + s.h] = 1; });
+    slate.forEach(function (s) { names[s.a + (s.n ? ' vs ' : ' @ ') + s.h] = s; });
     var publicBoard = ((extra.splits || {}).cf || []).filter(function (r) { return names[r[0]]; });
+    // Fade the public: 55%+ of bets on one side but at least 15 points less of the money. The other side becomes a fade spot.
+    var legByKey = {};
+    legs.forEach(function (l) { legByKey[l.g + '|' + l.label] = l; });
+    publicBoard.forEach(function (row) {
+      var gap = row[4] - row[5];
+      if (!(row[4] >= 55 && gap >= 15)) return;
+      var sl = names[row[0]];
+      if (!sl) return;
+      var side = row[3], mk = row[1], odds = -110, label;
+      if (mk === 'total') label = side + ' ' + row[7];
+      else if (mk === 'ml') { label = side + ' ML'; odds = side === sl.h ? sl.hml : sl.aml; }
+      else {
+        var mag = Math.abs(parseFloat(String(row[7]).split(' ')[1]));
+        var fav = sl.hs < 0 ? sl.h : sl.a;
+        label = side + ' ' + (side === fav ? '-' : '+') + mag;
+      }
+      if (odds == null) return;
+      var why = 'Public ' + row[4] + '% on ' + row[2] + ', money only ' + row[5] + '%';
+      var pf = Math.min(0.95, imp(odds) + gap / 500);
+      var ex = legByKey[sl.id + '|' + label];
+      if (ex) { ex.fade = true; ex.fadeWhy = why; if (!ex.held) ex.p = Math.max(ex.p, pf); ex.note = (ex.note ? ex.note + '; ' : '') + why; return; }
+      var nl = { g: sl.id, k: mk, label: label, odds: odds, p: pf, s: [0, 0, 0], fade: true, fadeWhy: why, dog: odds > 0 || (mk === 'spread' && label.indexOf('+') !== -1), note: why };
+      legs.push(nl); legByKey[sl.id + '|' + label] = nl;
+    });
+    rateLegs(legs, false);
     var games = slate.map(function (s) { return { id: s.id, label: s.a + (s.n ? ' vs ' : ' @ ') + s.h }; });
     var span = firstDate ? etDate(firstDate) + (lastDate && etDate(lastDate) !== etDate(firstDate) ? ' – ' + etDate(lastDate) : '') : '';
     return { games: games, legs: legs, publicBoard: publicBoard, slate: slate, chip: 'NCAAF' + (span ? ' · ' + span : ''), count: slate.length };
@@ -719,6 +781,6 @@
 
   root.BHLines = {
     load: load, stamp: stamp, REFRESH_MS: REFRESH_MS, etTime: etTime,
-    _test: { readEvent: readEvent, buildNfl: buildNfl, buildCollege: buildCollege, buildLineCheck: buildLineCheck, mlFromSpread: mlFromSpread }
+    rateLegs: rateLegs, _test: { readEvent: readEvent, buildNfl: buildNfl, buildCollege: buildCollege, buildLineCheck: buildLineCheck, mlFromSpread: mlFromSpread }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

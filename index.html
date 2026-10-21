@@ -1103,9 +1103,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261021174500';</script>
-<script src="runtime.js?v=20261021174500"></script>
-<script src="lines.js?v=20261021174500"></script>
+<script>window.BH_VERSION='20261021180500';</script>
+<script src="runtime.js?v=20261021180500"></script>
+<script src="lines.js?v=20261021180500"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1232,7 +1232,7 @@ class Component extends DCLogic {
 
     // With no games picked, only Horseshoe picks (2 of 3 checks) qualify.
     // Once someone picks games, every leg in those games is fair game, still ranked by confidence.
-    var meetsBar = function (l) { return l.s[0] + l.s[1] + l.s[2] >= 2; };
+    var meetsBar = function (l) { return !!l.pick; };
     var passes = function (l) {
       if (st.market !== 'both' && l.k !== st.market) return false;
       if (l.k === 'prop' && st.props.length && st.props.indexOf(l.c) === -1) return false;
@@ -1243,7 +1243,7 @@ class Component extends DCLogic {
     D.legs.forEach(function (l) { if (passes(l) && meetsBar(l)) qualCount[l.g] = (qualCount[l.g] || 0) + 1; if (passes(l)) allCount[l.g] = (allCount[l.g] || 0) + 1; });
     // Horseshoe picks first, then every other leg, each group by confidence.
     // Below-the-bar legs only get used when someone picks games, sets a leg count, or chases a price the picks can't reach.
-    var byConf = function (a, b) { return b.conf - a.conf; };
+    var byConf = function (a, b) { return (b.score - a.score) || (b.conf - a.conf); };
     var inPlay = D.legs.filter(function (l) { return passes(l) && activeGames.indexOf(l.g) !== -1; });
     // One side per game for moneyline/spread (books won't take both), one side of each total, one side of each prop line.
     var conflictKey = function (l) {
@@ -1267,7 +1267,8 @@ class Component extends DCLogic {
     if (st.target === 'fav') {
       if (N) ticket = pool.slice(0, N);
       else {
-        ticket = picksPool.filter(function (l) { return l.conf >= 75; }).slice(0, 6);
+        // Auto: every 5-horseshoe pick (rating 85+), at least the top 3 picks, at most 6.
+        ticket = picksPool.filter(function (l) { return l.conf >= 85; }).slice(0, 6);
         if (ticket.length < 3) ticket = pool.slice(0, 3);
       }
       decTotal = prodDec(ticket);
@@ -1493,22 +1494,36 @@ class Component extends DCLogic {
 
     // ---- fade helper (NFL + college)
     var mkNames = { ml: 'Moneyline', spread: 'Spread', total: 'Total' };
-    var fadeRows = function (rows, mkt, only, lineFor) {
+    // A public-split suggestion defers to the Horseshoe's pick for that slot, so the site never backs both sides.
+    var slotPickFor = function (legsArr, gid, mk, label) {
+      if (!gid) return null;
+      var slotK = mk === 'total' ? 'total' : 'side', pk = null;
+      legsArr.forEach(function (l) {
+        if (l.g !== gid || !l.pick || l.k === 'prop') return;
+        var kind = l.mk || l.k;
+        if ((kind === 'total' ? 'total' : 'side') === slotK) pk = l;
+      });
+      return pk && pk.label !== label ? pk.label : null;
+    };
+    var fadeRows = function (rows, mkt, only, lineFor, legsArr, gidOf) {
       var all = rows.map(function (row) {
         var gap = row[4] - row[5];
-        var contrarian = row[4] >= 55 && gap >= 15;
+        var contrarian0 = row[4] >= 55 && gap >= 15;
+        var sharp0 = gap <= -10;
+        var prefer = (contrarian0 || sharp0) && legsArr ? slotPickFor(legsArr, gidOf(row[0]), row[1], lineFor(row, contrarian0 ? row[3] : row[2])) : null;
+        var contrarian = contrarian0 && !prefer;
         var agree = Math.abs(gap) < 8;
-        var sharpPublic = gap <= -10;
-        var verdict = contrarian ? 'Fade: take ' + row[3] : sharpPublic ? 'Money backs ' + row[2] + ' too' : agree ? 'Public and money agree' : 'Lean public, light split';
+        var sharpPublic = sharp0 && !prefer;
+        var verdict = prefer ? 'Horseshoe prefers ' + prefer : contrarian ? 'Fade: take ' + row[3] : sharpPublic ? 'Money backs ' + row[2] + ' too' : agree ? 'Public and money agree' : 'Lean public, light split';
         var isTotal = row[1] === 'total';
         return {
           mk: row[1], mkLabel: mkNames[row[1]], mkStyle: tag('', row[1]),
           game: row[0], pub: row[2], tickets: row[4] + '%', money: row[5] + '%',
           open: isTotal ? 'O/U ' + row[6] : row[6], now: isTotal ? row[7] : row[7],
           contrarian: contrarian, gap: gap, verdict: verdict,
-          pick: contrarian ? 'Take ' + lineFor(row, row[3]) : sharpPublic ? 'Take ' + lineFor(row, row[2]) : 'No play',
+          pick: prefer ? 'Horseshoe pick: ' + prefer : contrarian ? 'Take ' + lineFor(row, row[3]) : sharpPublic ? 'Take ' + lineFor(row, row[2]) : 'No play',
           pickStyle: 'display: block; ' + (contrarian ? 'font-weight: 700; font-size: 14px; color: ' + B + ';' : sharpPublic ? 'font-weight: 700; font-size: 14px; color: ' + GREEN + ';' : 'font-weight: 500; color: ' + FAINT + ';'),
-          reason: contrarian ? 'Fade the public: money opposes bets by ' + gap + ' pts' : sharpPublic ? 'Sharp money is even heavier on ' + row[2] : agree ? 'Bets and money agree' : 'Split too small to fade',
+          reason: prefer ? 'The split points the other way, but the Horseshoe’s pick for this game is ' + prefer : contrarian ? 'Fade the public: money opposes bets by ' + gap + ' pts' : sharpPublic ? 'Sharp money is even heavier on ' + row[2] : agree ? 'Bets and money agree' : 'Split too small to fade',
           move: (isTotal ? 'O/U ' : '') + row[6] + ' → ' + row[7],
           verdictStyle: 'font-size: 12px; font-weight: 600; ' + (contrarian ? 'color: ' + B + ';' : sharpPublic ? 'color: ' + GREEN + ';' : 'color: ' + MUTED + ';'),
           rowStyle: contrarian ? 'background: #111D36;' : '',
@@ -1528,7 +1543,8 @@ class Component extends DCLogic {
       var mag = Math.abs(parseFloat(parts[1]));
       return side + ' ' + (nflAbbr[side] === parts[0] ? '-' : '+') + mag;
     };
-    var nflFade = fadeRows(D.publicBoard, st.fadeMkt, st.fadeOnly, nflLine);
+    var nflGid = {}; D.games.forEach(function (g) { nflGid[g.label.replace(/ \(.*\)$/, '')] = g.id; });
+    var nflFade = fadeRows(D.publicBoard, st.fadeMkt, st.fadeOnly, nflLine, D.legs, function (n) { return nflGid[n]; });
     var fadeMkts = [{ v: 'all', label: 'All' }, { v: 'spread', label: 'Spreads' }, { v: 'total', label: 'Totals' }].map(function (f) {
       var on = st.fadeMkt === f.v;
       var n = nflFade.all.filter(function (c) { return (f.v === 'all' || c.mk === f.v) && c.contrarian; }).length;
@@ -1560,11 +1576,10 @@ class Component extends DCLogic {
       }
       candMap[key] = o; candList.push(o);
     };
+    // Every section uses the shared Horseshoe verdict from lines.js: one pick per slot, one score, one rating.
     CF.legs.forEach(function (l) {
-      // Moneylines need 2 of 3 checks; spreads and totals get in on 1, then compete on value.
-      var sig = l.s[0] + l.s[1] + l.s[2];
-      if (sig < (l.k === 'ml' ? 2 : 1)) return;
-      addCand({ g: l.g, k: l.k, label: l.label, odds: l.odds, p: l.p, conf: l.conf, note: l.note, dog: !!l.dog || l.odds > 0, fade: false, fadeWhy: '' });
+      if (!l.pick) return;
+      addCand({ g: l.g, k: l.k, label: l.label, odds: l.odds, p: l.p, conf: l.conf, score: l.score, note: l.note, dog: !!l.dog || l.odds > 0, fade: !!l.fade, fadeWhy: l.fadeWhy || '' });
     });
     var slateByName = {};
     CF.slate.forEach(function (s) { slateByName[s.a + (s.n ? ' vs ' : ' @ ') + s.h] = s; });
@@ -1576,19 +1591,6 @@ class Component extends DCLogic {
       var fav = s ? (s.hs < 0 ? s.h : s.a) : row[2];
       return side + ' ' + (side === fav ? '-' : '+') + mag;
     };
-    CF.publicBoard.forEach(function (row) {
-      var gap = row[4] - row[5];
-      if (!(row[4] >= 55 && gap >= 15)) return;
-      var s = slateByName[row[0]];
-      if (!s) return;
-      var side = row[3], mk = row[1], odds = -110;
-      var label = cfLine(row, side);
-      if (mk === 'ml') odds = side === s.h ? s.hml : s.aml;
-      var ln = label.indexOf('+') !== -1 ? 1 : -1;
-      var imp0 = 1 / self.dec(odds);
-      var why = 'Public ' + row[4] + '% on ' + row[2] + ', money only ' + row[5] + '%';
-      addCand({ g: s.id, k: mk, label: label, odds: odds, p: Math.min(0.95, imp0 + gap / 500), conf: 58 + Math.min(20, Math.round(gap / 2)), note: why, dog: odds > 0 || (mk === 'spread' && ln > 0), fade: true, fadeWhy: why });
-    });
     candList.forEach(function (c) {
       c.imp = 1 / self.dec(c.odds);
       c.edge = c.p - c.imp;
@@ -1603,7 +1605,7 @@ class Component extends DCLogic {
     // Best bet = value against the actual price: expected return per dollar (Horseshoe chance x payout),
     // plus a little credit for likelihood so the ticket still cashes. Heavy favorites pay too little to rank high.
     var evOf = function (c) { return c.p * self.dec(c.odds) - 1; };
-    var favScore = function (c) { return evOf(c) * 3 + (c.p - 0.5) * 0.6 + c.tagN * 0.02; };
+    var favScore = function (c) { return c.score != null ? c.score : evOf(c) * 3 + (c.p - 0.5) * 0.6 + c.tagN * 0.02; };
     var primaryOf = function (c) { return c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean'; };
     var rankedAll = cfPool.slice().sort(function (x, y) { return favScore(y) - favScore(x); });
     var seenG = {}, rankedUnique = [];
@@ -1776,7 +1778,7 @@ class Component extends DCLogic {
     var upN = st.upN || 3;
     var liveCut = function (c) { return c.p >= (c.k === 'ml' ? 0.45 : 0.53); };
     // Horseshoe-backed dogs first; every other underdog on the board can fill bigger slips.
-    var upExtra = CF.legs.filter(function (l) { return l.dog && !candMap[l.g + '|' + l.label]; }).map(function (l) {
+    var upExtra = CF.legs.filter(function (l) { return l.dog && !l.alt && !l.slotPick && !candMap[l.g + '|' + l.label]; }).map(function (l) {
       var im = 1 / self.dec(l.odds);
       return { g: l.g, k: l.k, label: l.label, odds: l.odds, p: l.p, conf: l.conf, note: l.note, dog: true, fade: false, fadeWhy: '', imp: im, edge: l.p - im, board: true };
     });
@@ -1788,7 +1790,7 @@ class Component extends DCLogic {
       return c.p + bonus;
     };
     // Best upsets by value against the price (Horseshoe chance x payout), one per game, moneylines and dog spreads mixed.
-    var upValue = function (c) { return evOf(c) * 3 + c.edge * 2 + (c.fade ? 0.04 : 0) - (c.board ? 0.5 : 0); };
+    var upValue = function (c) { return (c.score != null ? c.score : evOf(c) * 3 + (c.p - 0.5) * 0.6) - (c.board ? 0.5 : 0); };
     var upSeen = {}, upRanked = [];
     upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }).forEach(function (c) { if (upSeen[c.g]) return; upSeen[c.g] = 1; upRanked.push(c); });
     var upT = pickMixed(upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }), upN).map(function (c) { return { c: c, pillar: c.fade ? 'fade' : c.edge >= 0 ? 'value' : 'live' }; });
@@ -1823,7 +1825,7 @@ class Component extends DCLogic {
     var upPriceVal = upT.length ? this.amer(upDec) : '—';
     var upPayVal = upT.length ? this.money(st.stake * upDec) : '$0.00';
 
-    var cfFade = fadeRows(CF.publicBoard, st.cfFadeMkt, st.cfFadeOnly, cfLine);
+    var cfFade = fadeRows(CF.publicBoard, st.cfFadeMkt, st.cfFadeOnly, cfLine, CF.legs, function (n) { var x = slateByName[n]; return x && x.id; });
     var cfFadeMkts = [{ v: 'all', label: 'All' }, { v: 'ml', label: 'Moneyline' }, { v: 'spread', label: 'Spreads' }, { v: 'total', label: 'Totals' }].map(function (f) {
       var on = st.cfFadeMkt === f.v;
       var n = cfFade.all.filter(function (c) { return (f.v === 'all' || c.mk === f.v) && c.contrarian; }).length;
@@ -1837,23 +1839,24 @@ class Component extends DCLogic {
     });
     // Full slate: the Horseshoe's lean in every market (spread, total, moneyline) for each game.
     var mkLean = function (g, k) {
-      var best = null, bs = -9;
+      var pickL = null, other = null;
       CF.legs.forEach(function (l) {
-        if (l.g !== g || l.k !== k || l.alt) return;
-        var sig = l.s[0] + l.s[1] + l.s[2];
-        var ev = l.p * self.dec(l.odds) - 1;
-        var sc = sig * 0.1 + ev * 3 + (l.p - 0.5) * 0.6;
-        if (sc > bs) { bs = sc; best = { l: l, sig: sig, ev: ev, sc: sc }; }
+        if (l.g !== g || !l.pick) return;
+        var slotK = l.k === 'total' ? 'total' : 'side';
+        if (slotK !== (k === 'total' ? 'total' : 'side')) return;
+        if (l.k === k) pickL = l; else other = l;
       });
-      if (!best) return { has: false, strong: false, sc: -9, label: 'Pass', labelStyle: 'display: block; color: ' + FAINT + ';', sub: 'Price too lopsided to play', shoes: [], shoeAria: 'No rating', oddsStr: '' };
-      var l = best.l, ev = Math.round(best.ev * 1000) / 10;
-      var strong = l.k === 'ml' ? best.sig >= 2 : best.sig >= 1;
+      if (!pickL) {
+        var sub = other ? 'Horseshoe plays ' + other.label : 'No Horseshoe signal';
+        return { has: false, strong: false, sc: -9, label: other ? 'See ' + (other.k === 'ml' ? 'moneyline' : 'spread') : 'Pass', labelStyle: 'display: block; color: ' + FAINT + ';', sub: sub, shoes: [], shoeAria: 'No rating', oddsStr: '' };
+      }
+      var l = pickL, ev = Math.round(l.ev * 1000) / 10;
       return {
-        has: true, strong: strong, sc: best.sc,
+        has: true, strong: true, sc: l.score,
         label: l.label, oddsStr: self.fmtOdds(l.odds),
-        labelStyle: 'display: block; font-weight: ' + (strong ? '700' : '500') + '; color: ' + (strong ? B : MUTED) + ';',
-        sub: strong ? 'Hits ' + pct(l.p) + ' · value ' + (ev >= 0 ? '+' : '') + ev + '%' : 'No signal',
-        shoes: strong ? shoes(l.conf) : [], shoeAria: strong ? 'Horseshoe rating ' + shoeCount(l.conf) + ' of 5' : 'No rating'
+        labelStyle: 'display: block; font-weight: 700; color: ' + B + ';',
+        sub: 'Hits ' + pct(l.p) + ' · value ' + (ev >= 0 ? '+' : '') + ev + '%' + (l.fade ? ' · fade' : ''),
+        shoes: shoes(l.conf), shoeAria: 'Horseshoe rating ' + shoeCount(l.conf) + ' of 5'
       };
     };
     var slateRows = CF.slate.filter(function (s) { return confF === 'All' || s.cf === confF; }).map(function (s) {
@@ -1897,8 +1900,8 @@ class Component extends DCLogic {
     var ovRow = function (l, college, gmap) {
       var p = l.p != null ? l.p : l.conf / 100;
       var d = self.dec(l.odds), imp = 1 / d, ev = p * d - 1;
-      var bar = l.s && l.s[0] + l.s[1] + l.s[2] >= 2;
-      return { l: l, p: p, imp: imp, ev: ev, bar: bar, score: ev * 1.5 + (p - 0.5) + (bar ? 0.15 : 0), vibe: vibeOf(l, college), game: gmap[l.g] ? gmap[l.g].label : '' };
+      var bar = !!l.pick;
+      return { l: l, p: p, imp: imp, ev: ev, bar: bar, score: l.score != null ? l.score + (bar ? 1 : 0) : ev * 1.5 + (p - 0.5), vibe: vibeOf(l, college), game: gmap[l.g] ? gmap[l.g].label : '' };
     };
     var ovShow = function (r, ix) {
       var ev = Math.round(r.ev * 1000) / 10;
@@ -1919,7 +1922,7 @@ class Component extends DCLogic {
     };
     // NFL: game-total overs plus player-prop overs and anytime TDs
     var nflOvAll = D.legs.filter(function (l) {
-      if (/\(alt\)/.test(l.label)) return false;
+      if (/\(alt\)/.test(l.label) || l.slotPick) return false; // the Horseshoe plays the other side of this slot
       if (l.odds < -400 || l.odds > 500) return false; // overs worth playing, not lottery tickets
       return /^Over /.test(l.label) || (l.k === 'prop' && (/ over /.test(l.label) || /anytime TD/.test(l.label)));
     }).map(function (l) { return ovRow(l, false, gameMap); }).sort(function (a, b) { return b.score - a.score; });
@@ -1938,7 +1941,7 @@ class Component extends DCLogic {
       return { label: m.label, on: on, style: chipW(on), pick: function () { self.setState({ ovMkt: m.v }); } };
     });
     // College: game-total overs
-    var cfOvAll = CF.legs.filter(function (l) { return l.k === 'total' && /^Over /.test(l.label) && !l.alt; })
+    var cfOvAll = CF.legs.filter(function (l) { return l.k === 'total' && /^Over /.test(l.label) && !l.alt && !l.slotPick; })
       .map(function (l) { return ovRow(l, true, cfGameMap); }).sort(function (a, b) { return b.score - a.score; });
     var cfOvTop = ovBuild(cfOvAll, 20, function (l) { return l.g; });
     var cfOvN = st.cfOvN || 3;
@@ -2265,6 +2268,7 @@ class Component extends DCLogic {
 
 (function () {
   var app = BHRuntime.mount(Component, document.getElementById('tpl').textContent, document.getElementById('app'));
+  window.BHApp = app;
   function refresh() { return BHLines.load().then(function () { app.forceUpdate(); }); }
   refresh();
   setInterval(function () { if (!document.hidden) refresh(); }, BHLines.REFRESH_MS);

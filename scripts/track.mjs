@@ -18,10 +18,10 @@ const normName = (x) => String(x || '').toLowerCase().replace(/\b(jr|sr|ii|iii|i
 const T = globalThis.BHLines._test;
 
 export async function track(log = console.log) {
-  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather] = await Promise.all([
+  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather, splits] = await Promise.all([
     readJSON('data/espn-nfl.json', null), readJSON('data/espn-cfb.json', null), readJSON('data/espn-injuries.json', null),
     readJSON('data/props.json', null), readJSON('data/sgo-nfl.json', null), readJSON('data/sgo-cfb.json', null),
-    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null)
+    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null), readJSON('data/splits.json', null)
   ]);
   const now = Date.now();
   const picks = store.picks || [];
@@ -69,13 +69,13 @@ export async function track(log = console.log) {
     Object.assign(row, parsed, {
       label, date: e.date, game: e.short, away: e.a.shortDisplayName, home: e.h.shortDisplayName,
       odds: l.odds, p: Math.round(p * 1000) / 1000, imp: Math.round((1 / dec(l.odds)) * 1000) / 1000,
-      conf: l.conf, s: l.sOrig || l.s, held: l.held || null, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
+      conf: l.conf, score: l.score, top: !!l.pick, fade: !!l.fade, s: l.sOrig || l.s, held: l.held || null, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
       tilt: l.tilt || 0, wind: weather && weather.games && weather.games[l.g] && !weather.games[l.g].indoor ? Math.round(weather.games[l.g].wind) : null,
       ...moveOf(parsed, e)
     });
   };
   if (nflSb) {
-    const nfl = T.buildNfl(nflSb, inj, { props, sgo, weather });
+    const nfl = T.buildNfl(nflSb, inj, { props, sgo, weather, splits });
     for (const l of nfl.legs) {
       if (l.alt) continue;
       const s0 = l.sOrig || l.s; // held legs keep their original checks so we can see how the rules do
@@ -84,12 +84,12 @@ export async function track(log = console.log) {
     }
   }
   if (cfbSb) {
-    const cf = T.buildCollege(cfbSb, { sgoCfb, weather });
+    const cf = T.buildCollege(cfbSb, { sgoCfb, weather, splits });
     for (const l of cf.legs) {
       if (l.alt) continue;
       const s0 = l.sOrig || l.s;
       const sig = s0[0] + s0[1] + s0[2];
-      if (sig >= (l.k === 'ml' ? 2 : 1)) record('cfb', l, l.label);
+      if (sig >= (l.k === 'ml' ? 2 : 1) || l.fade) record('cfb', l, l.label);
     }
   }
   for (const p of picks) {
@@ -200,10 +200,13 @@ function clvOf(p) {
 }
 
 // One pick per game per market: a team's ML and spread, and both sides of a game, share one slot; totals have their own.
-// The pick with more signals wins the slot, then the bigger edge over the price.
+// The slot goes to the same line the site shows as the Horseshoe pick (lines.js rateLegs: l.pick / l.score).
+// Picks recorded before Oct 21 have no shared verdict, so they fall back to the old rule: more signals, then bigger edge.
 function dedupe(picks) {
   const slot = (p) => p.market === 'prop' ? p.key : `${p.sport}|${p.g}|${p.market === 'total' ? 'total' : 'side'}`;
-  const score = (p) => (p.s ? p.s[0] + p.s[1] + p.s[2] : 0) * 10 + ((p.p || 0) - (p.imp || 0)) * 100 + (p.conf || 0) / 1000;
+  const score = (p) => p.top !== undefined
+    ? (p.top ? 1e6 : 0) + (p.score || 0) * 1000
+    : (p.s ? p.s[0] + p.s[1] + p.s[2] : 0) * 10 + ((p.p || 0) - (p.imp || 0)) * 100 + (p.conf || 0) / 1000;
   const best = {};
   for (const p of picks) {
     if (!p.active || p.held) continue;
