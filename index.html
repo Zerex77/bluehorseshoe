@@ -3,27 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0A1020">
 <title>Blue Horseshoe Picks</title>
 <meta name="description" content="Blue Horseshoe: NFL and college football parlay picks built from live lines.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#F7F8FA}
-a{color:#1D5FD6}a:hover{color:#123F91}
+:root{color-scheme:dark}
+body{margin:0;background:#0A1020}
+h1,h2{font-family:'Barlow Condensed',Inter,sans-serif !important;text-transform:uppercase;letter-spacing:0.02em;line-height:1 !important}
+h1{font-size:34px !important;font-weight:800 !important}
+h2{font-size:26px !important;font-weight:800 !important}
+.bh-word{font-family:'Barlow Condensed',Inter,sans-serif;font-weight:800;font-size:24px;letter-spacing:0.05em;text-transform:uppercase;line-height:1}
+@media (max-width:600px){h1{font-size:28px !important}h2{font-size:22px !important}}
+a{color:#7FB0FF}a:hover{color:#B5D0FF}
 button{font:inherit}
 .fader{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;margin:0}
-.fader:focus-visible{outline:2px solid #1D5FD6;outline-offset:3px;border-radius:4px}
-.fader::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#D5DAE1}
-.fader::-moz-range-track{height:4px;border-radius:2px;background:#D5DAE1}
+.fader:focus-visible{outline:2px solid #7FB0FF;outline-offset:3px;border-radius:4px}
+.fader::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#2A3A5E}
+.fader::-moz-range-track{height:4px;border-radius:2px;background:#2A3A5E}
 .fader::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:#1D5FD6;border:2px solid #FFFFFF;box-shadow:0 0 0 1px #1D5FD6}
 .fader::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#1D5FD6;border:2px solid #FFFFFF;box-shadow:0 0 0 1px #1D5FD6}
-.fader.off::-webkit-slider-thumb{background:#AEB5C0;box-shadow:0 0 0 1px #AEB5C0}
-.fader.off::-moz-range-thumb{background:#AEB5C0;box-shadow:0 0 0 1px #AEB5C0}
+.fader.off::-webkit-slider-thumb{background:#4A5878;box-shadow:0 0 0 1px #4A5878}
+.fader.off::-moz-range-thumb{background:#4A5878;box-shadow:0 0 0 1px #4A5878}
 .fader.onblue::-webkit-slider-runnable-track{background:rgba(255,255,255,0.35)}
 .fader.onblue::-moz-range-track{background:rgba(255,255,255,0.35)}
-.fader.onblue::-webkit-slider-thumb{background:#FFFFFF;border-color:#1D5FD6;box-shadow:0 0 0 1px #FFFFFF}
-.fader.onblue::-moz-range-thumb{background:#FFFFFF;border-color:#1D5FD6;box-shadow:0 0 0 1px #FFFFFF}
+.fader.onblue::-webkit-slider-thumb{background:#111A2E;border-color:#1D5FD6;box-shadow:0 0 0 1px #FFFFFF}
+.fader.onblue::-moz-range-thumb{background:#111A2E;border-color:#1D5FD6;box-shadow:0 0 0 1px #FFFFFF}
 .fader.onblue.off::-webkit-slider-thumb{background:#8FB0EC;box-shadow:0 0 0 1px #8FB0EC}
 .fader.onblue.off::-moz-range-thumb{background:#8FB0EC;box-shadow:0 0 0 1px #8FB0EC}
 .fader.onblue:focus-visible{outline-color:#FFFFFF}
@@ -33,23 +40,23 @@ button{font:inherit}
 <div id="app"></div>
 <noscript>Blue Horseshoe needs JavaScript to load live lines.</noscript>
 <script type="text/x-template" id="tpl">
-<div style="min-height: 100vh; background: #F7F8FA; color: #111827; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; box-sizing: border-box;">
+<div style="min-height: 100vh; background: #0A1020; color: #EEF2FA; font-family: Inter, system-ui, sans-serif; font-size: 14px; box-sizing: border-box;">
 
-  <header style="background: #FFFFFF; border-bottom: 1px solid #E3E6EB;">
+  <header style="background: #111A2E; border-bottom: 1px solid #1E2A45;">
     <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px;">
       <div style="display: flex; align-items: center; gap: 10px; min-height: 56px;">
-        <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
-        <span style="font-weight: 700; font-size: 17px; letter-spacing: -0.01em;">Blue Horseshoe</span>
+        <svg width="36" height="36" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1D5FD6"></rect><path d="M18 12 v16 a14 14 0 0 0 28 0 v-16" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round"></path></svg>
+        <span class="bh-word">Blue Horseshoe</span>
       </div>
       <nav aria-label="Pages" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;">
         <button type="button" onClick="{{nflTop.pick}}" aria-current="{{nflTop.current}}" style="{{nflTop.style}}">NFL</button>
         <button type="button" onClick="{{collegeTab.pick}}" aria-current="{{collegeTab.current}}" style="{{collegeTab.style}}">College</button>
         <button type="button" onClick="{{recordTab.pick}}" aria-current="{{recordTab.current}}" style="{{recordTab.style}}">Track record</button>
-        <a href="live.html" target="bhlive" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #111827; text-decoration: none;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Live</a>
+        <a href="live.html" target="bhlive" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #EEF2FA; text-decoration: none;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Live</a>
       </nav>
       <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; padding: 6px 0;">
-        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6472;">{{chipText}}</span>
-        <span role="status" aria-live="polite" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #6B7280;"><span aria-hidden="true" style="{{liveDot}}"></span>{{liveStamp}}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B5CF;">{{chipText}}</span>
+        <span role="status" aria-live="polite" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #A9B5CF;"><span aria-hidden="true" style="{{liveDot}}"></span>{{liveStamp}}</span>
       </span>
     </div>
   </header>
@@ -62,10 +69,10 @@ button{font:inherit}
           <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
           <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
             <h1 style="margin: 0; font-size: 20px; font-weight: 700;">NFL · the Horseshoe has spoken</h1>
-            <span style="font-size: 13px; color: #5B6472;">Game lines and player props, built from live lines.</span>
+            <span style="font-size: 13px; color: #A9B5CF;">Game lines and player props, built from live lines.</span>
           </div>
         </div>
-        <nav aria-label="NFL pages" style="display: flex; gap: 4px; background: #EEF0F3; padding: 3px; border-radius: 8px;">
+        <nav aria-label="NFL pages" style="display: flex; gap: 4px; background: #1E2A45; padding: 3px; border-radius: 8px;">
           <sc-for list="{{nflTabs}}" as="nt" hint-placeholder-count="4">
             <button type="button" onClick="{{nt.pick}}" aria-current="{{nt.current}}" style="{{nt.style}}">{{nt.label}}</button>
           </sc-for>
@@ -96,7 +103,7 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Target</span>
                 <select onChange="{{onTarget}}" value="{{targetVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{targetOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{targetOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -110,27 +117,27 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Stake</span>
                 <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Markets</span>
                 <select onChange="{{onMkt}}" value="{{mktVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{mktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{mktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <sc-if value="{{showPropFilter}}" hint-placeholder-val="{{ true }}">
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Prop type</span>
                 <select onChange="{{onProp}}" value="{{propVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{propOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{propOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               </sc-if>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Time slot</span>
                 <select onChange="{{onSlot}}" value="{{slotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{slotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{slotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -155,57 +162,57 @@ button{font:inherit}
         </section>
 
             <sc-if value="{{showWarn}}" hint-placeholder-val="{{ false }}">
-              <div role="status" style="display: flex; gap: 8px; align-items: flex-start; border: 1px solid #F0D9A8; background: #FFF8E8; color: #7A4A00; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{warnText}}</div>
+              <div role="status" style="display: flex; gap: 8px; align-items: flex-start; border: 1px solid #6B4A16; background: #33240E; color: #FFB86B; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{warnText}}</div>
             </sc-if>
 
             <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
-              <span style="font-size: 13px; color: #5B6472;">{{softLine}}</span>
+              <span style="font-size: 13px; color: #A9B5CF;">{{softLine}}</span>
               <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                <button type="button" onClick="{{toggleAll}}" style="min-height: 34px; padding: 0 12px; background: #FFFFFF; color: #111827; border: 1px solid #D5DAE1; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{toggleAllLabel}}</button>
-                <button type="button" onClick="{{toggleBuild}}" aria-expanded="{{buildOpen}}" style="min-height: 34px; padding: 0 12px; background: #FFFFFF; color: #111827; border: 1px solid #D5DAE1; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{buildLabel}}</button>
-                <button type="button" onClick="{{watchNfl}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #0F1B3D; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button>
+                <button type="button" onClick="{{toggleAll}}" style="min-height: 34px; padding: 0 12px; background: #111A2E; color: #EEF2FA; border: 1px solid #2A3A5E; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{toggleAllLabel}}</button>
+                <button type="button" onClick="{{toggleBuild}}" aria-expanded="{{buildOpen}}" style="min-height: 34px; padding: 0 12px; background: #111A2E; color: #EEF2FA; border: 1px solid #2A3A5E; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">{{buildLabel}}</button>
+                <button type="button" onClick="{{watchNfl}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #263556; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button>
                 <a href="https://www.hardrock.bet/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #1D5FD6; color: #FFFFFF; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none;">Open Hard Rock Bet
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3h7v7M13 3L4 12" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 </a>
               </div>
             </div>
 
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; overflow-x: auto;">
               <div>
                 <sc-for list="{{ticket}}" as="leg" hint-placeholder-count="6">
-                  <div style="border-bottom: 1px solid #EEF0F3;">
+                  <div style="border-bottom: 1px solid #1E2A45;">
                     <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;">
-                      <span style="width: 18px; flex-shrink: 0; padding-top: 1px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B7280;">{{leg.num}}</span>
+                      <span style="width: 18px; flex-shrink: 0; padding-top: 1px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B5CF;">{{leg.num}}</span>
                       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px;">
                         <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
                           <span style="font-weight: 600;">{{leg.label}}</span>
-                          <span style="font-size: 12px; color: #6B7280;">{{leg.game}} · {{leg.note}}</span>
+                          <span style="font-size: 12px; color: #A9B5CF;">{{leg.game}} · {{leg.note}}</span>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px;">
                           <span style="{{leg.tagStyle}}">{{leg.tag}}</span>
-                          <sc-if value="{{leg.belowBar}}" hint-placeholder-val="{{ false }}"><span title="Fails the 2-of-3 check. Shown because you picked this game." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #FFF4E5; color: #9A5B00; white-space: nowrap;">Below the bar</span></sc-if><sc-if value="{{leg.featherText}}" hint-placeholder-val="{{ false }}"><span title="Swapped to a safer alternate line because the ticket already beat its target." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #E6F6EF; color: #0B6E4F; white-space: nowrap;">Feathered</span></sc-if>
+                          <sc-if value="{{leg.belowBar}}" hint-placeholder-val="{{ false }}"><span title="Fails the 2-of-3 check. Shown because you picked this game." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #3D2810; color: #9A5B00; white-space: nowrap;">Below the bar</span></sc-if><sc-if value="{{leg.featherText}}" hint-placeholder-val="{{ false }}"><span title="Swapped to a safer alternate line because the ticket already beat its target." style="display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #123A2A; color: #6BE3A6; white-space: nowrap;">Feathered</span></sc-if>
                           <span style="display: flex; gap: 3px;" aria-label="{{leg.sigAria}}">
                             <sc-for list="{{leg.sigs}}" as="sg" hint-placeholder-count="3">
                               <span title="{{sg.name}}" style="{{sg.style}}">{{sg.letter}}</span>
                             </sc-for>
                           </span>
-                          <span style="display: inline-flex; align-items: center; gap: 6px; color: #5B6472;">Conf <span style="font-family: 'IBM Plex Mono', monospace; color: #111827;">{{leg.conf}}</span><span style="width: 40px; height: 3px; background: #EEF0F3; border-radius: 2px; overflow: hidden; display: inline-block;"><span style="{{leg.barStyle}}; display: block;"></span></span></span>
+                          <span style="display: inline-flex; align-items: center; gap: 6px; color: #A9B5CF;">Conf <span style="font-family: 'IBM Plex Mono', monospace; color: #EEF2FA;">{{leg.conf}}</span><span style="width: 40px; height: 3px; background: #1E2A45; border-radius: 2px; overflow: hidden; display: inline-block;"><span style="{{leg.barStyle}}; display: block;"></span></span></span>
                           <span style="{{leg.injStyle}}">{{leg.injLabel}}</span>
                         </div>
                       </div>
                       <span style="flex-shrink: 0; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{leg.oddsStr}}</span>
-                      <button type="button" onClick="{{leg.toggle}}" aria-expanded="{{leg.open}}" aria-label="Leg details" style="flex-shrink: 0; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #D5DAE1; border-radius: 6px; cursor: pointer;">
+                      <button type="button" onClick="{{leg.toggle}}" aria-expanded="{{leg.open}}" aria-label="Leg details" style="flex-shrink: 0; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; background: #111A2E; border: 1px solid #2A3A5E; border-radius: 6px; cursor: pointer;">
                         <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="{{leg.chevStyle}}"><path d="M2 4l4 4 4-4" stroke="#111827" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                       </button>
                     </div>
                     <sc-if value="{{leg.stackWarn}}" hint-placeholder-val="{{ false }}">
-                      <div role="note" style="margin: 0 12px 8px 52px; font-size: 12px; color: #7A4A00;">{{leg.stackText}}</div>
+                      <div role="note" style="margin: 0 12px 8px 52px; font-size: 12px; color: #FFB86B;">{{leg.stackText}}</div>
                     </sc-if>
                     <sc-if value="{{leg.open}}" hint-placeholder-val="{{ false }}">
-                      <div style="margin: 0 12px 12px 52px; padding: 12px; background: #F7F8FA; border-radius: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px; font-size: 13px;">
-                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #5B6472;">Why the Horseshoe likes it</span><span>{{leg.note}}</span></div>
-                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #5B6472;">Signals hit</span><span>{{leg.sigList}}</span></div>
-                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #5B6472;">Injury report · {{leg.injStatus}}</span><span>{{leg.injWho}}</span><span style="font-size: 12px; color: #6B7280;">{{leg.injNote}}</span></div>
+                      <div style="margin: 0 12px 12px 52px; padding: 12px; background: #0A1020; border-radius: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px; font-size: 13px;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #A9B5CF;">Why the Horseshoe likes it</span><span>{{leg.note}}</span></div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #A9B5CF;">Signals hit</span><span>{{leg.sigList}}</span></div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; color: #A9B5CF;">Injury report · {{leg.injStatus}}</span><span>{{leg.injWho}}</span><span style="font-size: 12px; color: #A9B5CF;">{{leg.injNote}}</span></div>
                       </div>
                     </sc-if>
                   </div>
@@ -214,22 +221,22 @@ button{font:inherit}
             </div>
 
             <sc-if value="{{buildOpen}}" hint-placeholder-val="{{ false }}">
-              <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px;">
                   <h2 style="margin: 0; font-size: 15px; font-weight: 700;">Build it on Hard Rock</h2>
-                  <span style="font-size: 13px; color: #5B6472;">{{buildProgress}} · target <span style="font-family: 'IBM Plex Mono', monospace; color: #111827;">{{buildPrice}}</span> · <button type="button" onClick="{{resetChecks}}" style="background: none; border: none; padding: 0; color: #1D5FD6; font-size: 13px; font-weight: 600; cursor: pointer;">Reset</button></span>
+                  <span style="font-size: 13px; color: #A9B5CF;">{{buildProgress}} · target <span style="font-family: 'IBM Plex Mono', monospace; color: #EEF2FA;">{{buildPrice}}</span> · <button type="button" onClick="{{resetChecks}}" style="background: none; border: none; padding: 0; color: #7FB0FF; font-size: 13px; font-weight: 600; cursor: pointer;">Reset</button></span>
                 </div>
-                <div style="height: 4px; background: #EEF0F3; border-radius: 2px; overflow: hidden;"><div style="{{buildBarStyle}}"></div></div>
+                <div style="height: 4px; background: #1E2A45; border-radius: 2px; overflow: hidden;"><div style="{{buildBarStyle}}"></div></div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px 16px;">
                   <sc-for list="{{buildGroups}}" as="grp" hint-placeholder-count="3">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: #5B6472;">{{grp.game}} · {{grp.count}}</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: #A9B5CF;">{{grp.game}} · {{grp.count}}</span>
                       <sc-for list="{{grp.items}}" as="it" hint-placeholder-count="2">
                         <button type="button" onClick="{{it.toggle}}" aria-pressed="{{it.done}}" style="{{it.rowStyle}}">
                           <span aria-hidden="true" style="{{it.boxStyle}}">{{it.mark}}</span>
                           <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
                             <span style="{{it.labelStyle}}">{{it.label}}</span>
-                            <span style="font-size: 12px; color: #6B7280;">{{it.where}}</span>
+                            <span style="font-size: 12px; color: #A9B5CF;">{{it.where}}</span>
                           </span>
                           <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{it.oddsStr}}</span>
                         </button>
@@ -237,16 +244,16 @@ button{font:inherit}
                     </div>
                   </sc-for>
                 </div>
-                <span style="font-size: 12px; color: #6B7280;">Menu names in the app may differ slightly. If a line isn't offered, take the closest one and check the slip total.</span>
+                <span style="font-size: 12px; color: #A9B5CF;">Menu names in the app may differ slightly. If a line isn't offered, take the closest one and check the slip total.</span>
               </div>
             </sc-if>
 
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Next best legs</span>
+              <span style="font-size: 12px; font-weight: 600; color: #A9B5CF;">Next best legs</span>
               <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
                 <sc-for list="{{bench}}" as="b" hint-placeholder-count="3">
-                  <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
-                    <span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{b.label}}</span><span style="font-size: 12px; color: #6B7280;">{{b.game}} · conf {{b.conf}}</span></span>
+                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
+                    <span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{b.label}}</span><span style="font-size: 12px; color: #A9B5CF;">{{b.game}} · conf {{b.conf}}</span></span>
                     <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{b.oddsStr}}</span>
                   </div>
                 </sc-for>
@@ -259,20 +266,20 @@ button{font:inherit}
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px;">
           <h2 style="margin: 0; font-size: 16px; font-weight: 700;">Spin it</h2>
-          <span style="font-size: 13px; color: #5B6472;">The Horseshoe draws a random parlay from legs that pass its checks and your Builder filters.</span>
+          <span style="font-size: 13px; color: #A9B5CF;">The Horseshoe draws a random parlay from legs that pass its checks and your Builder filters.</span>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
-          <aside style="flex: 1 1 260px; background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 14px;">
+          <aside style="flex: 1 1 260px; background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 14px;">
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Legs</span>
+              <span style="font-size: 12px; font-weight: 600; color: #A9B5CF;">Legs</span>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" onClick="{{rndDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">−</button>
+                <button type="button" onClick="{{rndDown}}" aria-label="Fewer legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font-size: 16px; cursor: pointer;">−</button>
                 <span style="min-width: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600;">{{rndN}}</span>
-                <button type="button" onClick="{{rndUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font-size: 16px; cursor: pointer;">+</button>
+                <button type="button" onClick="{{rndUp}}" aria-label="More legs" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font-size: 16px; cursor: pointer;">+</button>
               </div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Stake</span>
+              <span style="font-size: 12px; font-weight: 600; color: #A9B5CF;">Stake</span>
               <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;">
                 <sc-for list="{{stakes}}" as="s2" hint-placeholder-count="4">
                   <button type="button" onClick="{{s2.pick}}" aria-pressed="{{s2.on}}" style="{{s2.style}}">{{s2.label}}</button>
@@ -280,19 +287,19 @@ button{font:inherit}
               </div>
             </div>
             <button type="button" onClick="{{spin}}" style="min-height: 40px; background: #1D5FD6; color: #FFFFFF; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer;">Spin</button>
-            <span style="font-size: 12px; color: #6B7280;">{{spinNote}}</span>
+            <span style="font-size: 12px; color: #A9B5CF;">{{spinNote}}</span>
           </aside>
           <section style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: #E3E6EB; border: 1px solid #E3E6EB; border-radius: 8px; overflow: hidden;">
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Price</span><span style="{{spinPriceStyle}}">{{spinPrice}}</span></div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">{{stakeLabel}} pays</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; overflow-wrap: anywhere;">{{spinPayout}}</span></div>
-              <div style="background: #FFFFFF; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit chance</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{spinHit}}</span></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: #1E2A45; border: 1px solid #1E2A45; border-radius: 8px; overflow: hidden;">
+              <div style="background: #111A2E; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Price</span><span style="{{spinPriceStyle}}">{{spinPrice}}</span></div>
+              <div style="background: #111A2E; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">{{stakeLabel}} pays</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; overflow-wrap: anywhere;">{{spinPayout}}</span></div>
+              <div style="background: #111A2E; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Hit chance</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600;">{{spinHit}}</span></div>
             </div>
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
               <sc-for list="{{spinLegs}}" as="sp" hint-placeholder-count="4">
-                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
-                  <span style="width: 22px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B7280;">{{sp.num}}</span>
-                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-weight: 600;">{{sp.label}}</span><span style="font-size: 12px; color: #6B7280;">{{sp.game}} · conf {{sp.conf}}</span></span>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
+                  <span style="width: 22px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B5CF;">{{sp.num}}</span>
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-weight: 600;">{{sp.label}}</span><span style="font-size: 12px; color: #A9B5CF;">{{sp.game}} · conf {{sp.conf}}</span></span>
                   <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{sp.oddsStr}}</span>
                 </div>
               </sc-for>
@@ -306,11 +313,11 @@ button{font:inherit}
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; flex-direction: column; gap: 2px;">
           <h2 style="margin: 0; font-size: 16px; font-weight: 700;">Line check</h2>
-          <span style="font-size: 13px; color: #5B6472;">What the market thinks the line should be. We take the other books' numbers, adjust for juice, and compare them to your book. If the books lean -4.6 and you can lay -4.5, you're getting a fair-or-better price.</span>
+          <span style="font-size: 13px; color: #A9B5CF;">What the market thinks the line should be. We take the other books' numbers, adjust for juice, and compare them to your book. If the books lean -4.6 and you can lay -4.5, you're getting a fair-or-better price.</span>
         </div>
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;">
           <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
-            <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Your book</span>
+            <span style="font-size: 12px; font-weight: 600; color: #A9B5CF;">Your book</span>
             <div role="group" aria-label="Your book" style="display: flex; flex-wrap: wrap; gap: 4px;">
               <sc-for list="{{bookOpts}}" as="bo" hint-placeholder-count="5">
                 <button type="button" onClick="{{bo.pick}}" aria-pressed="{{bo.on}}" style="{{bo.style}}">{{bo.label}}</button>
@@ -319,8 +326,8 @@ button{font:inherit}
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 13px; color: #0F7A43; font-weight: 600;">{{evCount}}</span>
-            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Check
-              <select onChange="{{onLcKind}}" value="{{lcKindVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #A9B5CF;">Check
+              <select onChange="{{onLcKind}}" value="{{lcKindVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">
                 <sc-for list="{{lcKindOpts}}" as="o" hint-placeholder-count="2"><option value="{{o.v}}">{{o.label}}</option></sc-for>
               </select>
             </label>
@@ -328,36 +335,36 @@ button{font:inherit}
           </div>
         </div>
         <sc-if value="{{lineEmpty}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">Book-by-book prices aren't loaded yet.</b> Line check compares Hard Rock with the other sportsbooks every 4 hours. Check back shortly.</div>
+          <div role="status" style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #A9B5CF;"><b style="color: #EEF2FA;">Book-by-book prices aren't loaded yet.</b> Line check compares Hard Rock with the other sportsbooks every 4 hours. Check back shortly.</div>
         </sc-if>
         <sc-if value="{{lcPropNote}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFF8E8; border: 1px solid #F0D9A8; color: #7A4A00; border-radius: 8px; padding: 10px 14px; font-size: 13px;">{{lcPropNote}}</div>
+          <div role="status" style="background: #33240E; border: 1px solid #6B4A16; color: #FFB86B; border-radius: 8px; padding: 10px 14px; font-size: 13px;">{{lcPropNote}}</div>
         </sc-if>
-        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+        <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-              <tr style="background: #FAFBFC;">
-                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Market</th>
-                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's take</th>
-                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Your line</th>
-                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Books say</th>
-                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Gap</th>
+              <tr style="background: #0E1628;">
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Market</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Horseshoe's take</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Your line</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Books say</th>
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Gap</th>
               </tr>
             </thead>
             <tbody>
               <sc-for list="{{screenRows}}" as="row" hint-placeholder-count="10">
                 <tr style="{{row.rowStyle}}">
-                  <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{row.label}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{row.game}}</span></th>
-                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{row.takeStyle}}">{{row.take}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{row.takeSub}}</span></td>
-                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{row.mineStr}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{row.mineOdds}}</span></td>
-                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{row.fairStr}}</span><span style="display: block; font-size: 11px; color: #6B7280;">{{row.othersStr}}</span></td>
-                  <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{row.gapStyle}}">{{row.gapStr}}</span></td>
+                  <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #1E2A45; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{row.label}}</span><span style="display: block; font-size: 12px; color: #A9B5CF;">{{row.game}}</span></th>
+                  <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="{{row.takeStyle}}">{{row.take}}</span><span style="display: block; font-size: 12px; color: #A9B5CF;">{{row.takeSub}}</span></td>
+                  <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{row.mineStr}}</span><span style="display: block; font-size: 12px; color: #A9B5CF;">{{row.mineOdds}}</span></td>
+                  <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{row.fairStr}}</span><span style="display: block; font-size: 11px; color: #A9B5CF;">{{row.othersStr}}</span></td>
+                  <td style="padding: 8px 12px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="{{row.gapStyle}}">{{row.gapStr}}</span></td>
                 </tr>
               </sc-for>
             </tbody>
           </table>
         </div>
-        <span style="font-size: 12px; color: #6B7280;">{{booksStamp}} Rows are sorted by the biggest gap. Juice matters: a book hanging -140 on the Over at 6.5 catches is really saying 7.</span>
+        <span style="font-size: 12px; color: #A9B5CF;">{{booksStamp}} Rows are sorted by the biggest gap. Juice matters: a book hanging -140 on the Over at 6.5 catches is really saying 7.</span>
       </div>
     </sc-if>
 
@@ -391,19 +398,19 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Stake</span>
                 <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Show</span>
                 <select onChange="{{onOvMkt}}" value="{{ovMktVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{ovMktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{ovMktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Time slot</span>
                 <select onChange="{{onSlot}}" value="{{slotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{slotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{slotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
           </div>
@@ -414,32 +421,32 @@ button{font:inherit}
           </div>
         </section>
         <sc-if value="{{ovEmpty}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No overs on the board right now. Check back when lines post.</div>
+          <div role="status" style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 14px; font-size: 13px; color: #A9B5CF;">No overs on the board right now. Check back when lines post.</div>
         </sc-if>
-        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+        <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
           <sc-for list="{{ovList}}" as="ov" hint-placeholder-count="8">
-            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
-              <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; background: #E6F6EF; color: #0B6E4F; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ov.num}}</span>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
+              <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; background: #123A2A; color: #6BE3A6; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ov.num}}</span>
               <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
                   <span style="font-size: 14px; font-weight: 700;">{{ov.label}}</span>
-                  <span style="font-size: 12px; color: #6B7280;">{{ov.game}}</span>
+                  <span style="font-size: 12px; color: #A9B5CF;">{{ov.game}}</span>
                   <span style="{{ov.heatStyle}}">{{ov.heat}}</span>
-                  <span style="font-size: 11px; font-weight: 600; color: #0B6E4F;">↑ {{ov.vibe}}</span>
+                  <span style="font-size: 11px; font-weight: 600; color: #6BE3A6;">↑ {{ov.vibe}}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #5B6472;">
-                  <span style="position: relative; width: 120px; height: 6px; background: #EEF0F3; border-radius: 3px; flex-shrink: 0;" role="img" aria-label="Horseshoe {{ov.pStr}}, book {{ov.impStr}}"><span style="display: block; {{ov.meterH}}"></span><span style="{{ov.meterB}}"></span></span>
-                  <span>Horseshoe <b style="color: #0B6E4F;">{{ov.pStr}}</b> · book {{ov.impStr}}</span>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #A9B5CF;">
+                  <span style="position: relative; width: 120px; height: 6px; background: #1E2A45; border-radius: 3px; flex-shrink: 0;" role="img" aria-label="Horseshoe {{ov.pStr}}, book {{ov.impStr}}"><span style="display: block; {{ov.meterH}}"></span><span style="{{ov.meterB}}"></span></span>
+                  <span>Horseshoe <b style="color: #6BE3A6;">{{ov.pStr}}</b> · book {{ov.impStr}}</span>
                 </div>
               </div>
               <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
                 <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ov.oddsStr}}</span>
-                <span style="font-size: 11px; color: #6B7280;">value <span style="{{ov.evStyle}}">{{ov.evStr}}</span></span>
+                <span style="font-size: 11px; color: #A9B5CF;">value <span style="{{ov.evStyle}}">{{ov.evStr}}</span></span>
               </div>
             </div>
           </sc-for>
         </div>
-        <span style="font-size: 12px; color: #6B7280;">Value is the Horseshoe's chance times the payout, minus your stake. The black tick on each bar is what the book's price implies; green past the tick means the Horseshoe likes it more than the book does.</span>
+        <span style="font-size: 12px; color: #A9B5CF;">Value is the Horseshoe's chance times the payout, minus your stake. The black tick on each bar is what the book's price implies; green past the tick means the Horseshoe likes it more than the book does.</span>
       </div>
     </sc-if>
 
@@ -448,7 +455,7 @@ button{font:inherit}
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;">
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <h1 style="margin: 0; font-size: 20px; font-weight: 700;">Fade the public</h1>
-            <span style="font-size: 13px; color: #5B6472;">Share of bets vs. share of money. A big gap means bigger bettors are on the other side.</span>
+            <span style="font-size: 13px; color: #A9B5CF;">Share of bets vs. share of money. A big gap means bigger bettors are on the other side.</span>
           </div>
           <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
             <sc-for list="{{fadeMkts}}" as="fm" hint-placeholder-count="3">
@@ -458,25 +465,25 @@ button{font:inherit}
           </div>
         </div>
         <sc-if value="{{fadeEmpty}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">Splits aren't posted yet.</b> Books release bets-vs-money splits closer to kickoff. Fades show up here as soon as a real gap between bets and money appears.</div>
+          <div role="status" style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #A9B5CF;"><b style="color: #EEF2FA;">Splits aren't posted yet.</b> Books release bets-vs-money splits closer to kickoff. Fades show up here as soon as a real gap between bets and money appears.</div>
         </sc-if>
-        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+        <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-              <tr style="background: #FAFBFC;">
-                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Game</th>
-                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's pick</th>
-                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Public split</th>
-                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Line move</th>
+              <tr style="background: #0E1628;">
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Game</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Horseshoe's pick</th>
+                <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Public split</th>
+                <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Line move</th>
               </tr>
             </thead>
             <tbody>
               <sc-for list="{{fadeCards}}" as="fc" hint-placeholder-count="8">
                 <tr style="{{fc.rowStyle}}">
-                  <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{fc.game}}</span><span style="{{fc.mkStyle}}; margin-top: 3px;">{{fc.mkLabel}}</span></th>
-                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{fc.pickStyle}}">{{fc.pick}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{fc.reason}}</span></td>
-                  <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-size: 12px; color: #6B7280;">Public on {{fc.pub}}</span><span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span>Bets {{fc.tickets}}</span><span style="color: #1D5FD6;">Money {{fc.money}}</span></span></td>
-                  <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{fc.move}}</td>
+                  <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #1E2A45; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{fc.game}}</span><span style="{{fc.mkStyle}}; margin-top: 3px;">{{fc.mkLabel}}</span></th>
+                  <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="{{fc.pickStyle}}">{{fc.pick}}</span><span style="display: block; font-size: 12px; color: #A9B5CF;">{{fc.reason}}</span></td>
+                  <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="display: block; font-size: 12px; color: #A9B5CF;">Public on {{fc.pub}}</span><span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span>Bets {{fc.tickets}}</span><span style="color: #7FB0FF;">Money {{fc.money}}</span></span></td>
+                  <td style="padding: 8px 12px; border-bottom: 1px solid #1E2A45; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{fc.move}}</td>
                 </tr>
               </sc-for>
             </tbody>
@@ -492,10 +499,10 @@ button{font:inherit}
             <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
             <div style="display: flex; flex-direction: column; gap: 2px;">
               <h1 style="margin: 0; font-size: 20px; font-weight: 700;">College football · the Horseshoe has spoken</h1>
-              <span style="font-size: 13px; color: #5B6472;">Moneylines, spreads and totals only. No props.</span>
+              <span style="font-size: 13px; color: #A9B5CF;">Moneylines, spreads and totals only. No props.</span>
             </div>
           </div>
-          <nav aria-label="College pages" style="display: flex; gap: 4px; background: #EEF0F3; padding: 3px; border-radius: 8px;">
+          <nav aria-label="College pages" style="display: flex; gap: 4px; background: #1E2A45; padding: 3px; border-radius: 8px;">
             <sc-for list="{{cfTabs}}" as="ct" hint-placeholder-count="3">
               <button type="button" onClick="{{ct.pick}}" aria-current="{{ct.current}}" style="{{ct.style}}">{{ct.label}}</button>
             </sc-for>
@@ -511,8 +518,8 @@ button{font:inherit}
                 </sc-for>
               </div>
               <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
-                <span style="font-size: 13px; color: #5B6472;">{{slateCount}}</span>
-                <div role="group" aria-label="Sort by Horseshoe lean" style="display: flex; gap: 2px; background: #EEF0F3; padding: 2px; border-radius: 6px;">
+                <span style="font-size: 13px; color: #A9B5CF;">{{slateCount}}</span>
+                <div role="group" aria-label="Sort by Horseshoe lean" style="display: flex; gap: 2px; background: #1E2A45; padding: 2px; border-radius: 6px;">
                   <sc-for list="{{cfSortOpts}}" as="so" hint-placeholder-count="3">
                     <button type="button" onClick="{{so.pick}}" aria-pressed="{{so.on}}" style="{{so.style}}">{{so.label}}</button>
                   </sc-for>
@@ -520,59 +527,59 @@ button{font:inherit}
                 <button type="button" onClick="{{cfLeansToggle}}" aria-pressed="{{cfLeansOnly}}" style="{{cfLeansStyle}}">Horseshoe leans only</button>
               </div>
             </div>
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #E3E6EB; background: #FAFBFC;">
-                <button type="button" onClick="{{cycleSort}}" aria-label="Sort by Horseshoe lean" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; font-weight: 600; color: #1D5FD6;">Game · sort by lean{{leanArrow}}</button>
-                <span style="font-size: 11px; color: #6B7280;">Spread · Over/Under · Moneyline</span>
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #1E2A45; background: #0E1628;">
+                <button type="button" onClick="{{cycleSort}}" aria-label="Sort by Horseshoe lean" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; font-weight: 600; color: #7FB0FF;">Game · sort by lean{{leanArrow}}</button>
+                <span style="font-size: 11px; color: #A9B5CF;">Spread · Over/Under · Moneyline</span>
               </div>
               <sc-for list="{{slateRows}}" as="sr" hint-placeholder-count="12">
-                <div style="display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-bottom: 1px solid #EEF0F3;">
+                <div style="display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-bottom: 1px solid #1E2A45;">
                   <div style="flex: 1 1 170px; min-width: 0;">
                     <span style="display: block; font-weight: 600; font-size: 14px;">{{sr.game}}</span>
-                    <span style="display: block; font-size: 12px; color: #6B7280;">{{sr.conf}}</span>
+                    <span style="display: block; font-size: 12px; color: #A9B5CF;">{{sr.conf}}</span>
                   </div>
                   <div style="flex: 4 1 520px; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
                     <div style="min-width: 0; display: flex; flex-direction: column; gap: 1px;">
-                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Spread</span>
-                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280; overflow-wrap: anywhere;">{{sr.spreadLine}}</span>
+                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Spread</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A9B5CF; overflow-wrap: anywhere;">{{sr.spreadLine}}</span>
                       <span style="display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; font-size: 13px;">
                         <span style="{{sr.sp.labelStyle}}; display: inline;">{{sr.sp.label}}</span>
-                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #374151;">{{sr.sp.oddsStr}}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #C9D3E8;">{{sr.sp.oddsStr}}</span>
                       </span>
                       <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.sp.shoeAria}}">
                         <sc-for list="{{sr.sp.shoes}}" as="sh" hint-placeholder-count="5">
                           <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
                         </sc-for>
                       </span>
-                      <span style="font-size: 11px; color: #6B7280;">{{sr.sp.sub}}</span>
+                      <span style="font-size: 11px; color: #A9B5CF;">{{sr.sp.sub}}</span>
                     </div>
                     <div style="min-width: 0; display: flex; flex-direction: column; gap: 1px;">
-                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Over/Under</span>
-                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280; overflow-wrap: anywhere;">{{sr.totalLine}}</span>
+                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Over/Under</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A9B5CF; overflow-wrap: anywhere;">{{sr.totalLine}}</span>
                       <span style="display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; font-size: 13px;">
                         <span style="{{sr.tt.labelStyle}}; display: inline;">{{sr.tt.label}}</span>
-                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #374151;">{{sr.tt.oddsStr}}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #C9D3E8;">{{sr.tt.oddsStr}}</span>
                       </span>
                       <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.tt.shoeAria}}">
                         <sc-for list="{{sr.tt.shoes}}" as="sh" hint-placeholder-count="5">
                           <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
                         </sc-for>
                       </span>
-                      <span style="font-size: 11px; color: #6B7280;">{{sr.tt.sub}}</span>
+                      <span style="font-size: 11px; color: #A9B5CF;">{{sr.tt.sub}}</span>
                     </div>
                     <div style="min-width: 0; display: flex; flex-direction: column; gap: 1px;">
-                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Moneyline</span>
-                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280; overflow-wrap: anywhere;">{{sr.mlLine}}</span>
+                      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Moneyline</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A9B5CF; overflow-wrap: anywhere;">{{sr.mlLine}}</span>
                       <span style="display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; font-size: 13px;">
                         <span style="{{sr.ml.labelStyle}}; display: inline;">{{sr.ml.label}}</span>
-                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #374151;">{{sr.ml.oddsStr}}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #C9D3E8;">{{sr.ml.oddsStr}}</span>
                       </span>
                       <span style="display: flex; gap: 1px;" role="img" aria-label="{{sr.ml.shoeAria}}">
                         <sc-for list="{{sr.ml.shoes}}" as="sh" hint-placeholder-count="5">
                           <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
                         </sc-for>
                       </span>
-                      <span style="font-size: 11px; color: #6B7280;">{{sr.ml.sub}}</span>
+                      <span style="font-size: 11px; color: #A9B5CF;">{{sr.ml.sub}}</span>
                     </div>
                   </div>
                 </div>
@@ -607,7 +614,7 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Target</span>
                 <select onChange="{{onCfTarget}}" value="{{cfTargetVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{cfTargetOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{cfTargetOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -621,27 +628,27 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Stake</span>
                 <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Lines</span>
                 <select onChange="{{onCfMkt}}" value="{{cfMktVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{cfMktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{cfMktOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <sc-if value="{{cfShowOU}}" hint-placeholder-val="{{ true }}">
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Totals</span>
                 <select onChange="{{onCfOU}}" value="{{cfOUVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{cfOUSel}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{cfOUSel}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               </sc-if>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Time slot</span>
                 <select onChange="{{onCfSlot}}" value="{{cfSlotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <button type="button" role="switch" onClick="{{cfFeatherBtn.pick}}" aria-checked="{{cfFeatherBtn.on}}" title="When the parlay beats your target, swap in safer alternate lines while staying at or above it." style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0; background: none; border: none; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">
@@ -652,30 +659,30 @@ button{font:inherit}
             </section>
 
             <sc-if value="{{cfHasUpset}}" hint-placeholder-val="{{ true }}">
-              <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; background: #0F1B3D; color: #FFFFFF; border-radius: 8px; padding: 10px 14px;">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; background: #263556; color: #FFFFFF; border-radius: 8px; padding: 10px 14px;">
                 <span style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0;">
                   <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #FFC24D;">UPSET SPECIAL</span>
                   <span style="font-size: 13px; font-weight: 600;">{{upTeaser}}</span>
                 </span>
                 <span style="display: flex; align-items: center; gap: 14px;">
                   <b style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #FFC24D;">{{cfUpsetPrice}}</b>
-                  <button type="button" onClick="{{cfGoDogs}}" style="min-height: 32px; padding: 0 12px; background: #FFFFFF; color: #0F1B3D; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">See the upsets</button>
+                  <button type="button" onClick="{{cfGoDogs}}" style="min-height: 32px; padding: 0 12px; background: #EEF2FA; color: #0F1B3D; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">See the upsets</button>
                 </span>
               </div>
             </sc-if>
 
             <sc-if value="{{cfWarn}}" hint-placeholder-val="{{ false }}">
-              <div role="status" style="border: 1px solid #F0D9A8; background: #FFF8E8; color: #7A4A00; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{cfWarnText}}</div>
+              <div role="status" style="border: 1px solid #6B4A16; background: #33240E; color: #FFB86B; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{cfWarnText}}</div>
             </sc-if>
 
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
               <sc-for list="{{cfTicket}}" as="cr" hint-placeholder-count="3">
-                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
                   <span style="width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: #1D5FD6; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;">{{cr.num}}</span>
                   <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
                     <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
                       <span style="font-size: 14px; font-weight: 700;">{{cr.label}}</span>
-                      <span style="font-size: 12px; color: #6B7280;">{{cr.game}}</span>
+                      <span style="font-size: 12px; color: #A9B5CF;">{{cr.game}}</span>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px;">
                       <sc-for list="{{cr.badges}}" as="bd" hint-placeholder-count="2">
@@ -687,31 +694,31 @@ button{font:inherit}
                           <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
                         </sc-for>
                       </span>
-                      <span style="color: #5B6472;">{{cr.why}}</span>
+                      <span style="color: #A9B5CF;">{{cr.why}}</span>
                     </div>
                   </div>
                   <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
                     <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{cr.oddsStr}}</span>
-                    <span style="font-size: 11px; color: #6B7280;">Horseshoe <b style="font-family: 'IBM Plex Mono', monospace; color: #1D5FD6;">{{cr.pStr}}</b> · Book {{cr.impStr}}</span>
+                    <span style="font-size: 11px; color: #A9B5CF;">Horseshoe <b style="font-family: 'IBM Plex Mono', monospace; color: #7FB0FF;">{{cr.pStr}}</b> · Book {{cr.impStr}}</span>
                   </div>
                 </div>
               </sc-for>
             </div>
 
-            <div style="display: flex; justify-content: flex-end;"><button type="button" onClick="{{watchCf}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #0F1B3D; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button></div>
+            <div style="display: flex; justify-content: flex-end;"><button type="button" onClick="{{watchCf}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #263556; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button></div>
 
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #5B6472;">Next up if you want to swap a leg</span>
+              <span style="font-size: 12px; font-weight: 600; color: #A9B5CF;">Next up if you want to swap a leg</span>
               <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
                 <sc-for list="{{cfBench}}" as="cb" hint-placeholder-count="4">
-                  <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
+                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
                     <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
                       <span style="font-weight: 600;">{{cb.label}}</span>
                       <span style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
                         <sc-for list="{{cb.badges}}" as="bd2" hint-placeholder-count="1">
                           <span style="{{bd2.style}}">{{bd2.label}}</span>
                         </sc-for>
-                        <span style="font-size: 12px; color: #6B7280;">{{cb.game}} · {{cb.pStr}}</span>
+                        <span style="font-size: 12px; color: #A9B5CF;">{{cb.game}} · {{cb.pStr}}</span>
                       </span>
                     </span>
                     <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{cb.oddsStr}}</span>
@@ -724,7 +731,7 @@ button{font:inherit}
 
         <sc-if value="{{cfIsDogs}}" hint-placeholder-val="{{ false }}">
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <section aria-label="The Horseshoe Upset Special" style="background: #0F1B3D; color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
+            <section aria-label="The Horseshoe Upset Special" style="background: #263556; color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
               <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; min-width: 0;" title="Dogs only, balanced the same way: one public fade, one value play over the book and one live dog at a time.">
                   <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="37" cy="42" r="3.2" fill="#0F1B3D"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><path d="M52 4 l2.2 4.4 l4.8 0.7 l-3.5 3.4 l0.8 4.8 l-4.3 -2.3 l-4.3 2.3 l0.8 -4.8 l-3.5 -3.4 l4.8 -0.7 z" fill="#FFC24D"></path></svg>
@@ -747,7 +754,7 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Type</span>
                 <select onChange="{{onUpMode}}" value="{{upModeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{upModeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{upModeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -761,13 +768,13 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Stake</span>
                 <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C9D3E8;">Time slot</span>
                 <select onChange="{{onCfSlot}}" value="{{cfSlotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
           </div>
@@ -795,24 +802,24 @@ button{font:inherit}
             </section>
 
             <h2 style="margin: 6px 0 0; font-size: 15px; font-weight: 700;">Every underdog on the board</h2>
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; overflow-x: auto;">
               <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                 <thead>
-                  <tr style="background: #FAFBFC;">
-                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Underdog</th>
-                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's read</th>
-                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe vs book</th>
+                  <tr style="background: #0E1628;">
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Underdog</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Horseshoe's read</th>
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Horseshoe vs book</th>
                   </tr>
                 </thead>
                 <tbody>
                   <sc-for list="{{cfDogs}}" as="dg" hint-placeholder-count="8">
                     <tr>
-                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{dg.label}} <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{dg.oddsStr}}</span></span><span style="display: block; font-size: 12px; color: #6B7280;">{{dg.game}} · {{dg.note}}</span><span style="{{dg.mkStyle}}; margin-top: 3px;">{{dg.mkLabel}}</span></th>
-                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{dg.verdictStyle}}; display: block;">{{dg.verdict}}</span><span style="display: block; font-size: 12px; color: #6B7280;">Edge <b style="font-family: 'IBM Plex Mono', monospace; color: {{dg.edgeColor}};">{{dg.edgeStr}}</b> pts</span></td>
-                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top;">
+                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #1E2A45; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{dg.label}} <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500;">{{dg.oddsStr}}</span></span><span style="display: block; font-size: 12px; color: #A9B5CF;">{{dg.game}} · {{dg.note}}</span><span style="{{dg.mkStyle}}; margin-top: 3px;">{{dg.mkLabel}}</span></th>
+                      <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="{{dg.verdictStyle}}; display: block;">{{dg.verdict}}</span><span style="display: block; font-size: 12px; color: #A9B5CF;">Edge <b style="font-family: 'IBM Plex Mono', monospace; color: {{dg.edgeColor}};">{{dg.edgeStr}}</b> pts</span></td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #1E2A45; vertical-align: top;">
                         <div style="display: flex; flex-direction: column; gap: 3px;">
-                          <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 64px; height: 4px; background: #EEF0F3; border-radius: 2px; overflow: hidden;"><div style="{{dg.horseBar}}"></div></div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #1D5FD6;">{{dg.pStr}}</span></div>
-                          <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 64px; height: 4px; background: #EEF0F3; border-radius: 2px; overflow: hidden;"><div style="{{dg.bookBar}}"></div></div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B6472;">{{dg.impStr}}</span></div>
+                          <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 64px; height: 4px; background: #1E2A45; border-radius: 2px; overflow: hidden;"><div style="{{dg.horseBar}}"></div></div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7FB0FF;">{{dg.pStr}}</span></div>
+                          <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 64px; height: 4px; background: #1E2A45; border-radius: 2px; overflow: hidden;"><div style="{{dg.bookBar}}"></div></div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B5CF;">{{dg.impStr}}</span></div>
                         </div>
                       </td>
                     </tr>
@@ -853,13 +860,13 @@ button{font:inherit}
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Stake</span>
                 <select onChange="{{onStake}}" value="{{stakeVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{stakeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #C8F2DF;">Time slot</span>
                 <select onChange="{{onCfSlot}}" value="{{cfSlotVal}}" style="min-height: 32px; padding: 0 28px 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12) url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none'/%3E%3C/svg%3E&quot;) no-repeat right 10px center; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #111827;">{{o.label}}</option></sc-for>
+                  <sc-for list="{{cfSlotOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}" style="color: #EEF2FA;">{{o.label}}</option></sc-for>
                 </select>
               </label>
           </div>
@@ -870,32 +877,32 @@ button{font:inherit}
           </div>
         </section>
         <sc-if value="{{cfOvEmpty}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No overs on the board right now. Check back when lines post.</div>
+          <div role="status" style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 14px; font-size: 13px; color: #A9B5CF;">No overs on the board right now. Check back when lines post.</div>
         </sc-if>
-        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+        <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
           <sc-for list="{{cfOvList}}" as="ov" hint-placeholder-count="8">
-            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
-              <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; background: #E6F6EF; color: #0B6E4F; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ov.num}}</span>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
+              <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; background: #123A2A; color: #6BE3A6; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700;">{{ov.num}}</span>
               <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
                   <span style="font-size: 14px; font-weight: 700;">{{ov.label}}</span>
-                  <span style="font-size: 12px; color: #6B7280;">{{ov.game}}</span>
+                  <span style="font-size: 12px; color: #A9B5CF;">{{ov.game}}</span>
                   <span style="{{ov.heatStyle}}">{{ov.heat}}</span>
-                  <span style="font-size: 11px; font-weight: 600; color: #0B6E4F;">↑ {{ov.vibe}}</span>
+                  <span style="font-size: 11px; font-weight: 600; color: #6BE3A6;">↑ {{ov.vibe}}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #5B6472;">
-                  <span style="position: relative; width: 120px; height: 6px; background: #EEF0F3; border-radius: 3px; flex-shrink: 0;" role="img" aria-label="Horseshoe {{ov.pStr}}, book {{ov.impStr}}"><span style="display: block; {{ov.meterH}}"></span><span style="{{ov.meterB}}"></span></span>
-                  <span>Horseshoe <b style="color: #0B6E4F;">{{ov.pStr}}</b> · book {{ov.impStr}}</span>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #A9B5CF;">
+                  <span style="position: relative; width: 120px; height: 6px; background: #1E2A45; border-radius: 3px; flex-shrink: 0;" role="img" aria-label="Horseshoe {{ov.pStr}}, book {{ov.impStr}}"><span style="display: block; {{ov.meterH}}"></span><span style="{{ov.meterB}}"></span></span>
+                  <span>Horseshoe <b style="color: #6BE3A6;">{{ov.pStr}}</b> · book {{ov.impStr}}</span>
                 </div>
               </div>
               <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
                 <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">{{ov.oddsStr}}</span>
-                <span style="font-size: 11px; color: #6B7280;">value <span style="{{ov.evStyle}}">{{ov.evStr}}</span></span>
+                <span style="font-size: 11px; color: #A9B5CF;">value <span style="{{ov.evStyle}}">{{ov.evStr}}</span></span>
               </div>
             </div>
           </sc-for>
         </div>
-        <span style="font-size: 12px; color: #6B7280;">Value is the Horseshoe's chance times the payout, minus your stake. The black tick on each bar is what the book's price implies; green past the tick means the Horseshoe likes it more than the book does.</span>
+        <span style="font-size: 12px; color: #A9B5CF;">Value is the Horseshoe's chance times the payout, minus your stake. The black tick on each bar is what the book's price implies; green past the tick means the Horseshoe likes it more than the book does.</span>
       </div>
         </sc-if>
 
@@ -908,25 +915,25 @@ button{font:inherit}
               <button type="button" onClick="{{cfFadeToggle}}" aria-pressed="{{cfFadeOnly}}" style="{{cfFadeBtnStyle}}">Fades only</button>
             </div>
             <sc-if value="{{cfFadeEmpty}}" hint-placeholder-val="{{ false }}">
-              <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #5B6472;"><b style="color: #111827;">College splits aren't posted yet.</b> Until real bets-vs-money numbers land, the Parlay and Upset Special lean on line movement instead of public fades.</div>
+              <div role="status" style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; color: #A9B5CF;"><b style="color: #EEF2FA;">College splits aren't posted yet.</b> Until real bets-vs-money numbers land, the Parlay and Upset Special lean on line movement instead of public fades.</div>
             </sc-if>
-            <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; overflow-x: auto;">
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; overflow-x: auto;">
               <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                 <thead>
-                  <tr style="background: #FAFBFC;">
-                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Game</th>
-                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Horseshoe's pick</th>
-                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Public split</th>
-                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #5B6472; border-bottom: 1px solid #E3E6EB;">Line move</th>
+                  <tr style="background: #0E1628;">
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Game</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Horseshoe's pick</th>
+                    <th scope="col" style="text-align: left; padding: 8px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Public split</th>
+                    <th scope="col" style="text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #A9B5CF; border-bottom: 1px solid #1E2A45;">Line move</th>
                   </tr>
                 </thead>
                 <tbody>
                   <sc-for list="{{cfFadeCards}}" as="cfc" hint-placeholder-count="8">
                     <tr style="{{cfc.rowStyle}}">
-                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{cfc.game}}</span><span style="{{cfc.mkStyle}}; margin-top: 3px;">{{cfc.mkLabel}}</span></th>
-                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="{{cfc.pickStyle}}">{{cfc.pick}}</span><span style="display: block; font-size: 12px; color: #6B7280;">{{cfc.reason}}</span></td>
-                      <td style="padding: 8px; border-bottom: 1px solid #EEF0F3; vertical-align: top;"><span style="display: block; font-size: 12px; color: #6B7280;">Public on {{cfc.pub}}</span><span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span>Bets {{cfc.tickets}}</span><span style="color: #1D5FD6;">Money {{cfc.money}}</span></span></td>
-                      <td style="padding: 8px 12px; border-bottom: 1px solid #EEF0F3; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{cfc.move}}</td>
+                      <th scope="row" style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #1E2A45; font-weight: 400; vertical-align: top;"><span style="display: block; font-weight: 600;">{{cfc.game}}</span><span style="{{cfc.mkStyle}}; margin-top: 3px;">{{cfc.mkLabel}}</span></th>
+                      <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="{{cfc.pickStyle}}">{{cfc.pick}}</span><span style="display: block; font-size: 12px; color: #A9B5CF;">{{cfc.reason}}</span></td>
+                      <td style="padding: 8px; border-bottom: 1px solid #1E2A45; vertical-align: top;"><span style="display: block; font-size: 12px; color: #A9B5CF;">Public on {{cfc.pub}}</span><span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;"><span>Bets {{cfc.tickets}}</span><span style="color: #7FB0FF;">Money {{cfc.money}}</span></span></td>
+                      <td style="padding: 8px 12px; border-bottom: 1px solid #1E2A45; vertical-align: top; font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{cfc.move}}</td>
                     </tr>
                   </sc-for>
                 </tbody>
@@ -944,56 +951,56 @@ button{font:inherit}
             <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
             <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
               <h1 style="margin: 0; font-size: 20px; font-weight: 700;">The Horseshoe's track record</h1>
-              <span style="font-size: 13px; color: #5B6472;">Every pick it signals on is locked at kickoff and graded after the final, one pick per game per market. Margin shows how far the result landed from the line.</span>
+              <span style="font-size: 13px; color: #A9B5CF;">Every pick it signals on is locked at kickoff and graded after the final, one pick per game per market. Margin shows how far the result landed from the line.</span>
             </div>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px 14px;">
-            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Sport
-              <select onChange="{{onRecSport}}" value="{{recSportVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recSportOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #A9B5CF;">Sport
+              <select onChange="{{onRecSport}}" value="{{recSportVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recSportOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
             </label>
-            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Market
-              <select onChange="{{onRecMkt}}" value="{{recMktVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recMktOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #A9B5CF;">Market
+              <select onChange="{{onRecMkt}}" value="{{recMktVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recMktOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
             </label>
-            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472;">Period
-              <select onChange="{{onRecPer}}" value="{{recPerVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #D5DAE1; background: #FFFFFF; color: #111827; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recPerOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #A9B5CF;">Period
+              <select onChange="{{onRecPer}}" value="{{recPerVal}}" style="min-height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;"><sc-for list="{{recPerOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select>
             </label>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Record (W-L-P)</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recWLP}}</span><span style="font-size: 11px; color: #6B7280;">{{recGradedStr}}</span></div>
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recHit}}</span><span style="font-size: 11px; color: #6B7280;">Horseshoe expected {{recExp}}</span></div>
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Profit, $10 a pick</span><span style="{{recProfitStyle}}">{{recProfit}}</span><span style="font-size: 11px; color: #6B7280;">ROI {{recRoi}}</span></div>
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Avg margin vs line</span><span style="{{recDevStyle}}">{{recDev}}</span><span style="font-size: 11px; color: #6B7280;">wins {{recDevW}} · losses {{recDevL}}</span></div>
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Beat the closing line</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recClv}}</span><span style="font-size: 11px; color: #6B7280;">{{recClvSub}}</span></div>
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #5B6472;">Waiting on results</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #111827;">{{recPendingN}}</span><span style="font-size: 11px; color: #6B7280;">{{recUpcomingN}} more lock at kickoff</span></div>
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Record (W-L-P)</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #EEF2FA;">{{recWLP}}</span><span style="font-size: 11px; color: #A9B5CF;">{{recGradedStr}}</span></div>
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #EEF2FA;">{{recHit}}</span><span style="font-size: 11px; color: #A9B5CF;">Horseshoe expected {{recExp}}</span></div>
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Profit, $10 a pick</span><span style="{{recProfitStyle}}">{{recProfit}}</span><span style="font-size: 11px; color: #A9B5CF;">ROI {{recRoi}}</span></div>
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Avg margin vs line</span><span style="{{recDevStyle}}">{{recDev}}</span><span style="font-size: 11px; color: #A9B5CF;">wins {{recDevW}} · losses {{recDevL}}</span></div>
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Beat the closing line</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #EEF2FA;">{{recClv}}</span><span style="font-size: 11px; color: #A9B5CF;">{{recClvSub}}</span></div>
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Waiting on results</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #EEF2FA;">{{recPendingN}}</span><span style="font-size: 11px; color: #A9B5CF;">{{recUpcomingN}} more lock at kickoff</span></div>
         </div>
         <sc-if value="{{recEmpty}}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 14px; font-size: 13px; color: #5B6472;">No graded picks yet for this view. Picks are recorded every 10 minutes and graded within about 10 minutes of each final.</div>
+          <div role="status" style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 14px; font-size: 13px; color: #A9B5CF;">No graded picks yet for this view. Picks are recorded every 10 minutes and graded within about 10 minutes of each final.</div>
         </sc-if>
-        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+        <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
           <sc-for list="{{recByMkt}}" as="bm" hint-placeholder-count="4">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
               <b style="flex: 1 1 120px; font-size: 13px;">{{bm.label}}</b>
-              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">W-L-P</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.wlp}}</span></span>
-              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.hit}}</span></span>
-              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Expected</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #6B7280;">{{bm.exp}}</span></span>
-              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Profit ($10)</span><span style="{{bm.profitStyle}}">{{bm.profit}}</span></span>
-              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">Avg margin</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.dev}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">W-L-P</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.wlp}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.hit}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Expected</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: #A9B5CF;">{{bm.exp}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Profit ($10)</span><span style="{{bm.profitStyle}}">{{bm.profit}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 70px;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">Avg margin</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">{{bm.dev}}</span></span>
             </div>
           </sc-for>
         </div>
         <sc-if value="{{recBreakAny}}" hint-placeholder-val="{{ true }}">
           <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">What's working</h2>
-          <span style="font-size: 12px; color: #5B6472; margin-top: -6px;">Small samples swing a lot. Patterns mean something after a few hundred picks; beating the closing line shows up sooner.</span>
+          <span style="font-size: 12px; color: #A9B5CF; margin-top: -6px;">Small samples swing a lot. Patterns mean something after a few hundred picks; beating the closing line shows up sooner.</span>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 8px;">
             <sc-for list="{{recBreak}}" as="bg" hint-placeholder-count="4">
-              <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
-                <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #9AA3AF;">{{bg.title}}</span>
+              <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #7D89A3;">{{bg.title}}</span>
                 <sc-for list="{{bg.rows}}" as="br" hint-placeholder-count="2">
                   <div style="display: flex; align-items: baseline; gap: 10px; font-size: 13px;">
                     <span style="flex: 1; min-width: 0;">{{br.label}}</span>
                     <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; min-width: 48px; text-align: right;">{{br.wlp}}</span>
-                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B7280; min-width: 48px; text-align: right;">{{br.hit}}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B5CF; min-width: 48px; text-align: right;">{{br.hit}}</span>
                     <span style="{{br.profitStyle}} min-width: 64px; text-align: right;">{{br.profit}}</span>
                   </div>
                 </sc-for>
@@ -1002,13 +1009,13 @@ button{font:inherit}
           </div>
         </sc-if>
         <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">Graded picks</h2>
-        <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+        <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
           <sc-for list="{{recRows}}" as="rr" hint-placeholder-count="10">
-            <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3;">
+            <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
               <span style="{{rr.chipStyle}}">{{rr.chip}}</span>
               <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
-                <span style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;"><b style="font-size: 14px;">{{rr.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{rr.oddsStr}}</span><span style="font-size: 12px; color: #6B7280;">{{rr.game}} · {{rr.when}}</span></span>
-                <span style="font-size: 12px; color: #374151;">{{rr.detail}}</span>
+                <span style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;"><b style="font-size: 14px;">{{rr.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{rr.oddsStr}}</span><span style="font-size: 12px; color: #A9B5CF;">{{rr.game}} · {{rr.when}}</span></span>
+                <span style="font-size: 12px; color: #C9D3E8;">{{rr.detail}}</span>
               </div>
               <span style="{{rr.devStyle}}">{{rr.devStr}}</span>
             </div>
@@ -1016,25 +1023,25 @@ button{font:inherit}
         </div>
         <sc-if value="{{recPendingAny}}" hint-placeholder-val="{{ false }}">
           <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">Locked, waiting on the final</h2>
-          <div style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 8px;">
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
             <sc-for list="{{recPending}}" as="pp" hint-placeholder-count="5">
-              <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 8px 12px; border-bottom: 1px solid #EEF0F3; font-size: 13px;"><b>{{pp.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{pp.oddsStr}}</span><span style="font-size: 12px; color: #6B7280;">{{pp.game}} · {{pp.when}}</span></div>
+              <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 8px 12px; border-bottom: 1px solid #1E2A45; font-size: 13px;"><b>{{pp.label}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px;">{{pp.oddsStr}}</span><span style="font-size: 12px; color: #A9B5CF;">{{pp.game}} · {{pp.when}}</span></div>
             </sc-for>
           </div>
         </sc-if>
       </div>
     </sc-if>
 
-    <footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; line-height: 1.5; color: #6B7280; border-top: 1px solid #E3E6EB; padding-top: 14px;">
+    <footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; line-height: 1.5; color: #A9B5CF; border-top: 1px solid #1E2A45; padding-top: 14px;">
       <svg width="16" height="16" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path></svg>
       <span>{{footText}}</span>
     </footer>
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261019190337';</script>
-<script src="runtime.js?v=20261019190337"></script>
-<script src="lines.js?v=20261019190337"></script>
+<script>window.BH_VERSION='20261021172500';</script>
+<script src="runtime.js?v=20261021172500"></script>
+<script src="lines.js?v=20261021172500"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1140,8 +1147,8 @@ class Component extends DCLogic {
       }
       return cur;
     };
-    var B = '#1D5FD6', TXT = '#111827', MUTED = '#5B6472', FAINT = '#6B7280', BORDER = '#D5DAE1', LIGHT = '#EEF0F3';
-    var GREEN = '#0F7A43', AMBER = '#9A5B00', RED = '#B42318';
+    var B = '#6FA5FF', TXT = '#EEF2FA', MUTED = '#A9B5CF', FAINT = '#A9B5CF', BORDER = '#2A3A5E', LIGHT = '#1E2A45';
+    var GREEN = '#3FD18A', AMBER = '#FFB86B', RED = '#FF7A7A';
     var gameMap = {};
     D.games.forEach(function (g) { gameMap[g.id] = g; });
     var allIds = D.games.map(function (g) { return g.id; });
@@ -1149,13 +1156,13 @@ class Component extends DCLogic {
 
     // ---- shared control styles
     var seg = function (on) {
-      return 'min-height: 32px; padding: 0 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF; border: 1px solid ' + B + ';' : 'background: #FFFFFF; color: ' + TXT + '; border: 1px solid ' + BORDER + ';');
+      return 'min-height: 32px; padding: 0 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF; border: 1px solid ' + B + ';' : 'background: #111A2E; color: ' + TXT + '; border: 1px solid ' + BORDER + ';');
     };
     var chip = function (on) {
-      return 'min-height: 28px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500; box-sizing: border-box; ' + (on ? 'background: #EEF4FE; color: ' + B + '; border: 1px solid #A9C4F5;' : 'background: #FFFFFF; color: ' + MUTED + '; border: 1px solid ' + BORDER + ';');
+      return 'min-height: 28px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500; box-sizing: border-box; ' + (on ? 'background: #13284F; color: ' + B + '; border: 1px solid #A9C4F5;' : 'background: #111A2E; color: ' + MUTED + '; border: 1px solid ' + BORDER + ';');
     };
     var tag = function (txt, kind) {
-      var c = kind === 'line' || kind === 'spread' ? ['#EEF4FE', B] : kind === 'total' ? ['#F3EEFE', '#5B3FB8'] : kind === 'ml' ? ['#EAF6EF', GREEN] : ['#F1F3F6', '#374151'];
+      var c = kind === 'line' || kind === 'spread' ? ['#13284F', B] : kind === 'total' ? ['#2A1F4D', '#C9B8FF'] : kind === 'ml' ? ['#123A2A', GREEN] : ['#1E2A45', '#C9D3E8'];
       return 'display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: ' + c[0] + '; color: ' + c[1] + '; white-space: nowrap;';
     };
 
@@ -1269,7 +1276,7 @@ class Component extends DCLogic {
         if (on) hits.push(sigNames[j]);
         return {
           name: sigNames[j] + (on ? ': yes' : ': no'), letter: sigLetters[j],
-          style: 'width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-family: IBM Plex Mono, monospace; font-size: 11px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #EEF4FE; color: ' + B + '; border: 1px solid #A9C4F5;' : 'color: #9AA3AF; border: 1px dashed ' + BORDER + ';')
+          style: 'width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-family: IBM Plex Mono, monospace; font-size: 11px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #13284F; color: ' + B + '; border: 1px solid #A9C4F5;' : 'color: #7D89A3; border: 1px dashed ' + BORDER + ';')
         };
       });
       return {
@@ -1279,7 +1286,7 @@ class Component extends DCLogic {
         sigs: sigs, sigAria: 'Signals: ' + hits.join(', '),
         sigList: hits.length ? hits.join(', ') : 'None',
         conf: l.conf,
-        barStyle: 'height: 100%; width: ' + l.conf + '%; background: ' + (l.conf >= 80 ? B : l.conf >= 70 ? '#6B9BE8' : '#AEB5C0') + ';',
+        barStyle: 'height: 100%; width: ' + l.conf + '%; background: ' + (l.conf >= 80 ? B : l.conf >= 70 ? '#6B9BE8' : '#4A5878') + ';',
         injLabel: flagged ? ij[0] + ' ' + stt.toLowerCase() : 'No injury flags',
         injStyle: 'font-size: 12px; font-weight: 600; color: ' + injC + ';',
         injWho: ij[0], injStatus: stt, injNote: ij[2] || '—',
@@ -1319,10 +1326,10 @@ class Component extends DCLogic {
       var n = qualCount[g.id] || 0;
       return {
         label: g.label, on: on, sub: on ? (allCount[g.id] || 0) + ' legs' : n + ' pick' + (n === 1 ? '' : 's'), mark: on ? '✓' : '',
-        boxStyle: 'width: 14px; height: 14px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #AEB5C0;'),
+        boxStyle: 'width: 14px; height: 14px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #4A5878;'),
         short: g.label.replace(' VS ', ' v ').replace(' @ ', ' @ ').replace(/ \(\w+\)$/, ''),
         title: g.label + ' · ' + (on ? (allCount[g.id] || 0) + ' legs' : n + ' Horseshoe pick' + (n === 1 ? '' : 's')),
-        style: 'min-height: 28px; padding: 0 4px; border-radius: 5px; cursor: pointer; font-family: IBM Plex Mono, monospace; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF; border: 1px solid ' + B + ';' : 'background: #FFFFFF; color: ' + TXT + '; border: 1px solid ' + BORDER + ';'),
+        style: 'min-height: 28px; padding: 0 4px; border-radius: 5px; cursor: pointer; font-family: IBM Plex Mono, monospace; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; ' + (on ? 'background: ' + B + '; color: #FFFFFF; border: 1px solid ' + B + ';' : 'background: #111A2E; color: ' + TXT + '; border: 1px solid ' + BORDER + ';'),
         pick: function () { var cur = st.games.slice(); var ix = cur.indexOf(g.id); if (ix === -1) cur.push(g.id); else cur.splice(ix, 1); self.setState({ games: cur }); }
       };
     });
@@ -1348,8 +1355,8 @@ class Component extends DCLogic {
           var done = !!st.checked[l.label];
           return {
             label: l.label, where: where(l), oddsStr: self.fmtOdds(l.odds), done: done, mark: done ? '✓' : '',
-            boxStyle: 'width: 16px; height: 16px; flex-shrink: 0; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; box-sizing: border-box; ' + (done ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #AEB5C0;'),
-            rowStyle: 'width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; text-align: left; font: inherit; box-sizing: border-box; background: ' + (done ? '#F7F8FA' : '#FFFFFF') + '; border: 1px solid ' + (done ? LIGHT : BORDER) + '; color: ' + (done ? FAINT : TXT) + ';',
+            boxStyle: 'width: 16px; height: 16px; flex-shrink: 0; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; box-sizing: border-box; ' + (done ? 'background: ' + B + '; color: #FFFFFF;' : 'border: 1px solid #4A5878;'),
+            rowStyle: 'width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; text-align: left; font: inherit; box-sizing: border-box; background: ' + (done ? '#0E1628' : '#111A2E') + '; border: 1px solid ' + (done ? LIGHT : BORDER) + '; color: ' + (done ? FAINT : TXT) + ';',
             labelStyle: 'font-weight: 600; ' + (done ? 'text-decoration: line-through;' : ''),
             toggle: function () { var c = Object.assign({}, st.checked); c[l.label] = !done; self.setState({ checked: c }); }
           };
@@ -1408,7 +1415,7 @@ class Component extends DCLogic {
         take: take,
         takeStyle: 'display: block; font-weight: ' + (val ? '700' : '500') + '; color: ' + (val ? GREEN : FAINT) + ';',
         takeSub: val ? 'Books lean ' + (r[2] === 'spread' ? signed(Number(oneDec(cons))) : oneDec(cons)) + ', your book has ' + (r[2] === 'spread' ? signed(mine[0]) : mine[0]) : 'Your number matches the market',
-        rowStyle: val ? 'background: #F2FAF5;' : ''
+        rowStyle: val ? 'background: #10261D;' : ''
       };
     }).sort(function (a, c) { return c.absGap - a.absGap; });
     var evCount = screenRows.filter(function (r) { return r.val; }).length;
@@ -1440,8 +1447,8 @@ class Component extends DCLogic {
           reason: contrarian ? 'Fade the public: money opposes bets by ' + gap + ' pts' : sharpPublic ? 'Sharp money is even heavier on ' + row[2] : agree ? 'Bets and money agree' : 'Split too small to fade',
           move: (isTotal ? 'O/U ' : '') + row[6] + ' → ' + row[7],
           verdictStyle: 'font-size: 12px; font-weight: 600; ' + (contrarian ? 'color: ' + B + ';' : sharpPublic ? 'color: ' + GREEN + ';' : 'color: ' + MUTED + ';'),
-          rowStyle: contrarian ? 'background: #F5F8FE;' : '',
-          ticketBar: 'height: 100%; width: ' + row[4] + '%; background: #AEB5C0;',
+          rowStyle: contrarian ? 'background: #111D36;' : '',
+          ticketBar: 'height: 100%; width: ' + row[4] + '%; background: #4A5878;',
           moneyBar: 'height: 100%; width: ' + row[5] + '%; background: ' + B + ';'
         };
       }).sort(function (a, c) { return c.gap - a.gap; });
@@ -1582,9 +1589,9 @@ class Component extends DCLogic {
     var cfHit = 1, cfBook = 1;
     cfTicket.forEach(function (t) { cfHit *= t.c.p; cfBook *= t.c.imp; });
     var shoeCount = function (cc) { return cc >= 85 ? 5 : cc >= 76 ? 4 : cc >= 68 ? 3 : cc >= 58 ? 2 : 1; };
-    var shoes = function (cc) { var n = shoeCount(cc); return [0,1,2,3,4].map(function (k) { return { color: k < n ? B : '#D5DAE1' }; }); };
+    var shoes = function (cc) { var n = shoeCount(cc); return [0,1,2,3,4].map(function (k) { return { color: k < n ? B : '#2A3A5E' }; }); };
     var pct = function (x) { return Math.round(x * 100) + '%'; };
-    var pillarInfo = { lean: ['Lean', GREEN, '#EAF6EF'], fade: ['Fade', B, '#EEF4FE'], dog: ['Dog', AMBER, '#FFF4E5'] };
+    var pillarInfo = { lean: ['Lean', GREEN, '#123A2A'], fade: ['Fade', B, '#13284F'], dog: ['Dog', AMBER, '#3D2810'] };
     var badgesFor = function (c, primary) {
       var list = [];
       ['fade', 'dog', 'lean'].forEach(function (k) {
@@ -1629,10 +1636,10 @@ class Component extends DCLogic {
         return { label: c.label, game: cfGameMap[c.g].label, pStr: 'Horseshoe ' + pct(c.p), oddsStr: self.fmtOdds(c.odds), badges: badgesFor(c, prim) };
       });
     var segW = function (on) {
-      return 'min-height: 32px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
+      return 'min-height: 32px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #111A2E; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
     };
     var chipW = function (on) {
-      return 'min-height: 28px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
+      return 'min-height: 28px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #111A2E; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
     };
     var cfStakes = [5, 10, 25, 50].map(function (v) {
       var on = st.stake === v;
@@ -1668,9 +1675,9 @@ class Component extends DCLogic {
         oddsStr: self.fmtOdds(l.odds), pStr: pct(l.p), impStr: pct(imp),
         edgeStr: (ed >= 0 ? '+' : '') + ed, edgeColor: ed >= 0 ? GREEN : RED,
         verdict: bite ? 'Horseshoe bites' : sniff ? 'Worth a sniff' : 'Pass',
-        verdictStyle: 'font-size: 12px; font-weight: 600; color: ' + (bite ? B : sniff ? MUTED : '#9AA3AF') + ';',
+        verdictStyle: 'font-size: 12px; font-weight: 600; color: ' + (bite ? B : sniff ? MUTED : '#7D89A3') + ';',
         horseBar: 'height: 100%; width: ' + Math.round(l.p * 100) + '%; background: ' + B + ';',
-        bookBar: 'height: 100%; width: ' + Math.round(imp * 100) + '%; background: #AEB5C0;'
+        bookBar: 'height: 100%; width: ' + Math.round(imp * 100) + '%; background: #4A5878;'
       };
     }).sort(function (a, c) { return c.edge - a.edge; });
     // ---- Upset Special: balanced across fade, value and live dogs
@@ -1696,7 +1703,7 @@ class Component extends DCLogic {
     var upT = pickMixed(upPool.slice().sort(function (x, y) { return upValue(y) - upValue(x); }), upN).map(function (c) { return { c: c, pillar: c.fade ? 'fade' : c.edge >= 0 ? 'value' : 'live' }; });
     var upDec = 1, upHit = 1, upBook = 1;
     upT.forEach(function (t) { upDec *= self.dec(t.c.odds); upHit *= t.c.p; upBook *= t.c.imp; });
-    var upInfo = { fade: ['Fade', B, '#EEF4FE'], value: ['Value', AMBER, '#FFF4E5'], live: ['Live dog', GREEN, '#EAF6EF'] };
+    var upInfo = { fade: ['Fade', B, '#13284F'], value: ['Value', AMBER, '#3D2810'], live: ['Live dog', GREEN, '#123A2A'] };
     var upBadges = function (c, primary) {
       var out = [];
       ['fade', 'value', 'live'].forEach(function (k) {
@@ -1776,7 +1783,7 @@ class Component extends DCLogic {
     if (cfSort === 'asc') slateRows.sort(function (x, y) { if (!x.hasLean) return 1; if (!y.hasLean) return -1; return x.sortKey - y.sortKey; });
     var cfSortOpts = [{ v: 'slate', label: 'Slate order' }, { v: 'desc', label: 'Strongest first' }, { v: 'asc', label: 'Weakest first' }].map(function (o) {
       var on = cfSort === o.v;
-      return { label: o.label, on: on, style: 'min-height: 28px; padding: 0 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 500; ' + (on ? 'background: #FFFFFF; color: ' + TXT + '; box-shadow: 0 1px 2px rgba(17,24,39,0.12);' : 'background: transparent; color: ' + MUTED + ';'), pick: function () { self.setState({ cfSort: o.v }); } };
+      return { label: o.label, on: on, style: 'min-height: 28px; padding: 0 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 500; ' + (on ? 'background: #1D5FD6; color: #FFFFFF; font-weight: 600;' : 'background: transparent; color: ' + MUTED + ';'), pick: function () { self.setState({ cfSort: o.v }); } };
     });
     var leanArrow = cfSort === 'desc' ? ' ↓' : cfSort === 'asc' ? ' ↑' : '';
     var leanAria = cfSort === 'desc' ? 'descending' : cfSort === 'asc' ? 'ascending' : 'none';
@@ -1809,9 +1816,9 @@ class Component extends DCLogic {
         num: String(ix + 1), label: r.l.label, game: r.game, vibe: r.vibe, note: r.l.note || '',
         oddsStr: self.fmtOdds(r.l.odds), pStr: pct(r.p), impStr: pct(r.imp), evStr: (ev >= 0 ? '+' : '') + ev + '%',
         evStyle: 'font-family: IBM Plex Mono, monospace; font-weight: 700; color: ' + (ev >= 0 ? OV : RED) + ';',
-        heat: hot ? 'Horseshoe pick' : 'On the board', heatStyle: 'display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; ' + (hot ? 'background: ' + GOLD + '; color: #3D2B00;' : 'background: #EEF0F3; color: #5B6472;'),
+        heat: hot ? 'Horseshoe pick' : 'On the board', heatStyle: 'display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; ' + (hot ? 'background: ' + GOLD + '; color: #3D2B00;' : 'background: #1E2A45; color: #A9B5CF;'),
         meterH: 'height: 100%; width: ' + Math.round(r.p * 100) + '%; background: linear-gradient(90deg, ' + OV2 + ', ' + OV + '); border-radius: 3px;',
-        meterB: 'position: absolute; top: -2px; bottom: -2px; width: 2px; background: #111827; left: ' + Math.round(r.imp * 100) + '%;'
+        meterB: 'position: absolute; top: -2px; bottom: -2px; width: 2px; background: #EEF2FA; left: ' + Math.round(r.imp * 100) + '%;'
       };
     };
     var ovBuild = function (rows, n, keyOf) {
@@ -1850,7 +1857,7 @@ class Component extends DCLogic {
       var on = st.cfTab === t.id;
       return {
         label: t.label, current: on ? 'page' : 'false',
-        style: 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #FFFFFF; color: ' + TXT + '; box-shadow: 0 1px 2px rgba(17,24,39,0.12);' : 'background: transparent; color: ' + MUTED + ';'),
+        style: 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF; font-weight: 600;' : 'background: transparent; color: ' + MUTED + ';'),
         pick: function () { self.setState({ cfTab: t.id }); }
       };
     });
@@ -1940,7 +1947,7 @@ class Component extends DCLogic {
       if (p.market === 'total') return 'Final ' + p.final + ' · ' + p.actual + ' total points vs ' + p.line;
       return (p.side === 'yes' ? p.actual + ' TD' + (p.actual === 1 ? '' : 's') : p.actual + ' vs line ' + p.line) + (p.final ? ' · final ' + p.final : '');
     };
-    var chipFor = function (r) { var c = r === 'win' ? [GREEN, '#EAF6EF'] : r === 'loss' ? [RED, '#FDEEEE'] : [MUTED, '#EEF0F3']; return 'flex-shrink: 0; min-width: 44px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; color: ' + c[0] + '; background: ' + c[1] + ';'; };
+    var chipFor = function (r) { var c = r === 'win' ? [GREEN, '#123A2A'] : r === 'loss' ? [RED, '#3D1518'] : [MUTED, '#1E2A45']; return 'flex-shrink: 0; min-width: 44px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; color: ' + c[0] + '; background: ' + c[1] + ';'; };
     var recRows = gradedP.slice().sort(function (a, b) { return Date.parse(b.gradedAt || b.date) - Date.parse(a.gradedAt || a.date); }).slice(0, 150).map(function (p) {
       return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p), detail: detailOf(p) + clvText(p), chip: p.result, chipStyle: chipFor(p.result),
         devStr: p.market === 'ml' ? '' : fmtDev(p.dev) + unitOf(p), devStyle: 'flex-shrink: 0; font-family: IBM Plex Mono, monospace; font-size: 13px; font-weight: 700; color: ' + ((p.dev || 0) > 0 ? GREEN : (p.dev || 0) < 0 ? RED : MUTED) + ';' };
@@ -1948,10 +1955,10 @@ class Component extends DCLogic {
     var recPending = pendingP.sort(function (a, b) { return Date.parse(a.date) - Date.parse(b.date); }).slice(0, 60).map(function (p) { return { label: p.label, oddsStr: self.fmtOdds(p.odds), game: (p.sport === 'nfl' ? 'NFL · ' : 'NCAAF · ') + p.game, when: whenOf(p) }; });
     // ---- page tabs
     var tabStyle = function (on) {
-      return 'min-height: 44px; padding: 0 2px; background: none; border: none; border-bottom: 2px solid ' + (on ? B : 'transparent') + '; cursor: pointer; font-size: 14px; font-weight: ' + (on ? '600' : '500') + '; color: ' + (on ? TXT : MUTED) + ';';
+      return 'min-height: 44px; padding: 0 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; background: ' + (on ? '#17213A' : 'transparent') + '; color: ' + (on ? TXT : MUTED) + ';';
     };
     var go = function (id) { return function () { self.setState({ page: id }); try { window.scrollTo(0, 0); } catch (e) {} }; };
-    var subTabStyle = function (on) { return 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #FFFFFF; color: ' + TXT + '; box-shadow: 0 1px 2px rgba(17,24,39,0.12);' : 'background: transparent; color: ' + MUTED + ';'); };
+    var subTabStyle = function (on) { return 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF; font-weight: 600;' : 'background: transparent; color: ' + MUTED + ';'); };
     var nflTabs = [{ id: 'builder', label: 'Horseshoe Ticket' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
       var on = st.page === t.id;
       return { label: t.label, current: on ? 'page' : 'false', style: subTabStyle(on), pick: function () { self.setState({ page: t.id, nflLast: t.id }); } };
@@ -1995,7 +2002,7 @@ class Component extends DCLogic {
       cfOUVal: cfOU, cfOUSel: [{ v: 'either', label: 'Overs + unders' }, { v: 'over', label: 'Overs only' }, { v: 'under', label: 'Unders only' }],
       onCfOU: function (ev) { self.setState({ cfOU: ev.target.value }); },
       cfFeatherTrack: 'position: relative; width: 34px; height: 20px; border-radius: 999px; background: ' + (cfFeatherOn ? '#FFD166' : 'rgba(255,255,255,0.3)') + ';',
-      cfFeatherKnob: 'position: absolute; top: 2px; left: ' + (cfFeatherOn ? '16px' : '2px') + '; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.25);',
+      cfFeatherKnob: 'position: absolute; top: 2px; left: ' + (cfFeatherOn ? '16px' : '2px') + '; width: 16px; height: 16px; border-radius: 50%; background: #111A2E; box-shadow: 0 1px 2px rgba(0,0,0,0.25);',
       upModeVal: upMode, upModeOpts: [{ v: 'all', label: 'Dogs + points' }, { v: 'ml', label: 'Moneyline upsets' }],
       onUpMode: function (ev) { self.setState({ upMode: ev.target.value }); },
       ovMktVal: ovMkt, ovMktOpts: [{ v: 'all', label: 'Everything' }, { v: 'game', label: 'Game totals' }, { v: 'prop', label: 'Player overs' }],
@@ -2011,13 +2018,13 @@ class Component extends DCLogic {
       gamesOpen: !!st.gamesOpen, toggleGames: function () { self.setState({ gamesOpen: !st.gamesOpen }); },
       gamesSummary: (st.games.length ? st.games.length + ' game' + (st.games.length === 1 ? '' : 's') + ' picked' : 'All games') + (st.gamesOpen ? '  ▴' : ''),
       featherTrack: 'position: relative; width: 34px; height: 20px; border-radius: 999px; background: ' + (featherOn ? '#FFD166' : 'rgba(255,255,255,0.3)') + '; transition: background 0.15s;',
-      featherKnob: 'position: absolute; top: 2px; left: ' + (featherOn ? '16px' : '2px') + '; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: left 0.15s;',
+      featherKnob: 'position: absolute; top: 2px; left: ' + (featherOn ? '16px' : '2px') + '; width: 16px; height: 16px; border-radius: 50%; background: #111A2E; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: left 0.15s;',
       nTargets: targets.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
       nStakes: stakes.map(function (t) { return Object.assign({}, t, { style: segW(t.on) }); }),
       nMarkets: markets.map(function (t) { return Object.assign({}, t, { style: chipW(t.on) }); }),
       nPropTypes: propTypes.map(function (t) { return Object.assign({}, t, { style: chipW(t.on) }); }),
-      nGames: gamesUi.map(function (g) { return Object.assign({}, g, { style: 'min-height: 26px; padding: 0 8px; border-radius: 999px; cursor: pointer; font-family: IBM Plex Mono, monospace; font-size: 11px; white-space: nowrap; box-sizing: border-box; ' + (g.on ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF; font-weight: 700;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);') }); }),
-      allGamesOn: !st.games.length, allGamesStyle: 'min-height: 26px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; box-sizing: border-box; ' + (!st.games.length ? 'background: #FFFFFF; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);'),
+      nGames: gamesUi.map(function (g) { return Object.assign({}, g, { style: 'min-height: 26px; padding: 0 8px; border-radius: 999px; cursor: pointer; font-family: IBM Plex Mono, monospace; font-size: 11px; white-space: nowrap; box-sizing: border-box; ' + (g.on ? 'background: #111A2E; color: ' + B + '; border: 1px solid #FFFFFF; font-weight: 700;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);') }); }),
+      allGamesOn: !st.games.length, allGamesStyle: 'min-height: 26px; padding: 0 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; box-sizing: border-box; ' + (!st.games.length ? 'background: #111A2E; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.4);'),
       nLegsAutoStyle: chipW(isAuto),
       nPriceStyle: mono(this.fitSize(priceVal, 22, 15), '#FFFFFF'), nPayStyle: mono(this.fitSize(payoutVal, 17, 13), '#FFFFFF'),
       isOvers: st.page === 'overs', cfIsOvers: st.cfTab === 'overs',
@@ -2033,7 +2040,7 @@ class Component extends DCLogic {
       ovStakes: [5, 10, 25, 50].map(function (v) { var on = st.stake === v; return { label: '$' + v, on: on, style: chipW(on), pick: function () { self.setState({ stake: v }); } }; }),
       isBuilder: st.page === 'builder', isSpin: st.page === 'spin', isOdds: st.page === 'odds', isFade: st.page === 'fade', isCollege: isCollege,
       chipText: isCollege ? CF.chip : D.chip,
-      liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#AEB5C0') + ';',
+      liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#4A5878') + ';',
       lineEmpty: !D.lineCheck.length, booksStamp: window.BH.booksAsOf ? 'Book prices from The Odds API, updated ' + window.BHLines.etTime(window.BH.booksAsOf) + ' ET ' + window.BH.booksAsOf.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '. They refresh every 4 hours.' : '',
       footText: 'Game lines: ' + (window.BH.source === 'snapshot' ? 'DraftKings via ESPN (backup snapshot, refreshed every 15 min)' : 'DraftKings via ESPN, refreshed every minute') + '. NFL moneylines and college prices marked est. are converted from the spread.' + (window.BH.propsAsOf ? (String(window.BH.propsAsOf).indexOf('sgo:') === 0 ? ' Player props and alternate lines: SportsGameOdds (DraftKings/FanDuel prices), updated ' + window.BHLines.etTime(new Date(String(window.BH.propsAsOf).slice(4))) + ' ET, refreshed every 8 hours.' : ' Player props as of ' + window.BH.propsAsOf + '.') : '') + ' Lines move, so confirm the price at your sportsbook. Horseshoe ratings are analysis, not advice. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.',
       fadeEmpty: D.publicBoard.length === 0, cfFadeEmpty: CF.publicBoard.length === 0,
