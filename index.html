@@ -16,7 +16,11 @@ h1,h2{font-family:'Barlow Condensed',Inter,sans-serif !important;text-transform:
 h1{font-size:34px !important;font-weight:800 !important}
 h2{font-size:26px !important;font-weight:800 !important}
 .bh-word{font-family:'Barlow Condensed',Inter,sans-serif;font-weight:800;font-size:24px;letter-spacing:0.05em;text-transform:uppercase;line-height:1}
-@media (max-width:600px){h1{font-size:28px !important}h2{font-size:22px !important}}
+h1.bh-hero{font-size:76px !important;line-height:0.95 !important;letter-spacing:0.01em}
+h2.bh-sec{font-size:40px !important}
+h1.bh-hero2{font-size:56px !important;line-height:0.95 !important}
+h2.bh-sec2{font-size:30px !important}
+@media (max-width:600px){h1{font-size:28px !important}h2{font-size:22px !important}h1.bh-hero{font-size:46px !important}h1.bh-hero2{font-size:38px !important}h2.bh-sec{font-size:30px !important}h2.bh-sec2{font-size:26px !important}.bh-stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
 a{color:#7FB0FF}a:hover{color:#B5D0FF}
 button{font:inherit}
 .fader{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;margin:0}
@@ -64,15 +68,21 @@ button{font:inherit}
   <main style="max-width: 1400px; margin: 0 auto; padding: 20px 20px 40px; display: flex; flex-direction: column; gap: 16px;">
 
     <sc-if value="{{isNfl}}" hint-placeholder-val="{{ true }}">
-      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
-        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-          <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
-          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-            <h1 style="margin: 0; font-size: 20px; font-weight: 700;">NFL · the Horseshoe has spoken</h1>
-            <span style="font-size: 13px; color: #A9B5CF;">Game lines and player props, built from live lines.</span>
-          </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px 24px; padding: 12px 0 8px;">
+        <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0; flex: 999 1 480px;">
+          <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7FB0FF;">{{chipText}}</div>
+          <h1 class="bh-hero2" style="margin: 0;">NFL · The Horseshoe has spoken.</h1>
+          <span style="font-size: 16px; color: #A9B5CF;">Game lines and player props, built from live lines.</span>
+          <sc-if value="{{isBuilder}}" hint-placeholder-val="{{ true }}">
+            <div class="bh-stats" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #1E2A45; border: 1px solid #1E2A45; border-radius: 14px; overflow: hidden; max-width: 600px;">
+              <button type="button" onClick="{{goRecord}}" style="all: unset; cursor: pointer; background: #111A2E; padding: 14px 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Record</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 30px; line-height: 1.1;">{{heroRec}}</div></button>
+              <div style="background: #111A2E; padding: 14px 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Win rate</div><div style="{{heroHitStyle}}">{{heroHit}}</div></div>
+              <div style="background: #111A2E; padding: 14px 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Graded</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 30px; line-height: 1.1;">{{heroN}}</div></div>
+              <div style="background: #111A2E; padding: 14px 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">$10 a pick</div><div style="{{heroProfitStyle}}">{{heroProfit}}</div></div>
+            </div>
+          </sc-if>
         </div>
-        <nav aria-label="NFL pages" style="display: flex; gap: 4px; background: #1E2A45; padding: 3px; border-radius: 8px;">
+        <nav aria-label="NFL pages" style="display: flex; flex-wrap: wrap; gap: 4px; background: #1E2A45; padding: 3px; border-radius: 8px;">
           <sc-for list="{{nflTabs}}" as="nt" hint-placeholder-count="4">
             <button type="button" onClick="{{nt.pick}}" aria-current="{{nt.current}}" style="{{nt.style}}">{{nt.label}}</button>
           </sc-for>
@@ -495,6 +505,7 @@ button{font:inherit}
     <sc-if value="{{isCollege}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
+          <sc-if value="{{cfNotPicks}}" hint-placeholder-val="{{ false }}">
           <div style="display: flex; align-items: center; gap: 12px;">
             <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#1D5FD6" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="37" cy="42" r="3.2" fill="#FFFFFF"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#111827"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#111827"></circle></svg>
             <div style="display: flex; flex-direction: column; gap: 2px;">
@@ -502,6 +513,7 @@ button{font:inherit}
               <span style="font-size: 13px; color: #A9B5CF;">Moneylines, spreads and totals only. No props.</span>
             </div>
           </div>
+          </sc-if>
           <nav aria-label="College pages" style="display: flex; gap: 4px; background: #1E2A45; padding: 3px; border-radius: 8px;">
             <sc-for list="{{cfTabs}}" as="ct" hint-placeholder-count="3">
               <button type="button" onClick="{{ct.pick}}" aria-current="{{ct.current}}" style="{{ct.style}}">{{ct.label}}</button>
@@ -589,27 +601,33 @@ button{font:inherit}
         </sc-if>
 
         <sc-if value="{{cfIsPicks}}" hint-placeholder-val="{{ true }}">
-          <div style="display: flex; flex-direction: column; gap: 14px;">
-            <section aria-label="The Horseshoe Parlay" style="background: #1D5FD6; color: #FFFFFF; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px;">
-                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;" title="Every moneyline, spread and total ranked by how much the Horseshoe likes it. Each leg you add is the next best line on the board, one per game.">
-                  <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#FFFFFF" stroke-width="11" fill="none" stroke-linecap="round"></path><circle cx="27" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="37" cy="42" r="3.2" fill="#1D5FD6"></circle><circle cx="27.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle><circle cx="37.6" cy="42.6" r="1.5" fill="#FFFFFF"></circle></svg>
-                  <div style="display: flex; flex-direction: column; min-width: 0;">
-                    <h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2;">The Horseshoe Parlay</h2>
-                    <span style="display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11px; color: #DCE7FB;">
-                      <sc-for list="{{cfPillars}}" as="pl" hint-placeholder-count="3">
-                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span aria-hidden="true" style="{{pl.dotStyle}}"></span>{{pl.label}} <b style="font-family: 'IBM Plex Mono', monospace;">{{pl.count}}</b></span>
-                      </sc-for>
-                    </span>
-                    <sc-if value="{{cfFeatherNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 600; color: #FFD166;">{{cfFeatherNote}}</span></sc-if>
-                  </div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px;">
-                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Price</span><span style="{{cfPriceStyle}}">{{cfPrice}}</span></span>
-                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">{{stakeLabel}} pays</span><span style="{{cfPayoutStyle}}">{{cfPayout}}</span></span>
-                  <span style="display: flex; flex-direction: column;"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Hits</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; line-height: 1.2;">{{cfHitStr}} <span style="font-size: 11px; font-weight: 400; color: #CFDDF8;">book {{cfBookStr}}</span></span></span>
+          <div style="display: flex; flex-direction: column; gap: 56px; padding-top: 16px;">
+
+            <section style="display: flex; flex-wrap: wrap; gap: 40px; align-items: stretch;">
+              <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 24px; justify-content: center;">
+                <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7FB0FF;">{{chipText}}</div>
+                <h1 class="bh-hero" style="margin: 0;">The Horseshoe<br>has spoken.</h1>
+                <p style="margin: 0; max-width: 520px; font-size: 18px; line-height: 1.5; color: #A9B5CF;">Sharp moves, live dogs and fade-the-public spots, built into one ticket you can place on Hard Rock Bet in a minute.</p>
+                <div class="bh-stats" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #1E2A45; border: 1px solid #1E2A45; border-radius: 14px; overflow: hidden; max-width: 600px;">
+                  <button type="button" onClick="{{goRecord}}" style="all: unset; cursor: pointer; background: #111A2E; padding: 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Record</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; line-height: 1.1;">{{heroRec}}</div></button>
+                  <div style="background: #111A2E; padding: 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Win rate</div><div style="{{heroHitStyle}}">{{heroHit}}</div></div>
+                  <div style="background: #111A2E; padding: 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Graded</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; line-height: 1.1;">{{heroN}}</div></div>
+                  <div style="background: #111A2E; padding: 16px;"><div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">$10 a pick</div><div style="{{heroProfitStyle}}">{{heroProfit}}</div></div>
                 </div>
               </div>
+
+              <article aria-label="The Horseshoe Parlay" style="flex: 1 1 440px; min-width: 0; background: #111A2E; border: 1px solid #263556; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column;">
+                <div style="background: #1D5FD6; color: #FFFFFF; padding: 18px 22px; display: flex; flex-direction: column; gap: 14px;">
+                  <div style="display: flex; align-items: center; gap: 14px;">
+                    <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true" style="flex-shrink: 0;"><path d="M14 8 v20 a18 18 0 0 0 36 0 v-20" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round"></path></svg>
+                    <div style="flex: 1 1 auto; min-width: 0;">
+                      <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1; text-transform: uppercase; letter-spacing: 0.03em;">The Horseshoe Parlay</div>
+                      <div style="font-size: 13px; color: #E3ECFF; margin-top: 4px;">{{cfLegWord}} · {{cfTicketTitle}} · hits {{cfHitStr}}</div>
+                      <sc-if value="{{cfFeatherNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 600; color: #FFD166;">{{cfFeatherNote}}</span></sc-if>
+                    </div>
+                    <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; line-height: 1;">{{cfPrice}}</div>
+                  </div>
+                  <sc-if value="{{cfCustomOpen}}" hint-placeholder-val="{{ false }}">
           <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 18px; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px;">
               <label style="display: flex; flex-direction: column; gap: 4px;">
                 <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #CFDDF8;">Target</span>
@@ -656,76 +674,101 @@ button{font:inherit}
               </button>
               <button type="button" onClick="{{cfSizeAuto}}" style="height: 32px; padding: 0; background: none; border: none; color: #CFDDF8; font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer;">Reset legs to auto</button>
           </div>
+
+                  </sc-if>
+                </div>
+                <ol style="list-style: none; margin: 0; padding: 6px 22px;">
+                  <sc-for list="{{cfTicketCard}}" as="leg" hint-placeholder-count="4">
+                    <li style="display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px dashed #2A3A5E;">
+                      <span style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #3A5285; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #A9B5CF; flex: none;">{{leg.num}}</span>
+                      <div style="flex: 1 1 auto; min-width: 0;">
+                        <div style="font-weight: 700; font-size: 17px;">{{leg.label}}</div>
+                        <div style="font-size: 13px; color: #A9B5CF;">{{leg.game}} · {{leg.tag}}</div>
+                      </div>
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums;">{{leg.oddsStr}}</span>
+                    </li>
+                  </sc-for>
+                </ol>
+                <div style="margin-top: auto; padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 14px;">
+                  <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <div style="flex: 1 1 auto;">
+                      <div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">{{stakeLabel}} pays</div>
+                      <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 30px; line-height: 1.1;">{{cfPayout}}</div>
+                    </div>
+                    <a href="https://www.hardrock.bet/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border-radius: 12px; background: #EEF2FA; color: #0A1020; font-weight: 700; text-decoration: none;">Build it on Hard Rock</a>
+                  </div>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" onClick="{{toggleCfCustom}}" aria-expanded="{{cfCustomOpen}}" style="min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA; font: 600 14px Inter, sans-serif; cursor: pointer;">{{cfCustomLabel}}</button>
+                    <button type="button" onClick="{{watchCf}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA; font: 600 14px Inter, sans-serif; cursor: pointer;"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button>
+                  </div>
+                </div>
+              </article>
             </section>
-
-            <sc-if value="{{cfHasUpset}}" hint-placeholder-val="{{ true }}">
-              <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; background: #263556; color: #FFFFFF; border-radius: 8px; padding: 10px 14px;">
-                <span style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0;">
-                  <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #FFC24D;">UPSET SPECIAL</span>
-                  <span style="font-size: 13px; font-weight: 600;">{{upTeaser}}</span>
-                </span>
-                <span style="display: flex; align-items: center; gap: 14px;">
-                  <b style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #FFC24D;">{{cfUpsetPrice}}</b>
-                  <button type="button" onClick="{{cfGoDogs}}" style="min-height: 32px; padding: 0 12px; background: #EEF2FA; color: #0F1B3D; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">See the upsets</button>
-                </span>
-              </div>
-            </sc-if>
-
             <sc-if value="{{cfWarn}}" hint-placeholder-val="{{ false }}">
               <div role="status" style="border: 1px solid #6B4A16; background: #33240E; color: #FFB86B; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.45;">{{cfWarnText}}</div>
             </sc-if>
 
-            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px;">
-              <sc-for list="{{cfTicket}}" as="cr" hint-placeholder-count="3">
-                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #1E2A45;">
-                  <span style="width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; background: #1D5FD6; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;">{{cr.num}}</span>
-                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
-                    <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px;">
-                      <span style="font-size: 14px; font-weight: 700;">{{cr.label}}</span>
-                      <span style="font-size: 12px; color: #A9B5CF;">{{cr.game}}</span>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px;">
-                      <sc-for list="{{cr.badges}}" as="bd" hint-placeholder-count="2">
-                        <span style="{{bd.style}}">{{bd.label}}</span>
-                      </sc-for>
-                      <span style="{{cr.mkStyle}}">{{cr.mkLabel}}</span>
-                      <span style="display: inline-flex; gap: 1px;" role="img" aria-label="{{cr.shoeAria}}">
-                        <sc-for list="{{cr.shoes}}" as="sh" hint-placeholder-count="5">
-                          <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2v6a4 4 0 0 0 8 0V2" stroke="{{sh.color}}" stroke-width="2.6" fill="none" stroke-linecap="round"></path></svg>
-                        </sc-for>
-                      </span>
-                      <span style="color: #A9B5CF;">{{cr.why}}</span>
-                    </div>
-                  </div>
-                  <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600;">{{cr.oddsStr}}</span>
-                    <span style="font-size: 11px; color: #A9B5CF;">Horseshoe <b style="font-family: 'IBM Plex Mono', monospace; color: #7FB0FF;">{{cr.pStr}}</b> · Book {{cr.impStr}}</span>
-                  </div>
+            <section aria-labelledby="board-h" style="display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px;">
+                <h2 id="board-h" class="bh-sec" style="margin: 0;">This week's board</h2>
+                <div role="group" aria-label="Filter picks" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <sc-for list="{{cfBoardChips}}" as="bc" hint-placeholder-count="5">
+                    <button type="button" onClick="{{bc.pick}}" aria-pressed="{{bc.on}}" style="{{bc.style}}">{{bc.label}}</button>
+                  </sc-for>
                 </div>
-              </sc-for>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end;"><button type="button" onClick="{{watchCf}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; background: #263556; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Watch live</button></div>
-
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: #A9B5CF;">Next up if you want to swap a leg</span>
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
-                <sc-for list="{{cfBench}}" as="cb" hint-placeholder-count="4">
-                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px;">
-                    <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
-                      <span style="font-weight: 600;">{{cb.label}}</span>
-                      <span style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-                        <sc-for list="{{cb.badges}}" as="bd2" hint-placeholder-count="1">
-                          <span style="{{bd2.style}}">{{bd2.label}}</span>
-                        </sc-for>
-                        <span style="font-size: 12px; color: #A9B5CF;">{{cb.game}} · {{cb.pStr}}</span>
-                      </span>
-                    </span>
-                    <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">{{cb.oddsStr}}</span>
-                  </div>
+              </div>
+              <sc-if value="{{cfBoardEmpty}}" hint-placeholder-val="{{ false }}">
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; padding: 20px; color: #A9B5CF;">Nothing on the board for this filter right now.</div>
+              </sc-if>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+                <sc-for list="{{cfBoard}}" as="p" hint-placeholder-count="6">
+                  <article style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: #A9B5CF; font-weight: 600;">
+                      <span>{{p.game}}</span>
+                      <span style="white-space: nowrap;">{{p.time}}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere;">{{p.label}}</span>
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; padding: 4px 12px; border-radius: 8px; background: #1A2644; font-variant-numeric: tabular-nums; flex: none;">{{p.oddsStr}}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div style="flex: 1 1 auto; height: 8px; border-radius: 4px; background: #1E2A45; overflow: hidden;"><div style="{{p.barStyle}}"></div></div>
+                      <span style="font-size: 13px; font-weight: 700; min-width: 74px; text-align: right;">{{p.conf}} conf</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                      <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; background: #13284F; color: #9CC2FF;">{{p.tag}}</span>
+                      <span style="font-size: 14px; color: #A9B5CF;">{{p.note}}</span>
+                    </div>
+                  </article>
                 </sc-for>
               </div>
-            </div>
+            </section>
+
+            <section style="display: flex; flex-wrap: wrap; gap: 16px;">
+              <sc-if value="{{cfHasUpset}}" hint-placeholder-val="{{ true }}">
+                <div style="flex: 1 1 340px; min-width: 0; background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                  <h2 class="bh-sec2" style="margin: 0;">The Upset Special</h2>
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #17213A;">
+                    <div style="min-width: 0;">
+                      <div style="font-weight: 700; font-size: 17px;">{{upTeaser}}</div>
+                      <div style="font-size: 13px; color: #A9B5CF;">Underdogs the Horseshoe thinks can win outright</div>
+                    </div>
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; color: #FFB86B; flex: none;">{{cfUpsetPrice}}</span>
+                  </div>
+                  <button type="button" onClick="{{cfGoDogs}}" style="align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3A5E; background: transparent; color: #7FB0FF; font: 600 14px Inter, sans-serif; cursor: pointer;">See every underdog</button>
+                </div>
+              </sc-if>
+              <div style="flex: 1 1 340px; min-width: 0; background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+                <h2 class="bh-sec2" style="margin: 0;">Latest results</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <sc-for list="{{heroRecent}}" as="hr" hint-placeholder-count="4">
+                    <span style="{{hr.style}}">{{hr.txt}}</span>
+                  </sc-for>
+                </div>
+                <p style="margin: 0; color: #A9B5CF; font-size: 14px;">Every pick is locked at kickoff and graded after the final, wins and losses alike.</p>
+                <button type="button" onClick="{{goRecord}}" style="align-self: flex-start; margin-top: auto; min-height: 44px; padding: 0; background: none; border: none; color: #7FB0FF; font: 600 15px Inter, sans-serif; cursor: pointer; text-decoration: underline;">See the full track record</button>
+              </div>
+            </section>
           </div>
         </sc-if>
 
@@ -966,6 +1009,27 @@ button{font:inherit}
             </label>
           </div>
         </div>
+        <section style="display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 8px;">
+          <div aria-label="Overall record" style="flex: 1 1 340px; min-width: 0; background: #111A2E; border: 1px solid #263556; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="font-size: 12px; color: #A9B5CF; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;">This view · locked at kickoff</div>
+            <div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;">
+              <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 76px; line-height: 0.9;">{{recBigRec}}</span>
+              <span style="{{recHitStyleBig}}">{{recHit}}</span>
+            </div>
+            <div style="display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px;"><div style="{{recWBar}}"></div><div style="{{recLBar}}"></div></div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: #A9B5CF;"><span>{{recWins}}</span><span>{{recLosses}}</span></div>
+          </div>
+          <div style="flex: 1 1 340px; min-width: 0; background: #111A2E; border: 1px solid #1E2A45; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+            <h2 class="bh-sec2" style="margin: 0 0 4px;">What's working</h2>
+            <sc-for list="{{recSplit}}" as="m" hint-placeholder-count="6">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="width: 128px; font-size: 14px; font-weight: 600; flex: none;">{{m.name}}</span>
+                <div style="flex: 1 1 auto; height: 10px; border-radius: 5px; background: #1E2A45; overflow: hidden;"><div style="{{m.barStyle}}"></div></div>
+                <span style="width: 58px; text-align: right; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;">{{m.rec}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
           <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Record (W-L-P)</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #EEF2FA;">{{recWLP}}</span><span style="font-size: 11px; color: #A9B5CF;">{{recGradedStr}}</span></div>
           <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 11px; font-weight: 600; color: #A9B5CF;">Hit rate</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: #EEF2FA;">{{recHit}}</span><span style="font-size: 11px; color: #A9B5CF;">Horseshoe expected {{recExp}}</span></div>
@@ -990,7 +1054,7 @@ button{font:inherit}
           </sc-for>
         </div>
         <sc-if value="{{recBreakAny}}" hint-placeholder-val="{{ true }}">
-          <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">What's working</h2>
+          <h2 style="margin: 4px 0 0; font-size: 15px; font-weight: 700;">Digging deeper</h2>
           <span style="font-size: 12px; color: #A9B5CF; margin-top: -6px;">Small samples swing a lot. Patterns mean something after a few hundred picks; beating the closing line shows up sooner.</span>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 8px;">
             <sc-for list="{{recBreak}}" as="bg" hint-placeholder-count="4">
@@ -1039,9 +1103,9 @@ button{font:inherit}
   </main>
 </div>
 </script>
-<script>window.BH_VERSION='20261021172500';</script>
-<script src="runtime.js?v=20261021172500"></script>
-<script src="lines.js?v=20261021172500"></script>
+<script>window.BH_VERSION='20261021173500';</script>
+<script src="runtime.js?v=20261021173500"></script>
+<script src="lines.js?v=20261021173500"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1635,6 +1699,33 @@ class Component extends DCLogic {
         var prim = c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean';
         return { label: c.label, game: cfGameMap[c.g].label, pStr: 'Horseshoe ' + pct(c.p), oddsStr: self.fmtOdds(c.odds), badges: badgesFor(c, prim) };
       });
+
+    // ---- Mockup layout: board cards
+    var cfWhen = function (iso) { try { var d = new Date(iso); return d.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }).replace(',', ''); } catch (e) { return ''; } };
+    var cfDateMap = {}; (CF.slate || []).forEach(function (g) { cfDateMap[g.id] = g.date; });
+    var boardF = st.cfBoardF || 'all';
+    var boardSeen = {};
+    var cfBoardAll = cfPool.slice().sort(function (x, y) { return favScore(y) - favScore(x); }).filter(function (c) {
+      var key = c.g + '|' + c.k; if (boardSeen[key]) return false; boardSeen[key] = 1; return !!cfGameMap[c.g];
+    });
+    var cfBoard = cfBoardAll.filter(function (c) {
+      if (boardF === 'dogs') return c.dog || c.odds > 0;
+      return boardF === 'all' || c.k === boardF;
+    }).slice(0, 12).map(function (c) {
+      var prim = c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean';
+      var tagTxt = c.fade ? 'Fade the public' : (c.dogOk || c.odds > 0) ? 'Live dog' : c.k === 'total' ? 'Total' : 'Horseshoe lean';
+      var cf = Math.max(1, Math.min(99, Math.round(c.conf || c.p * 100)));
+      return { label: c.label, game: cfGameMap[c.g].label, time: cfDateMap[c.g] ? cfWhen(cfDateMap[c.g]) : '', oddsStr: self.fmtOdds(c.odds), conf: String(cf), barStyle: 'height: 100%; border-radius: 4px; background: #1D5FD6; width: ' + cf + '%;', tag: tagTxt, note: c.note || '' };
+    });
+    var cfBoardChips = [['all', 'All'], ['spread', 'Spreads'], ['ml', 'Moneylines'], ['total', 'Totals'], ['dogs', 'Underdogs']].map(function (o) {
+      var on = boardF === o[0];
+      return { label: o[1], on: on ? 'true' : 'false', pick: function () { self.setState({ cfBoardF: o[0] }); }, style: 'min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer; font: 600 14px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
+    });
+    var cfTicketCard = cfTicket.map(function (t, ix) {
+      var c = t.c;
+      var tg = t.pillar === 'fade' ? 'Fade the public' : t.pillar === 'dog' ? 'Live dog' : 'Horseshoe lean';
+      return { num: String(ix + 1), label: c.label, game: cfGameMap[c.g].label, tag: tg + (c.featheredFrom ? ' · feathered' : ''), oddsStr: self.fmtOdds(c.odds) };
+    });
     var segW = function (on) {
       return 'min-height: 32px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #111A2E; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
     };
@@ -1894,7 +1985,24 @@ class Component extends DCLogic {
     var fmtDev = function (x) { return x == null ? '—' : (x >= 0 ? '+' : '') + (Math.round(x * 10) / 10); };
     var fmtMoney = function (x) { return (x >= 0 ? '+$' : '−$') + Math.abs(x).toFixed(2); };
     var allT = tally(gradedP);
+
+    var heroAll = PK.filter(function (p) { return p.active && !p.dup && !p.held && (p.result === 'win' || p.result === 'loss' || p.result === 'push'); });
+    var heroT = tally(heroAll);
+    var heroRecent = heroAll.slice().sort(function (a, b) { return String(b.gradedAt || '').localeCompare(String(a.gradedAt || '')); }).slice(0, 4).map(function (p) {
+      var w = p.result === 'win', pu = p.result === 'push';
+      return { txt: (w ? 'W' : pu ? 'P' : 'L') + '  ' + p.label, style: 'padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 14px; ' + (w ? 'background: #123A2A; color: #6BE3A6;' : pu ? 'background: #1E2A45; color: #A9B5CF;' : 'background: #3D2810; color: #FFB86B;') };
+    });
     var mktNames2 = { ml: 'Moneylines', spread: 'Spreads', total: 'Totals', prop: 'Player props' };
+    var recSplit = [];
+    [['cfb', 'College'], ['nfl', 'NFL']].forEach(function (sp) {
+      [['spread', 'spreads'], ['ml', 'ML'], ['total', 'totals'], ['prop', 'props']].forEach(function (mk) {
+        var t = tally(gradedP.filter(function (p) { return p.sport === sp[0] && p.market === mk[0]; }));
+        if (!t.w && !t.l) return;
+        var h = t.w / (t.w + t.l);
+        recSplit.push({ name: sp[1] + ' ' + mk[1], rec: t.w + '–' + t.l, h: h, barStyle: 'height: 100%; border-radius: 5px; width: ' + Math.round(h * 100) + '%; background: ' + (h >= 0.524 ? '#3FD18A' : h >= 0.5 ? '#1D5FD6' : '#FF9F43') + ';' });
+      });
+    });
+    recSplit.sort(function (a, b) { return b.h - a.h; });
     var recByMkt = ['ml', 'spread', 'total', 'prop'].map(function (k) {
       var t = tally(gradedP.filter(function (p) { return p.market === k; }));
       return { label: mktNames2[k], n: String(t.n), wlp: t.w + '-' + t.l + '-' + t.pu, hit: fmtPct(t.hit), exp: fmtPct(t.exp), profit: t.n ? fmtMoney(t.prof) : '—', profitStyle: 'font-family: IBM Plex Mono, monospace; font-weight: 600; color: ' + (t.prof > 0 ? GREEN : t.prof < 0 ? RED : MUTED) + ';', dev: fmtDev(t.dev), has: t.n > 0 };
@@ -1990,6 +2098,9 @@ class Component extends DCLogic {
       recDev: fmtDev(allT.dev), recDevW: fmtDev(allT.devW), recDevL: fmtDev(allT.devL),
       recDevStyle: "font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: " + ((allT.dev || 0) > 0 ? GREEN : (allT.dev || 0) < 0 ? RED : TXT) + ';',
       recPendingN: String(pendingP.length), recUpcomingN: String(upcomingP.length),
+      recSplit: recSplit, recBigRec: allT.w + '–' + allT.l + (allT.pu ? '–' + allT.pu : ''), recWins: allT.w + ' wins', recLosses: allT.l + ' losses',
+      recWBar: 'flex: ' + Math.max(allT.w, 0.001) + ' 1 0; background: #3FD18A;', recLBar: 'flex: ' + Math.max(allT.l, 0.001) + ' 1 0; background: #FF9F43;',
+      recHitStyleBig: "font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; color: " + ((allT.hit || 0) >= 0.524 ? '#3FD18A' : '#EEF2FA') + ';',
       recEmpty: !gradedP.length, recByMkt: recByMkt, recBreak: recBreak, recBreakAny: recBreak.length > 0,
       recClv: withClv.length ? Math.round(clvBeat / withClv.length * 100) + '%' : '—',
       recClvSub: withClv.length ? clvBeat + ' of ' + withClv.length + ' locked picks' + (clvAvg != null ? ' · avg ' + fmtDev(clvAvg) + ' pts' : '') : 'starts with today\'s picks', recRows: recRows, recPending: recPending, recPendingAny: recPending.length > 0,
@@ -2120,7 +2231,14 @@ class Component extends DCLogic {
       cfUp: function () { var v = Math.min(20, (cfIsAuto ? (st.cfLastLegs || 4) : cfN) + 1); self.setState({ cfLegs: v, cfLastLegs: v }); },
       cfOnFader: function (e) { var v = parseInt(e.target.value, 10); if (!isNaN(v)) self.setState({ cfLegs: v, cfLastLegs: v }); },
       cfSizeHint: cfIsAuto ? 'Horseshoe decides' : cfN + ' legs, one per game',
-      cfTicket: cfRows, cfBench: cfBench, cfLegCount: cfTicket.length,
+      cfTicket: cfRows, cfBench: cfBench,
+      cfBoard: cfBoard, cfBoardChips: cfBoardChips, cfBoardEmpty: !cfBoard.length, cfTicketCard: cfTicketCard,
+      cfCustomOpen: !!st.cfCustom, cfCustomLabel: st.cfCustom ? 'Hide options' : 'Customize', toggleCfCustom: function () { self.setState({ cfCustom: !st.cfCustom }); },
+      cfNotPicks: st.cfTab !== 'picks', cfLegWord: cfTicket.length + ' leg' + (cfTicket.length === 1 ? '' : 's'),
+      heroRec: heroT.w + '–' + heroT.l + (heroT.pu ? '–' + heroT.pu : ''), heroHit: fmtPct(heroT.hit), heroN: String(heroT.n),
+      heroProfit: heroT.n ? fmtMoney(heroT.prof) : '—', heroProfitStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; line-height: 1.1; color: " + (heroT.prof > 0 ? '#3FD18A' : heroT.prof < 0 ? '#FF9F43' : '#EEF2FA') + ';',
+      heroHitStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 32px; line-height: 1.1; color: " + ((heroT.hit || 0) >= 0.524 ? '#3FD18A' : '#EEF2FA') + ';',
+      heroRecent: heroRecent, goRecord: go('record'), cfLegCount: cfTicket.length,
       cfTicketTitle: st.cfTarget === 'safe' ? 'Safest price' : 'Path to ' + (st.cfTarget > 0 ? '+' + st.cfTarget : st.cfTarget),
       cfPrice: cfPriceVal, cfPriceStyle: mono(this.fitSize(cfPriceVal, 22, 15), '#FFFFFF'),
       cfPayout: cfPayVal, cfPayoutStyle: mono(this.fitSize(cfPayVal, 17, 13), '#FFFFFF'),
