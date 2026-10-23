@@ -266,16 +266,52 @@ def flash_frame(width, text, kind, on):
         bg, fg = ((0, 0, 0), COL['win']) if on else (COL['win'], (0, 0, 0))
     else:
         bg, fg = ((0, 0, 0), RED) if on else ((40, 0, 0), RED)
-    font = F_FLASH
-    while text_w(font, text) > width - 8 and font.size > 11:
-        font = _font('DejaVuSansCondensed-Bold.ttf', font.size - 1)
     img = Image.new('RGB', (width, H), bg)
     d = _draw(img)
-    tw = text_w(font, text)
-    asc, desc = font.getmetrics()
-    d.text(((width - tw) // 2, (H - asc - desc) // 2 + 1), text, font=font, fill=fg)
+    for line, font, y in fit_lines(width - 8, text):
+        d.text(((width - text_w(font, line)) // 2, y), line, font=font, fill=fg)
     d.rectangle((0, 0, width - 1, H - 1), outline=fg)
     return img
+
+
+def _font_size(size):
+    return _font('DejaVuSansCondensed-Bold.ttf', size)
+
+
+def fit_lines(maxw, text):
+    """Lay out alert text in the 32px strip -> [(line, font, y)].
+    One big line if it fits (down to 14px); otherwise two lines, split at a newline in the text
+    or at the word break that balances them best, as large as both lines allow."""
+    text = text.strip()
+    if '\n' not in text:
+        for size in range(F_FLASH.size, 13, -1):
+            f = _font_size(size)
+            if text_w(f, text) <= maxw:
+                top = f.getbbox(text)[1]
+                bot = f.getbbox('A')[3]
+                return [(text, f, (H - (bot - top)) // 2 - top)]
+        words = text.split()
+        best = None
+        for i in range(1, len(words)):
+            a, b = ' '.join(words[:i]), ' '.join(words[i:])
+            w = max(text_w(F_BIG, a), text_w(F_BIG, b))
+            if best is None or w < best[0]:
+                best = (w, a, b)
+        lines = [best[1], best[2]] if best else [text, '']
+    else:
+        lines = [x.strip() for x in text.split('\n', 1)]
+    for size in (14, 13, 12, 11, 10):
+        f = _font_size(size)
+        if all(text_w(f, ln) <= maxw for ln in lines):
+            break
+    cap = f.getbbox('A')
+    ch = cap[3] - cap[1]                       # capital height
+    gap = max(2, (H - 2 * ch) // 3)
+    out = []
+    for k, ln in enumerate(lines):
+        y = gap + k * (ch + gap) - cap[1]
+        out.append((ln, f, y))
+    return out
 
 
 def _ab(t):

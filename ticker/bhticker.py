@@ -240,7 +240,7 @@ class Ticker:
                 rank, oldrank = inj.get('rank', 0), self.prev.get(ik)
                 if not first and oldrank is not None and rank > oldrank and r['cls'] not in ('win', 'lost'):
                     who = r.get('player') or r['label']
-                    self.alerts.append(('%s %s' % (who, inj.get('text') or inj.get('tag')), 'lost', 'injury'))
+                    self.alerts.append(('%s\n%s' % (who, inj.get('text') or inj.get('tag')), 'lost', 'injury'))
                 self.prev[ik] = rank
 
     def build_items(self, snap):
