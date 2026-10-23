@@ -545,6 +545,84 @@
     var hc = CONF[e.h.conferenceId], ac = CONF[e.a.conferenceId];
     return hc || ac || 'Group of 5';
   }
+  // ---------- Horseshoe Model (data/model.json, from CFBD power ratings)
+  // The top CFBD Pick'em models hit about 75% straight up but only about 52% against the spread, so the model
+  // gets a real say on moneylines and only a small one on spreads, where it mostly acts as a filter:
+  //  - moneylines: the Horseshoe chance becomes 70% market, 30% model
+  //  - spreads the model backs by 2+ pts: small nudge up; by 3+ pts with no other signal: a "Model edge" leg
+  //  - spreads the model disagrees with by 4+ pts: held (shown, not a Horseshoe pick); by 2-4 pts: small nudge down
+  // Every touched leg logs l.model (projected edge in points for that side, or model win chance for MLs) so the
+  // tracker can show whether the model helps.
+  var MODEL_EDGE = 3, MODEL_HOLD = 4, MODEL_ML_W = 0.3;
+  function modelLegs(legs, slate, byId, model) {
+    var G = (model && model.games) || {};
+    var sd = (model && model.sd) || 15.5;
+    var nmOf = function (s, side) { return side === 'a' ? s.a : s.h; };
+    var sideOfLabel = function (s, label) {
+      if (label.indexOf(s.a + ' ') === 0) return 'a';
+      if (label.indexOf(s.h + ' ') === 0) return 'h';
+      return null;
+    };
+    var hold = function (l, why) { if (l.held) return; l.held = why; l.sOrig = l.s; l.s = [0, 0, 0]; l.note = (l.note ? l.note + '; ' : '') + 'held: ' + why; };
+    var add = function (l, why) { l.note = (l.note ? l.note + '; ' : '') + why; };
+    slate.forEach(function (s) {
+      var mp = G[s.id], e = byId[s.id];
+      if (!mp || typeof mp.m !== 'number' || !e) return;
+      var m = mp.m, o = e.odds;
+      s.mp = m; // projected home margin
+      var fav = m >= 0 ? s.h : s.a;
+      var proj = 'Model: ' + fav + ' by ' + Math.abs(m).toFixed(1);
+      var edgeH = Math.round((m + s.hs) * 10) / 10; // > 0 means the model likes the home side vs the spread
+      var mSide = edgeH > 0 ? 'h' : edgeH < 0 ? 'a' : null, edge = Math.abs(edgeH);
+      var pH = phi(m / sd);
+      var mine = legs.filter(function (l) { return l.g === s.id && !l.alt; });
+      mine.forEach(function (l) {
+        var side = sideOfLabel(s, l.label);
+        if (!side) return;
+        if (l.k === 'ml') {
+          var pm = side === 'h' ? pH : 1 - pH;
+          l.model = Math.round(pm * 1000) / 1000;
+          var before = l.p;
+          l.p = clamp(l.p * (1 - MODEL_ML_W) + pm * MODEL_ML_W, 0.01, 0.97);
+          l.conf = clamp(Math.round((l.conf || 50) + (l.p - before) * 100), 5, 95);
+          add(l, proj + ', wins ' + pct(pm));
+        } else if (l.k === 'spread' && mSide) {
+          var agree = side === mSide;
+          l.model = agree ? edge : -edge;
+          if (agree && edge >= 2) {
+            var up = Math.min(0.03, (edge - 1) * 0.006);
+            l.p = clamp(l.p + up, 0.01, 0.97); l.conf = clamp(Math.round(l.conf + up * 100), 5, 95);
+            add(l, proj + ', ' + edge + ' pts of edge');
+          } else if (!agree && edge >= MODEL_HOLD) {
+            hold(l, proj + ', disagrees by ' + edge + ' pts');
+          } else if (!agree && edge >= 2) {
+            l.p = clamp(l.p - 0.01, 0.01, 0.97); l.conf = clamp(l.conf - 1, 5, 95);
+            add(l, proj + ', leans the other way');
+          }
+        }
+      });
+      // A spread the model likes by 3+ pts: upgrade the plain board leg if there is one, or add it.
+      if (mSide && edge >= MODEL_EDGE && o) {
+        var line = mSide === 'a' ? o.aNow : -o.aNow;
+        var label = nmOf(s, mSide) + ' ' + signed(line);
+        var odds = mSide === 'a' ? o.aSpOdds : o.hSpOdds;
+        if (odds == null) odds = -110;
+        var mp2 = 0.5 + Math.min(0.04, (edge - 2) * 0.008);
+        var why = 'Model edge: ' + proj.replace('Model: ', '') + ' vs the ' + signed(line) + ' line (' + edge + ' pts)';
+        var ex = mine.filter(function (l) { return l.k === 'spread' && l.label === label; })[0];
+        var sig = [1, mSide === 'h' ? 1 : 0, edge >= 5 ? 1 : 0];
+        if (ex && !ex.held) {
+          var had = ex.s ? ex.s[0] + ex.s[1] + ex.s[2] : 0;
+          if (!had) { ex.s = sig; ex.p = Math.max(ex.p, mp2); ex.conf = Math.round(ex.p * 100) + 5; ex.note = why; }
+          ex.modelPick = true;
+        } else if (!ex) {
+          legs.push({ g: s.id, k: 'spread', label: label, odds: odds, p: mp2, conf: Math.round(mp2 * 100) + 5, s: sig, dog: line > 0,
+            model: edge, modelPick: true, note: why });
+        }
+      }
+    });
+  }
+
   function buildCollege(json, extra) {
     var events = (g(json, 'events') || []).map(readEvent).filter(Boolean);
     var slate = [], legs = [], byId = {};
@@ -649,6 +727,7 @@
       }
     });
     tiltLegs(legs, byId, extra.weather, false);
+    modelLegs(legs, slate, byId, extra.model);
     slate.sort(function (x, y) { return x.date < y.date ? -1 : x.date > y.date ? 1 : 0; });
     var names = {};
     slate.forEach(function (s) { names[s.a + (s.n ? ' vs ' : ' @ ') + s.h] = s; });
@@ -748,8 +827,9 @@
       soft(getJSON('data/picks.json' + bust)),
       soft(getJSON('data/splits.json' + bust)),
       soft(getJSON('data/meta.json' + bust)),
-      soft(getJSON('data/weather.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7] }; });
+      soft(getJSON('data/weather.json' + bust)),
+      soft(getJSON('data/model.json' + bust))
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7], model: r[8] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {
@@ -781,6 +861,6 @@
 
   root.BHLines = {
     load: load, stamp: stamp, REFRESH_MS: REFRESH_MS, etTime: etTime,
-    rateLegs: rateLegs, _test: { readEvent: readEvent, buildNfl: buildNfl, buildCollege: buildCollege, buildLineCheck: buildLineCheck, mlFromSpread: mlFromSpread }
+    rateLegs: rateLegs, _test: { readEvent: readEvent, buildNfl: buildNfl, buildCollege: buildCollege, buildLineCheck: buildLineCheck, mlFromSpread: mlFromSpread, modelLegs: modelLegs }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

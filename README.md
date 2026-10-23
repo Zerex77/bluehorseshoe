@@ -12,6 +12,7 @@ NFL and college football picks built from live lines. No server and no monthly c
 | Line check (Hard Rock vs. other books) | The Odds API free plan, via the GitHub Action → `data/books.json` | Every 4 hours (about 360 of the 500 free monthly credits) |
 | Player props | `data/props.json` (edit by hand) | When you update it |
 | Public betting splits | `data/splits.json` (edit by hand) | When you update it |
+| Horseshoe Model (college projected margins from SP+, FPI, SRS and Elo) | CollegeFootballData.com free API, via `.github/workflows/model.yml` → `data/model.json` | Once a day, plus Friday and Saturday mornings (about 230 of the 1,000 free monthly calls) |
 
 Picks recalculate in the browser every time the lines change. Games drop off once they kick off.
 
@@ -37,7 +38,14 @@ Same as playsproutle.com:
 1. Get a free key at https://the-odds-api.com (Starter plan, 500 credits a month).
 2. Repo → **Settings → Secrets and variables → Actions → New repository secret**. Name: `ODDS_API_KEY`. Value: your key.
 
-### 5. Start the timer
+### 5. Turn on the Horseshoe Model (optional, free)
+1. Get a free key at https://collegefootballdata.com/key (it's emailed to you).
+2. Repo → **Settings → Secrets and variables → Actions → New repository secret**. Name: `CFBD_API_KEY`. Value: your key.
+3. **Actions → Horseshoe Model → Run workflow** once. After that it runs on its own every morning.
+
+What it does to college picks: moneylines become 70% market, 30% model. Spreads the model backs by 3+ points show up as **Model edge** legs, and spreads it disagrees with by 4+ points are held (still shown, not a Horseshoe pick). The model's view is in each leg's "why" note, and the tracker logs it so the record shows whether it helps.
+
+### 6. Start the timer
 Repo → **Actions** tab → enable workflows if asked → **Refresh lines → Run workflow**. After that it runs on its own every 15 minutes.
 
 ## Updating props or splits by hand
@@ -49,6 +57,7 @@ Repo → **Actions** tab → enable workflows if asked → **Refresh lines → R
 - `lines.js`: loads the live lines and turns them into Horseshoe legs
 - `runtime.js`: small page renderer
 - `scripts/refresh.mjs` + `.github/workflows/refresh.yml`: the timer
+- `scripts/model.mjs` + `.github/workflows/model.yml`: the Horseshoe Model
 - `data/`: snapshot files the timer and you keep updated
 
 Lines move. Confirm every price at your sportsbook. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.

@@ -18,10 +18,10 @@ const normName = (x) => String(x || '').toLowerCase().replace(/\b(jr|sr|ii|iii|i
 const T = globalThis.BHLines._test;
 
 export async function track(log = console.log) {
-  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather, splits] = await Promise.all([
+  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather, splits, model] = await Promise.all([
     readJSON('data/espn-nfl.json', null), readJSON('data/espn-cfb.json', null), readJSON('data/espn-injuries.json', null),
     readJSON('data/props.json', null), readJSON('data/sgo-nfl.json', null), readJSON('data/sgo-cfb.json', null),
-    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null), readJSON('data/splits.json', null)
+    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null), readJSON('data/splits.json', null), readJSON('data/model.json', null)
   ]);
   const now = Date.now();
   const picks = store.picks || [];
@@ -70,7 +70,7 @@ export async function track(log = console.log) {
       label, date: e.date, game: e.short, away: e.a.shortDisplayName, home: e.h.shortDisplayName,
       odds: l.odds, p: Math.round(p * 1000) / 1000, imp: Math.round((1 / dec(l.odds)) * 1000) / 1000,
       conf: l.conf, score: l.score, top: !!l.pick, fade: !!l.fade, s: l.sOrig || l.s, held: l.held || null, note: l.note, lastSeen: new Date(now).toISOString(), active: true,
-      tilt: l.tilt || 0, wind: weather && weather.games && weather.games[l.g] && !weather.games[l.g].indoor ? Math.round(weather.games[l.g].wind) : null,
+      tilt: l.tilt || 0, model: l.model != null ? l.model : null, modelPick: !!l.modelPick, wind: weather && weather.games && weather.games[l.g] && !weather.games[l.g].indoor ? Math.round(weather.games[l.g].wind) : null,
       ...moveOf(parsed, e)
     });
   };
@@ -84,7 +84,7 @@ export async function track(log = console.log) {
     }
   }
   if (cfbSb) {
-    const cf = T.buildCollege(cfbSb, { sgoCfb, weather, splits });
+    const cf = T.buildCollege(cfbSb, { sgoCfb, weather, splits, model });
     for (const l of cf.legs) {
       if (l.alt) continue;
       const s0 = l.sOrig || l.s;
