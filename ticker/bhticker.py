@@ -284,9 +284,19 @@ class Ticker:
             self.update()
             time.sleep(max(5, int(self.cfg['refresh'])))
 
+    def fresh_slip_img(self, item):
+        """Re-draw a slip header from the latest data (so a pinned header's 2/4 IN stays current)."""
+        sid = item[1].get('id')
+        with self.lock:
+            cur = next((sl for sl in self.snap if sl.get('id') == sid), None)
+        return R.item_slip(cur or item[1])
+
     def scroll_loop(self):
+        """Scroll items right to left. A slip's header pins to the left edge while its legs scroll
+        behind it, until the next slip's header slides in and pushes it off."""
         W, H = self.panel.width, self.panel.height
-        tiles = []   # [x, image]
+        tiles = []          # [x, image, item]
+        pinned = None       # [image, item, last redraw time] for the header stuck at the left edge
         idx = 0
         x_off = 0.0
         last = time.time()
@@ -303,7 +313,11 @@ class Ticker:
             x_off -= step
             for t in tiles:
                 t[0] -= step
-            tiles = [t for t in tiles if t[0] + t[1].width > 0]
+            # a header that reached the left edge becomes the pinned one
+            for t in tiles:
+                if t[2][0] == 'slip' and t[0] <= 0:
+                    pinned = [t[1], t[2], now]
+            tiles = [t for t in tiles if t[0] + t[1].width > 0 and not (t[2][0] == 'slip' and t[0] <= 0)]
             right = tiles[-1][0] + tiles[-1][1].width if tiles else W
             while right < W + 2:
                 with self.lock:
@@ -313,12 +327,24 @@ class Ticker:
                 it = items[idx % len(items)]
                 idx = (idx + 1) % max(1, len(items))
                 img = self.draw_item(it)
-                tiles.append([right, img])
+                tiles.append([right, img, it])
                 right += img.width
+            with self.lock:
+                has_slips = any(it[0] == 'slip' for it in self.items)
+            if pinned and not has_slips:
+                pinned = None
             frame = Image.new('RGB', (W, H))
-            for x, img in tiles:
+            for x, img, it in tiles:
                 if x < W:
                     frame.paste(img, (x, 0))
+            if pinned:
+                if now - pinned[2] > 2:   # keep its count / status current
+                    pinned[0], pinned[2] = self.fresh_slip_img(pinned[1]), now
+                px = 0
+                nxt = next((t for t in tiles if t[2][0] == 'slip'), None)
+                if nxt and nxt[0] < pinned[0].width:
+                    px = nxt[0] - pinned[0].width   # the next header shoves it out
+                frame.paste(pinned[0], (px, 0))
             self.panel.show(frame)
 
     def flash(self, text, kind, anim=None):
