@@ -5,6 +5,7 @@
   "name": "bluehorseshoe-relay",
   "main": "src/worker.js",
   "compatibility_date": "2026-06-01",
+  "workers_dev": true,
   "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"] },
   "d1_databases": [
     { "binding": "DB", "database_name": "bluehorseshoe-relay", "database_id": "ff72fff7-55be-4f7b-8983-bec3a3efc29c" }
