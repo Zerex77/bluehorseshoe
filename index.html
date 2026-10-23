@@ -1686,10 +1686,10 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261024000000';</script>
-<script src="runtime.js?v=20261024000000"></script>
-<script src="fantasy.js?v=20261024000000"></script>
-<script src="lines.js?v=20261024000000"></script>
+<script>window.BH_VERSION='20261024003000';</script>
+<script src="runtime.js?v=20261024003000"></script>
+<script src="fantasy.js?v=20261024003000"></script>
+<script src="lines.js?v=20261024003000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -2134,10 +2134,20 @@ class Component extends DCLogic {
     var fmtName = rec === 1 ? 'PPR' : rec === 0.5 ? 'Half PPR' : rec === 0 ? 'Standard' : rec + ' per catch';
     var ctx = { games: BHFantasy.weekGames(NFL), dvp: F.dvp, rec: rec };
     var cache = {};
-    var proj = function (key) { if (cache[key]) return cache[key]; var p = P[key]; return (cache[key] = p ? BHFantasy.project(p, ctx) : null); };
     var keyOfSleeper = function (sid) { return SLX[sid] || (/^[A-Z]{2,3}$/.test(sid) ? 'DEF_' + BHFantasy.NV(sid) : null); };
+    // real points for games that started (Sleeper's live scoring for every rostered player in the league)
+    var live = {};
+    ((this.ffLeague && this.ffLeague.matchups) || []).forEach(function (m) { Object.keys(m.players_points || {}).forEach(function (sid) { var k = keyOfSleeper(sid); if (k) live[k] = m.players_points[sid]; }); });
+    var proj = function (key) {
+      if (cache[key]) return cache[key];
+      var p = P[key]; if (!p) return null;
+      var r = BHFantasy.project(p, ctx);
+      if (r.locked) { var pts = live[key]; r.pts = pts != null ? Math.round(pts * 10) / 10 : 0; r.lo = r.hi = r.pts; r.sd = 0; r.liveTxt = (r.game.state === 'in' ? 'Live · ' : 'Final · ') + (pts != null ? r.pts.toFixed(1) + ' pts' : 'not on a roster here'); }
+      return (cache[key] = r);
+    };
     var grade = function (pj, pos) {
-      if (!pj || !pj.game) return { txt: 'No game', style: 'color: #7D89A3;' };
+      if (!pj || !pj.game) return { txt: 'Bye', style: 'color: #7D89A3;' };
+      if (pj.locked) return { txt: pj.liveTxt, style: 'color: ' + (pj.game.state === 'in' ? '#FFD166' : '#9CC2FF') + ';' };
       var g = pj.game, d = pj.dvp, opp = (g.home ? 'vs ' : '@ ') + g.opp;
       if (!d) return { txt: opp, style: 'color: ' + MUTED + ';' };
       var col = d.rk >= 25 ? '#3FD18A' : d.rk <= 8 ? '#FF8A80' : MUTED;
@@ -2179,9 +2189,10 @@ class Component extends DCLogic {
       var slots = (lg.league.roster_positions || []).filter(function (x) { return x !== 'BN' && x !== 'IR' && x !== 'TAXI'; });
       var teamOf = function (r) {
         var keys = (r.players || []).map(keyOfSleeper).filter(Boolean);
-        var cands = keys.map(function (k) { var p = P[k], pj = proj(k); return { key: k, pos: p.pos, proj: pj && pj.has ? pj.pts : 0, sd: pj && pj.sd ? pj.sd : 0 }; });
-        var best = BHFantasy.optimize(slots, cands);
+        var cands = keys.map(function (k) { var p = P[k], pj = proj(k); return { key: k, pos: p.pos, proj: pj && pj.has ? pj.pts : 0, sd: pj && pj.sd ? pj.sd : 0, locked: !!(pj && pj.locked) }; });
         var cur = (r.starters || []).map(keyOfSleeper);
+        var fixed = cur.map(function (k) { var pj = k && proj(k); return pj && pj.locked ? k : null; });
+        var best = BHFantasy.optimize(slots, cands, fixed);
         var curProj = cur.reduce(function (a, k) { var pj = k && proj(k); return a + (pj && pj.has ? pj.pts : 0); }, 0);
         var bestProj = best.reduce(function (a, x) { return a + (x ? x.proj : 0); }, 0);
         var sd = Math.sqrt(best.reduce(function (a, x) { return a + (x ? x.sd * x.sd : 0); }, 0)) || 20;

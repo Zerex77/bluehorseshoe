@@ -335,7 +335,9 @@
   function buildNfl(json, injJson, extra) {
     var inj = readInjuries(injJson || {});
     var events = (g(json, 'events') || []).map(readEvent).filter(Boolean);
-    var games = [], legs = [], injMap = {}, liveIds = {}, shortToId = {}, slate = [];
+    var games = [], legs = [], injMap = {}, liveIds = {}, shortToId = {}, slate = [], played = {};
+    // teams whose game this week has started or finished (the Fantasy tab uses real points for them)
+    events.forEach(function (e) { if (e.state && e.state !== 'pre') { played[e.a.abbreviation] = e.state; played[e.h.abbreviation] = e.state; } });
     var firstDate = null;
     events.forEach(function (e) {
       if (e.state !== 'pre' || !e.odds || e.odds.aNow == null) return;
@@ -583,7 +585,7 @@
     var wk = g(json, 'week.number');
     return {
       games: games, legs: legs, mu: {}, inj: injMap, screen: [], publicBoard: publicBoard,
-      slate: slate, injTeams: inj.byTeam, injAll: inj.all || null, weather: extra.weather || null, model: extra.nflModel || null,
+      slate: slate, played: played, injTeams: inj.byTeam, injAll: inj.all || null, weather: extra.weather || null, model: extra.nflModel || null,
       lineCheck: lc.rows, books: lc.books, bookShort: lc.bookShort, bookDefault: lc.def, booksAsOf: lc.asOf,
       chip: 'NFL' + (wk ? ' · Week ' + wk : '') + (firstDate ? ' · from ' + etDate(firstDate) : ''),
       count: games.length

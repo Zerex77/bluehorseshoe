@@ -22,6 +22,7 @@
       out[a] = { opp: h, home: false, imp: aImp, oppImp: hImp, date: s.date, gid: s.id, short: s.short, spread: hs != null ? -hs : null, tot: tot };
       out[h] = { opp: a, home: true, imp: hImp, oppImp: aImp, date: s.date, gid: s.id, short: s.short, spread: hs, tot: tot };
     });
+    Object.keys((nfl && nfl.played) || {}).forEach(function (t) { var k = NV(t); if (!out[k]) out[k] = { locked: true, state: nfl.played[t], opp: null }; });
     return out;
   }
 
@@ -37,7 +38,8 @@
     var fmt = ctx.rec == null ? 1 : ctx.rec; // points per reception
     var g = ctx.games[p.tm];
     var res = { pts: 0, lo: 0, hi: 0, why: [], game: g || null, has: !!g, injMult: 1 };
-    if (!g) { res.why.push({ k: 'No game listed', v: 'bye week, or the game already started' }); return res; }
+    if (!g) { res.why.push({ k: 'No game listed', v: 'bye week' }); return res; }
+    if (g.locked) { res.locked = true; res.has = true; res.why.push({ k: g.state === 'in' ? 'Playing now' : 'Already played', v: 'points come from the live box score' }); return res; }
     if (!p.g) { res.why.push({ k: 'No stats yet', v: 'no games played this season' }); return res; }
     var season = fmt === 1 ? p.ppg : fmt === 0.5 && p.half != null ? p.half : p.std != null ? p.std : p.ppg;
     var ratio = p.ppg ? season / p.ppg : 1;
@@ -74,11 +76,14 @@
 
   // ---------- lineup: fill the league's slots with the best projections
   var ELIG = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], K: ['K'], DEF: ['DEF'], FLEX: ['RB', 'WR', 'TE'], WRRB_FLEX: ['RB', 'WR'], REC_FLEX: ['WR', 'TE'], SUPER_FLEX: ['QB', 'RB', 'WR', 'TE'] };
-  function optimize(slots, players) {
-    // players: [{ key, pos, proj }]; fixed slots first, then the flexible ones from most to least restrictive
-    var order = slots.map(function (s, i) { return { s: s, i: i }; }).filter(function (x) { return ELIG[x.s]; })
+  function optimize(slots, players, fixed) {
+    // players: [{ key, pos, proj, locked }]; fixed: a player already locked into each slot (game started), or null.
+    // Locked players can't move, so they keep their slot and locked bench players can't come in.
+    var out = new Array(slots.length), used = {};
+    (fixed || []).forEach(function (k, i) { if (k) { var p = players.filter(function (x) { return x.key === k; })[0]; if (p) { out[i] = p; used[k] = 1; } } });
+    players.forEach(function (p) { if (p.locked && !used[p.key]) used[p.key] = 1; });
+    var order = slots.map(function (s, i) { return { s: s, i: i }; }).filter(function (x) { return ELIG[x.s] && !out[x.i]; })
       .sort(function (a, b) { return ELIG[a.s].length - ELIG[b.s].length; });
-    var used = {}, out = new Array(slots.length);
     order.forEach(function (x) {
       var best = null;
       players.forEach(function (p) { if (!used[p.key] && ELIG[x.s].indexOf(p.pos) !== -1 && (!best || p.proj > best.proj)) best = p; });
