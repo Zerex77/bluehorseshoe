@@ -155,7 +155,7 @@
       tree.kids.forEach(function (k) { build(k, [vals], out, false); });
       patchKids(host, out);
     }
-    ['click', 'change', 'input'].forEach(function (type) {
+    ['click', 'change', 'input', 'submit'].forEach(function (type) {
       host.addEventListener(type, function (ev) {
         var el = ev.target;
         while (el && el !== host) {

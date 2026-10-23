@@ -68,6 +68,7 @@ button{font:inherit}
       <nav aria-label="Pages" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;">
         <button type="button" onClick="{{nflTop.pick}}" aria-current="{{nflTop.current}}" style="{{nflTop.style}}">NFL</button>
         <button type="button" onClick="{{collegeTab.pick}}" aria-current="{{collegeTab.current}}" style="{{collegeTab.style}}">College</button>
+        <button type="button" onClick="{{fantasyTab.pick}}" aria-current="{{fantasyTab.current}}" style="{{fantasyTab.style}}">Fantasy</button>
         <button type="button" onClick="{{recordTab.pick}}" aria-current="{{recordTab.current}}" style="{{recordTab.style}}">Track record</button>
         <a href="live.html" target="bhlive" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #EEF2FA; text-decoration: none;"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #FF5A5F;"></span>Live</a>
       </nav>
@@ -851,6 +852,237 @@ button{font:inherit}
       </article>
     </sc-if>
 
+    <sc-if value="{{isFantasy}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 44px; padding-top: 8px;">
+        <sc-if value="{{ff.loading}}" hint-placeholder-val="{{ false }}"><div style="color: #A9B5CF; padding: 24px 0;">Loading fantasy stats…</div></sc-if>
+        <sc-if value="{{ff.hasErr}}" hint-placeholder-val="{{ false }}"><div role="status" style="border: 1px solid #6B4A16; background: #33240E; color: #FFB86B; border-radius: 8px; padding: 10px 14px;">{{ff.err}}</div></sc-if>
+
+        <sc-if value="{{ff.hasPlayer}}" hint-placeholder-val="{{ false }}">
+          <article class="bh-mp" aria-labelledby="fp-title">
+            <button type="button" onClick="{{ff.closePlayer}}" style="all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #7FB0FF; font-weight: 600; font-size: 14px;">← Back to fantasy</button>
+            <div class="bh-mp-kicker">Fantasy · {{ff.fmtName}}</div>
+            <div style="display: flex; flex-direction: column; gap: 6px; text-align: center; align-items: center;">
+              <h1 id="fp-title" style="margin: 0; font-size: 40px !important;">{{ff.player.name}}</h1>
+              <div style="font-size: 14px; color: #A9B5CF;">{{ff.player.sub}}</div>
+              <sc-if value="{{ff.player.hasInj}}" hint-placeholder-val="{{ false }}"><span style="{{ff.player.injStyle}}">{{ff.player.inj}}</span></sc-if>
+              <div style="font-size: 13px; color: #A9B5CF;">{{ff.player.owned}}</div>
+            </div>
+            <div class="bh-mp-tiles">
+              <div class="bh-mp-tile"><div class="bh-mx-k">This week</div><div class="bh-mp-tv">{{ff.player.proj}}</div><div class="bh-mp-ts">range {{ff.player.range}}</div></div>
+              <div class="bh-mp-tile"><div class="bh-mx-k">Season avg</div><div class="bh-mp-tv">{{ff.player.ppg}}</div><div class="bh-mp-ts">points a game</div></div>
+              <div class="bh-mp-tile"><div class="bh-mx-k">Last 3</div><div class="bh-mp-tv">{{ff.player.l3}}</div><div class="bh-mp-ts">points a game</div></div>
+              <div class="bh-mp-tile"><div class="bh-mx-k">Matchup</div><div style="{{ff.player.gradeStyle}}; margin-top: 6px; font-weight: 700;">{{ff.player.grade}}</div><div class="bh-mp-ts">{{ff.player.game}}</div></div>
+            </div>
+            <sc-if value="{{ff.player.hasWhy}}" hint-placeholder-val="{{ true }}">
+              <section style="display: flex; flex-direction: column; gap: 10px;">
+                <h2 class="bh-mp-h"><span>01</span> / Why this projection</h2>
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; overflow: hidden;">
+                  <sc-for list="{{ff.player.why}}" as="wy" hint-placeholder-count="4">
+                    <div style="display: grid; grid-template-columns: 140px 1fr; gap: 10px; padding: 11px 14px; border-top: 1px solid #1E2A45; font-size: 13px;"><span class="bh-mx-k" style="padding-top: 1px;">{{wy.k}}</span><span style="line-height: 1.45;">{{wy.v}}</span></div>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-if>
+            <sc-if value="{{ff.player.hasBars}}" hint-placeholder-val="{{ true }}">
+              <section style="display: flex; flex-direction: column; gap: 10px;">
+                <h2 class="bh-mp-h"><span>02</span> / Week by week</h2>
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 12px; overflow-x: auto;">
+                  <svg viewBox="0 0 {{ff.player.chartW}} 172" width="100%" role="img" aria-label="Fantasy points by week" style="display: block; min-width: 300px; max-width: 640px; margin: 0 auto;">
+                    <line x1="14" y1="140" x2="{{ff.player.chartW}}" y2="140" stroke="#2A3A5E" stroke-width="1"></line>
+                    <line x1="14" y1="{{ff.player.avgY}}" x2="{{ff.player.chartW}}" y2="{{ff.player.avgY}}" stroke="#7FB0FF" stroke-width="1" stroke-dasharray="4 3"></line>
+                    <sc-for list="{{ff.player.bars}}" as="br" hint-placeholder-count="6">
+                      <rect x="{{br.x}}" y="{{br.y}}" width="{{br.w}}" height="{{br.h}}" rx="3" fill="{{br.fill}}"></rect>
+                      <text x="{{br.lx}}" y="{{br.vy}}" text-anchor="middle" font-size="10" font-weight="700" fill="#EEF2FA" font-family="IBM Plex Mono, monospace">{{br.v}}</text>
+                      <text x="{{br.lx}}" y="154" text-anchor="middle" font-size="10" fill="#A9B5CF" font-family="Inter, sans-serif">{{br.lab}}</text>
+                      <text x="{{br.lx}}" y="167" text-anchor="middle" font-size="9" fill="#7D89A3" font-family="Inter, sans-serif">{{br.opp}}</text>
+                    </sc-for>
+                  </svg>
+                  <div style="font-size: 12px; color: #7D89A3; text-align: center; margin-top: 4px;">Dashed line = season average. Brighter bars beat it.</div>
+                </div>
+              </section>
+            </sc-if>
+            <section style="display: flex; flex-direction: column; gap: 10px;">
+              <h2 class="bh-mp-h"><span>03</span> / Usage</h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1px; background: #1E2A45; border: 1px solid #1E2A45; border-radius: 12px; overflow: hidden;">
+                <sc-for list="{{ff.player.usageRows}}" as="ur" hint-placeholder-count="6">
+                  <div style="background: #111A2E; padding: 12px 14px;"><div class="bh-mx-k">{{ur.k}}</div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; margin-top: 4px;">{{ur.v}}</div></div>
+                </sc-for>
+              </div>
+            </section>
+            <sc-if value="{{ff.player.hasProps}}" hint-placeholder-val="{{ false }}">
+              <section style="display: flex; flex-direction: column; gap: 10px;">
+                <h2 class="bh-mp-h"><span>04</span> / Props this week</h2>
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; overflow: hidden;">
+                  <sc-for list="{{ff.player.props}}" as="pp" hint-placeholder-count="3">
+                    <button type="button" onClick="{{pp.open}}" style="all: unset; box-sizing: border-box; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border-top: 1px solid #1E2A45;">
+                      <span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{pp.label}}</span><span style="font-size: 12px; color: #3FD18A; font-weight: 700;">{{pp.tag}}</span></span>
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;">{{pp.odds}} <span style="color: #7FB0FF; font-size: 14px;">›</span></span>
+                    </button>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-if>
+            <div style="font-size: 12px; color: #7D89A3; line-height: 1.5; border-top: 1px solid #1E2A45; padding-top: 12px;">Stats: nflverse (through week {{ff.statsWeek}}) · players and injuries: Sleeper · lines: ESPN. Updated {{ff.updated}}.</div>
+          </article>
+        </sc-if>
+
+        <sc-if value="{{ff.noPlayer}}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ff.ready}}" hint-placeholder-val="{{ true }}">
+          <section style="display: flex; flex-wrap: wrap; gap: 40px; align-items: stretch;">
+            <div style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px; justify-content: center;">
+              <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7FB0FF;">Fantasy · stats through week {{ff.statsWeek}} · {{ff.fmtName}}</div>
+              <h1 class="bh-hero" style="margin: 0;">Set the<br>lineup.</h1>
+              <p style="margin: 0; max-width: 520px; font-size: 18px; line-height: 1.5; color: #A9B5CF;">Projections built from recent production, the matchup and this week’s Vegas lines. Connect your league for start/sit calls, your matchup odds and the best players on waivers.</p>
+              <sc-if value="{{ff.notConnected}}" hint-placeholder-val="{{ true }}">
+                <form onSubmit="{{ff.connect}}" style="display: flex; flex-wrap: wrap; gap: 8px; max-width: 520px;">
+                  <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px;"><span class="bh-mx-k">Sleeper username</span>
+                    <input id="ff-user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="your Sleeper username" style="min-height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font: 500 16px Inter, sans-serif;">
+                  </label>
+                  <button type="button" onClick="{{ff.connect}}" style="align-self: flex-end; min-height: 48px; padding: 0 22px; border-radius: 10px; border: none; background: #1D5FD6; color: #FFFFFF; font: 700 15px Inter, sans-serif; cursor: pointer;">Connect league</button>
+                  <span style="flex-basis: 100%; font-size: 12px; color: #7D89A3;">Sleeper today. ESPN and Yahoo leagues are coming next.</span>
+                </form>
+              </sc-if>
+              <sc-if value="{{ff.hasStatus}}" hint-placeholder-val="{{ false }}"><div role="status" style="color: #A9B5CF;">{{ff.status}}</div></sc-if>
+              <sc-if value="{{ff.hasErr2}}" hint-placeholder-val="{{ false }}"><div role="status" style="color: #FFB86B;">{{ff.err2}}</div></sc-if>
+              <sc-if value="{{ff.connected}}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                  <span style="font-size: 13px; color: #A9B5CF;">Sleeper · <b style="color: #EEF2FA;">{{ff.userName}}</b></span>
+                  <sc-for list="{{ff.leagueChips}}" as="lc" hint-placeholder-count="2"><button type="button" onClick="{{lc.pick}}" aria-pressed="{{lc.on}}" style="{{lc.style}}">{{lc.label}}</button></sc-for>
+                  <button type="button" onClick="{{ff.disconnect}}" style="background: none; border: none; color: #7D89A3; font: 500 13px Inter, sans-serif; text-decoration: underline; cursor: pointer;">Switch account</button>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ff.hasTeam}}" hint-placeholder-val="{{ false }}">
+              <article aria-label="Your lineup" style="flex: 1 1 440px; min-width: 0; background: #111A2E; border: 1px solid #263556; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column;">
+                <div style="background: #1D5FD6; color: #FFFFFF; padding: 18px 22px; display: flex; align-items: center; gap: 14px;">
+                  <div style="flex: 1 1 auto; min-width: 0;">
+                    <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: anywhere;">{{ff.teamName}}</div>
+                    <div style="font-size: 13px; color: #E3ECFF; margin-top: 4px;">{{ff.record}} · best lineup</div>
+                  </div>
+                  <div style="text-align: right;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; line-height: 1;">{{ff.myProj}}</div><div style="font-size: 11px; color: #E3ECFF;">projected</div></div>
+                </div>
+                <sc-if value="{{ff.hasSwaps}}" hint-placeholder-val="{{ false }}">
+                  <div style="padding: 12px 22px; background: #0F3A25; display: flex; flex-direction: column; gap: 4px;">
+                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #3FD18A;">Lineup changes</span>
+                    <sc-for list="{{ff.swaps}}" as="sw" hint-placeholder-count="2"><span style="font-size: 14px;">Start <b>{{sw.inn}}</b> over {{sw.out2}} <span style="color: #3FD18A; font-family: 'IBM Plex Mono', monospace;">+{{sw.gain}}</span></span></sc-for>
+                    <span style="font-size: 12px; color: #A9B5CF;">Your current lineup projects {{ff.curProj}}.</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ff.noSwaps}}" hint-placeholder-val="{{ true }}"><div style="padding: 10px 22px; background: #0E1628; font-size: 13px; color: #3FD18A;">Your lineup is already the best one.</div></sc-if>
+                <ol style="list-style: none; margin: 0; padding: 4px 22px;">
+                  <sc-for list="{{ff.lineup}}" as="lu" hint-placeholder-count="10">
+                    <li style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px dashed #2A3A5E;">
+                      <span style="width: 44px; flex: none; font-size: 11px; font-weight: 800; color: #7D89A3; letter-spacing: 0.04em;">{{lu.slot}}</span>
+                      <button type="button" onClick="{{lu.open}}" style="all: unset; cursor: pointer; flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                        <span style="font-weight: 700; font-size: 15px;">{{lu.name}} <span style="font-weight: 500; font-size: 12px; color: #7D89A3;">{{lu.pos}} {{lu.tm}}</span></span>
+                        <span style="{{lu.gradeStyle}}">{{lu.grade}}</span>
+                        <sc-if value="{{lu.hasInj}}" hint-placeholder-val="{{ false }}"><span style="{{lu.injStyle}}">{{lu.inj}}</span></sc-if>
+                        <sc-if value="{{lu.swap}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 700; color: #3FD18A;">{{lu.swapTxt}}</span></sc-if>
+                      </button>
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; flex: none;">{{lu.proj}}</span>
+                    </li>
+                  </sc-for>
+                </ol>
+                <sc-if value="{{ff.hasOpp}}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top: auto; padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #1E2A45;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"><span style="font-size: 13px; color: #A9B5CF;">vs <b style="color: #EEF2FA;">{{ff.oppName}}</b> ({{ff.oppRecord}}) · projected {{ff.oppProj}}</span><span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px;">{{ff.winPct}}</span></div>
+                    <div style="height: 10px; border-radius: 6px; background: #1E2A45; overflow: hidden;"><div style="{{ff.winBar}}"></div></div>
+                    <div style="font-size: 12px; color: #7D89A3;">Chance to win with the best lineup. <sc-if value="{{ff.hasLive}}" hint-placeholder-val="{{ false }}">Live: {{ff.livePts}}</sc-if></div>
+                  </div>
+                </sc-if>
+              </article>
+            </sc-if>
+          </section>
+
+          <sc-if value="{{ff.hasOpp}}" hint-placeholder-val="{{ false }}">
+            <section style="display: flex; flex-direction: column; gap: 16px;">
+              <h2 class="bh-sec" style="margin: 0;">This week's matchup</h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; overflow: hidden;">
+                  <div style="padding: 12px 16px; background: #0E1628; display: flex; justify-content: space-between; font-weight: 700;"><span>Bench</span><span style="color: #7D89A3; font-weight: 500; font-size: 13px;">tap for details</span></div>
+                  <sc-for list="{{ff.bench}}" as="bn" hint-placeholder-count="5">
+                    <button type="button" onClick="{{bn.open}}" style="all: unset; box-sizing: border-box; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border-top: 1px solid #1E2A45;">
+                      <span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{bn.name}} <span style="font-size: 12px; color: #7D89A3; font-weight: 500;">{{bn.pos}} {{bn.tm}}</span></span><span style="{{bn.gradeStyle}}">{{bn.grade}}</span></span>
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;">{{bn.proj}}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; overflow: hidden;">
+                  <div style="padding: 12px 16px; background: #0E1628; display: flex; justify-content: space-between; font-weight: 700;"><span>{{ff.oppName}}</span><span style="font-family: 'Barlow Condensed', sans-serif; font-size: 20px;">{{ff.oppProj}}</span></div>
+                  <sc-for list="{{ff.oppLineup}}" as="ol" hint-placeholder-count="10">
+                    <button type="button" onClick="{{ol.open}}" style="all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 16px; border-top: 1px solid #1E2A45;">
+                      <span style="width: 40px; flex: none; font-size: 11px; font-weight: 800; color: #7D89A3;">{{ol.slot}}</span>
+                      <span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-weight: 600;">{{ol.name}}</span><span style="{{ol.gradeStyle}}">{{ol.grade}}</span></span>
+                      <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;">{{ol.proj}}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ff.hasAvail}}" hint-placeholder-val="{{ false }}">
+            <section style="display: flex; flex-direction: column; gap: 16px;">
+              <h2 class="bh-sec" style="margin: 0;">Best available</h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+                <sc-for list="{{ff.avail}}" as="av" hint-placeholder-count="4">
+                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; overflow: hidden;">
+                    <div style="padding: 10px 16px; background: #0E1628; font-weight: 800; letter-spacing: 0.06em;">{{av.pos}}</div>
+                    <sc-for list="{{av.rows}}" as="ar" hint-placeholder-count="3">
+                      <button type="button" onClick="{{ar.open}}" style="all: unset; box-sizing: border-box; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border-top: 1px solid #1E2A45;">
+                        <span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{ar.name}} <span style="font-size: 12px; color: #7D89A3; font-weight: 500;">{{ar.tm}}</span></span><span style="{{ar.gradeStyle}}">{{ar.grade}}</span></span>
+                        <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;">{{ar.proj}}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+          </sc-if>
+
+          <section style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px;">
+              <h2 class="bh-sec" style="margin: 0;">This week's rankings</h2>
+              <div role="group" aria-label="Position" style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{ff.posChips}}" as="pc" hint-placeholder-count="7"><button type="button" onClick="{{pc.pick}}" aria-pressed="{{pc.on}}" style="{{pc.style}}">{{pc.label}}</button></sc-for></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;">
+              <sc-for list="{{ff.ranks}}" as="rk" hint-placeholder-count="9">
+                <button type="button" onClick="{{rk.open}}" style="all: unset; box-sizing: border-box; cursor: pointer; background: #111A2E; border: 1px solid #1E2A45; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+                  <span style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7D89A3; width: 22px;">{{rk.rk}}</span>
+                    <span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-weight: 700; font-size: 16px;">{{rk.name}}</span><span style="font-size: 12px; color: #7D89A3;">{{rk.pos}} · {{rk.tm}} <span style="{{rk.ownedStyle}}">{{rk.owned}}</span></span></span>
+                    <span style="text-align: right;"><span style="display: block; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1;">{{rk.proj}}</span><span style="font-size: 11px; color: #7D89A3;">{{rk.range}}</span></span>
+                  </span>
+                  <span style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="{{rk.gradeStyle}}">{{rk.grade}}</span>
+                    <sc-if value="{{rk.hasSpark}}" hint-placeholder-val="{{ true }}"><svg width="74" height="24" viewBox="0 0 74 24" aria-hidden="true"><polyline points="{{rk.spark}}" fill="none" stroke="#7FB0FF" stroke-width="2" stroke-linejoin="round"></polyline></svg></sc-if>
+                  </span>
+                  <span style="display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: #A9B5CF;"><span>avg {{rk.ppg}} · last 3 {{rk.l3}}</span><span>{{rk.usage}}</span><sc-if value="{{rk.hasInj}}" hint-placeholder-val="{{ false }}"><span style="{{rk.injStyle}}">{{rk.inj}}</span></sc-if></span>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px;">
+              <h2 class="bh-sec" style="margin: 0;">Defense vs position</h2>
+              <div role="group" aria-label="Position" style="display: flex; gap: 6px;"><sc-for list="{{ff.dvpChips}}" as="dc" hint-placeholder-count="4"><button type="button" onClick="{{dc.pick}}" aria-pressed="{{dc.on}}" style="{{dc.style}}">{{dc.label}}</button></sc-for></div>
+            </div>
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 16px; overflow: hidden;">
+              <div style="display: grid; grid-template-columns: 52px 1fr 62px; gap: 10px; padding: 10px 14px; background: #0E1628; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #7D89A3;"><span>Defense</span><span>Points allowed to {{ff.dvpPos}}s a game (league avg {{ff.dvpAvg}})</span><span style="text-align: right;">This week</span></div>
+              <sc-for list="{{ff.dvpRows}}" as="dv" hint-placeholder-count="12">
+                <div style="{{dv.cell}}"><span style="font-weight: 700;">{{dv.tm}}</span><span style="display: flex; align-items: center; gap: 8px;"><span style="{{dv.bar}}"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{dv.pg}}</span></span><span style="text-align: right; font-size: 12px; color: #A9B5CF;">{{dv.opp}}</span></div>
+              </sc-for>
+              <div style="padding: 10px 14px; font-size: 12px; color: #7D89A3; border-top: 1px solid #1E2A45;">Easiest matchups at the top (green), toughest at the bottom (red). PPR points.</div>
+            </div>
+          </section>
+          <div style="font-size: 12px; color: #7D89A3; line-height: 1.5;">Stats: nflverse (through week {{ff.statsWeek}}) · players and injuries: Sleeper · lines: ESPN · updated {{ff.updated}}. Projections are estimates, not guarantees.</div>
+        </sc-if>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <sc-if value="{{isCollege}}" hint-placeholder-val="{{ false }}">
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;">
@@ -1454,9 +1686,10 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261023234500';</script>
-<script src="runtime.js?v=20261023234500"></script>
-<script src="lines.js?v=20261023234500"></script>
+<script>window.BH_VERSION='20261024000000';</script>
+<script src="runtime.js?v=20261024000000"></script>
+<script src="fantasy.js?v=20261024000000"></script>
+<script src="lines.js?v=20261024000000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1844,6 +2077,209 @@ class Component extends DCLogic {
     try { if (replace) history.replaceState(null, '', h); else { history.pushState(null, '', h); this._mxPushed = true; } } catch (e) { location.hash = h; }
     this.setState({ page: sport === 'nfl' ? (this.state.page === 'college' || this.state.page === 'record' ? 'builder' : this.state.page) : 'college', mxSport: sport, mxG: g, mxLeg: label || null, mxCat: null, mxAdv: null });
     if (!replace) try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  // ================= Fantasy =================
+  // data/fantasy.json is loaded only while the Fantasy tab is open (at most every 30 minutes).
+  ffEnsure() {
+    var self = this, now = Date.now();
+    if (!this._ffTriedSaved) {
+      this._ffTriedSaved = true;
+      var saved = null; try { saved = localStorage.getItem('bh.ff.user'); } catch (e) {}
+      if (saved) this.ffConnect(saved);
+    }
+    if (this._ffLoading || (this.ffData && now - this._ffAt < 30 * 60e3)) return;
+    this._ffLoading = true;
+    fetch('data/fantasy.json?t=' + Math.floor(now / 1800e3), { cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (d) { self.ffData = d; self._ffAt = Date.now(); self.ffErr = null; }).catch(function () { self.ffErr = 'Fantasy stats are unavailable right now.'; })
+      .then(function () { self._ffLoading = false; self.forceUpdate(); });
+  }
+  ffConnect(name) {
+    var self = this;
+    name = String(name || '').trim();
+    if (!name) return;
+    this.ffStatus = 'Connecting to Sleeper…'; this.ffErr2 = null; this.forceUpdate();
+    BHFantasy.sleeperUser(name).then(function (u) {
+      try { localStorage.setItem('bh.ff.user', name); } catch (e) {}
+      self.ffUser = u;
+      var saved = null; try { saved = localStorage.getItem('bh.ff.league'); } catch (e) {}
+      var L = u.leagues.filter(function (l) { return l.league_id === saved; })[0] || u.leagues[0];
+      if (!L) { self.ffStatus = null; self.ffErr2 = name + ' has no NFL leagues on Sleeper this season.'; self.forceUpdate(); return; }
+      return self.ffLoadLeague(L.league_id);
+    }).catch(function (e) { self.ffStatus = null; self.ffErr2 = String(e.message || e).indexOf('No Sleeper user') === 0 ? e.message : 'Couldn’t reach Sleeper. Try again in a minute.'; self.forceUpdate(); });
+  }
+  ffLoadLeague(id) {
+    var self = this, u = this.ffUser;
+    if (!u) return;
+    this.ffStatus = 'Loading your league…'; this.forceUpdate();
+    try { localStorage.setItem('bh.ff.league', id); } catch (e) {}
+    return BHFantasy.sleeperLeague(id, u.state.week).then(function (lg) { self.ffLeague = lg; self.ffStatus = null; self.forceUpdate(); })
+      .catch(function () { self.ffStatus = null; self.ffErr2 = 'Couldn’t load that league from Sleeper.'; self.forceUpdate(); });
+  }
+  ffDisconnect() { try { localStorage.removeItem('bh.ff.user'); localStorage.removeItem('bh.ff.league'); } catch (e) {} this.ffUser = null; this.ffLeague = null; this.forceUpdate(); }
+  openPlayer(key) {
+    try { history.pushState(null, '', '#fp/' + encodeURIComponent(key)); this._ffPushed = true; } catch (e) { location.hash = '#fp/' + key; }
+    this.setState({ page: 'fantasy', ffP: key, mxG: null });
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  ffVals(st) {
+    var self = this, F = this.ffData, NFL = this.data();
+    var MUTED = '#A9B5CF';
+    var out = { loading: !F && !this.ffErr, err: this.ffErr || '', hasErr: !!this.ffErr, ready: !!F };
+    if (!F) return out;
+    var P = F.players, SLX = F.sleeper || {};
+    var lg = this.ffLeague, rec = lg && lg.league && lg.league.scoring_settings ? lg.league.scoring_settings.rec : 1;
+    if (rec == null) rec = 1;
+    var fmtName = rec === 1 ? 'PPR' : rec === 0.5 ? 'Half PPR' : rec === 0 ? 'Standard' : rec + ' per catch';
+    var ctx = { games: BHFantasy.weekGames(NFL), dvp: F.dvp, rec: rec };
+    var cache = {};
+    var proj = function (key) { if (cache[key]) return cache[key]; var p = P[key]; return (cache[key] = p ? BHFantasy.project(p, ctx) : null); };
+    var keyOfSleeper = function (sid) { return SLX[sid] || (/^[A-Z]{2,3}$/.test(sid) ? 'DEF_' + BHFantasy.NV(sid) : null); };
+    var grade = function (pj, pos) {
+      if (!pj || !pj.game) return { txt: 'No game', style: 'color: #7D89A3;' };
+      var g = pj.game, d = pj.dvp, opp = (g.home ? 'vs ' : '@ ') + g.opp;
+      if (!d) return { txt: opp, style: 'color: ' + MUTED + ';' };
+      var col = d.rk >= 25 ? '#3FD18A' : d.rk <= 8 ? '#FF8A80' : MUTED;
+      return { txt: opp + ' · ' + (d.rk >= 25 ? 'great' : d.rk >= 17 ? 'good' : d.rk >= 9 ? 'tough' : 'very tough') + ' matchup', style: 'color: ' + col + ';' };
+    };
+    var injTag = function (p) { return p && p.inj ? p.inj + (p.injBody ? ' · ' + p.injBody : '') : ''; };
+    var injStyle = function (p) { var c = !p || !p.inj ? '#7D89A3' : (p.inj === 'Questionable' ? '#FFD166' : '#FF7A7A'); return 'font-size: 11px; font-weight: 700; color: ' + c + ';'; };
+    var spark = function (p) {
+      var w = (p.wk || []).slice(-8); if (w.length < 2) return '';
+      var mx = Math.max.apply(null, w.map(function (x) { return x[1]; })) || 1;
+      return w.map(function (x, i) { return Math.round(i / (w.length - 1) * 70 + 2) + ',' + Math.round(22 - x[1] / mx * 20); }).join(' ');
+    };
+    var row = function (key, extra) {
+      var p = P[key]; if (!p) return null;
+      var pj = proj(key), gr = grade(pj, p.pos);
+      return Object.assign({ key: key, name: p.n, pos: p.pos, tm: p.tm, proj: pj && pj.has ? pj.pts.toFixed(1) : '—', range: pj && pj.has && pj.pts ? pj.lo + '–' + pj.hi : '',
+        ppg: p.ppg != null ? p.ppg.toFixed(1) : '—', l3: p.l3 != null ? p.l3.toFixed(1) : '—', grade: gr.txt, gradeStyle: gr.style + ' font-size: 12px;',
+        inj: injTag(p), hasInj: !!p.inj, injStyle: injStyle(p), spark: spark(p), hasSpark: (p.wk || []).length >= 2,
+        usage: p.pos === 'QB' ? (p.u.py ? p.u.py + ' pass yds · ' + p.u.ptd + ' TD · ' + p.u.ry + ' rush yds' : '') : p.pos === 'RB' ? (p.u.car != null ? p.u.car + ' carries · ' + p.u.tgt + ' targets' + (p.u.snap != null ? ' · ' + Math.round(p.u.snap * 100) + '% snaps' : '') : '') : (p.pos === 'WR' || p.pos === 'TE') ? (p.u.tgt != null ? p.u.tgt + ' targets' + (p.u.ts != null ? ' · ' + Math.round(p.u.ts * 100) + '% share' : '') + (p.u.snap != null ? ' · ' + Math.round(p.u.snap * 100) + '% snaps' : '') : '') : '',
+        open: function () { self.openPlayer(key); }, projN: pj && pj.has ? pj.pts : -1 }, extra || {});
+    };
+    out.fmtName = fmtName;
+    out.statsWeek = F.week; out.updated = F.updated ? new Date(F.updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET' : '';
+
+    // ---- league
+    var u = this.ffUser;
+    out.connected = !!u; out.notConnected = !u; out.status = this.ffStatus || ''; out.hasStatus = !!this.ffStatus; out.err2 = this.ffErr2 || ''; out.hasErr2 = !!this.ffErr2;
+    out.connect = function (e) { if (e && e.preventDefault) e.preventDefault(); var el = document.getElementById('ff-user'); self.ffConnect(el ? el.value : ''); };
+    out.disconnect = function () { self.ffDisconnect(); };
+    out.userName = u ? u.user.display_name : '';
+    out.leagueChips = u ? u.leagues.map(function (l) { var on = lg && lg.league && lg.league.league_id === l.league_id;
+      return { label: l.name, on: on ? 'true' : 'false', pick: function () { self.ffLoadLeague(l.league_id); }, style: 'min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; font: 600 13px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') }; }) : [];
+    out.hasTeam = false;
+    var rostered = {};
+    if (u && lg && lg.rosters) {
+      lg.rosters.forEach(function (r) { (r.players || []).forEach(function (pid) { var k = keyOfSleeper(pid); if (k) rostered[k] = 1; }); });
+      var names = {}; (lg.users || []).forEach(function (x) { names[x.user_id] = (x.metadata && x.metadata.team_name) || x.display_name; });
+      var mine = lg.rosters.filter(function (r) { return r.owner_id === u.user.user_id || (r.co_owners || []).indexOf(u.user.user_id) !== -1; })[0];
+      var slots = (lg.league.roster_positions || []).filter(function (x) { return x !== 'BN' && x !== 'IR' && x !== 'TAXI'; });
+      var teamOf = function (r) {
+        var keys = (r.players || []).map(keyOfSleeper).filter(Boolean);
+        var cands = keys.map(function (k) { var p = P[k], pj = proj(k); return { key: k, pos: p.pos, proj: pj && pj.has ? pj.pts : 0, sd: pj && pj.sd ? pj.sd : 0 }; });
+        var best = BHFantasy.optimize(slots, cands);
+        var cur = (r.starters || []).map(keyOfSleeper);
+        var curProj = cur.reduce(function (a, k) { var pj = k && proj(k); return a + (pj && pj.has ? pj.pts : 0); }, 0);
+        var bestProj = best.reduce(function (a, x) { return a + (x ? x.proj : 0); }, 0);
+        var sd = Math.sqrt(best.reduce(function (a, x) { return a + (x ? x.sd * x.sd : 0); }, 0)) || 20;
+        return { keys: keys, best: best, cur: cur, curProj: curProj, bestProj: bestProj, sd: sd };
+      };
+      if (mine) {
+        var T = teamOf(mine);
+        out.hasTeam = true;
+        out.teamName = names[mine.owner_id] || 'Your team';
+        out.record = mine.settings ? mine.settings.wins + '–' + mine.settings.losses + (mine.settings.ties ? '–' + mine.settings.ties : '') : '';
+        var startKeys = {}; T.best.forEach(function (b) { if (b) startKeys[b.key] = 1; });
+        out.lineup = slots.map(function (sl, i) {
+          var b = T.best[i], k = b && b.key, curK = T.cur[i];
+          var rr = k ? row(k) : null;
+          var isNew = k && T.cur.indexOf(k) === -1;
+          return Object.assign(rr || { name: 'Empty', proj: '—', grade: '', gradeStyle: '', tm: '', pos: sl, inj: '', hasInj: false, open: function () {} }, { slot: sl === 'SUPER_FLEX' ? 'SFLX' : sl === 'REC_FLEX' || sl === 'WRRB_FLEX' ? 'FLEX' : sl,
+            swap: !!isNew, swapTxt: isNew ? 'Move into your lineup' : '' });
+        });
+        out.bench = T.keys.filter(function (k) { return !startKeys[k]; }).map(function (k) { return row(k); }).filter(Boolean).sort(function (a, b) { return b.projN - a.projN; });
+        // who comes in and who goes out (by name, not slot): best lineup minus current starters, paired by projection
+        var curSet = {}; T.cur.forEach(function (k) { if (k) curSet[k] = 1; });
+        var ins = T.best.filter(function (b) { return b && !curSet[b.key]; }).sort(function (a, b) { return b.proj - a.proj; });
+        var outs = T.cur.filter(function (k) { return k && !startKeys[k]; }).map(function (k) { var pj = proj(k); return { key: k, proj: pj && pj.has ? pj.pts : 0 }; }).sort(function (a, b) { return a.proj - b.proj; });
+        out.swaps = ins.map(function (b, i) { var o = outs[i]; return { inn: P[b.key] ? P[b.key].n : '', out2: o && P[o.key] ? P[o.key].n : 'an empty spot', gain: (b.proj - (o ? o.proj : 0)).toFixed(1) }; }).filter(function (x) { return +x.gain > 0.2; });
+        out.hasSwaps = out.swaps.length > 0; out.noSwaps = !out.hasSwaps;
+        out.myProj = T.bestProj.toFixed(1); out.curProj = T.curProj.toFixed(1);
+        // this week's opponent
+        var mm = (lg.matchups || []).filter(function (m) { return m.roster_id === mine.roster_id; })[0];
+        var om = mm && mm.matchup_id != null ? (lg.matchups || []).filter(function (m) { return m.matchup_id === mm.matchup_id && m.roster_id !== mine.roster_id; })[0] : null;
+        var oppR = om ? lg.rosters.filter(function (r) { return r.roster_id === om.roster_id; })[0] : null;
+        out.hasOpp = !!oppR;
+        if (oppR) {
+          var O = teamOf(oppR);
+          var oppStart = (om.starters && om.starters.length ? om.starters : oppR.starters || []).map(keyOfSleeper);
+          var oppProj = oppStart.reduce(function (a, k) { var pj = k && proj(k); return a + (pj && pj.has ? pj.pts : 0); }, 0);
+          var w = BHFantasy.winChance(T.bestProj, oppProj, T.sd, O.sd);
+          out.oppName = names[oppR.owner_id] || 'Opponent'; out.oppProj = oppProj.toFixed(1);
+          out.oppRecord = oppR.settings ? oppR.settings.wins + '–' + oppR.settings.losses : '';
+          out.winPct = Math.round(w * 100) + '%';
+          out.winBar = 'height: 100%; border-radius: 6px; background: ' + (w >= 0.5 ? '#3FD18A' : '#FF9F43') + '; width: ' + Math.round(w * 100) + '%;';
+          out.livePts = mm.points ? mm.points.toFixed(2) + ' – ' + (om.points || 0).toFixed(2) : '';
+          out.hasLive = !!(mm.points || om.points);
+          out.oppLineup = slots.map(function (sl, i) { var k = oppStart[i]; var rr = k ? row(k) : null; return Object.assign(rr || { name: 'Empty', proj: '—', grade: '', gradeStyle: '', open: function () {} }, { slot: sl }); });
+        }
+      }
+    }
+    // ---- best available (not on any roster in the league)
+    var avail = function (pos) {
+      return Object.keys(P).filter(function (k) { var p = P[k]; return p.pos === pos && !rostered[k] && (!p.inj || p.inj === 'Questionable'); })
+        .map(function (k) { return row(k); }).filter(function (r) { return r && r.projN > 0; }).sort(function (a, b) { return b.projN - a.projN; }).slice(0, 3);
+    };
+    out.hasAvail = !!(u && lg);
+    out.avail = out.hasAvail ? ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(function (pos) { return { pos: pos, rows: avail(pos) }; }).filter(function (x) { return x.rows.length; }) : [];
+
+    // ---- rankings
+    var pos = st.ffPos || 'RB';
+    out.posChips = ['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(function (x) { var on = pos === x;
+      return { label: x, on: on ? 'true' : 'false', pick: function () { self.setState({ ffPos: x }); }, style: 'min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; font: 600 13px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') }; });
+    out.ranks = Object.keys(P).filter(function (k) { var p = P[k]; return pos === 'FLEX' ? ['RB', 'WR', 'TE'].indexOf(p.pos) !== -1 : p.pos === pos; })
+      .map(function (k) { return row(k, { mine: !!(u && lg && rostered[k]) }); }).filter(function (r) { return r && r.projN > 0; })
+      .sort(function (a, b) { return b.projN - a.projN; }).slice(0, 40).map(function (r, i) { r.rk = String(i + 1); r.owned = r.mine ? 'Rostered' : (u && lg ? 'Available' : ''); r.ownedStyle = 'font-size: 11px; font-weight: 700; color: ' + (r.mine ? '#7D89A3' : '#3FD18A') + ';'; return r; });
+    out.rankPos = pos;
+
+    // ---- defense vs position
+    var dPos = st.ffDvp || 'WR';
+    out.dvpChips = ['QB', 'RB', 'WR', 'TE'].map(function (x) { var on = dPos === x;
+      return { label: x, on: on ? 'true' : 'false', pick: function () { self.setState({ ffDvp: x }); }, style: 'min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; font: 600 13px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') }; });
+    out.dvpRows = Object.keys(F.dvp).filter(function (t) { return t !== '_avg' && F.dvp[t][dPos]; }).map(function (t) { var d = F.dvp[t][dPos], g = ctx.games[t];
+      var h = Math.round(((d.rk - 1) / 31) * 120); // 0 red (tough) → 120 green (easy)
+      return { tm: t, pg: d.pg.toFixed(1), rk: d.rk, opp: g ? 'faces ' + g.opp : 'no game', cell: 'display: grid; grid-template-columns: 52px 1fr 62px; align-items: center; gap: 10px; padding: 9px 14px; border-top: 1px solid #1E2A45;',
+        bar: 'height: 10px; border-radius: 3px; background: hsl(' + h + ', 60%, 48%); width: ' + Math.max(6, Math.round(d.f * 50)) + '%;' }; })
+      .sort(function (a, b) { return b.rk - a.rk; });
+    out.dvpAvg = F.dvp._avg && F.dvp._avg[dPos] != null ? F.dvp._avg[dPos].toFixed(1) : '—'; out.dvpPos = dPos;
+
+    // ---- player page
+    var pk = st.ffP && P[st.ffP] ? st.ffP : null;
+    out.player = null; out.hasPlayer = !!pk; out.noPlayer = !pk;
+    if (pk) {
+      var p = P[pk], pj = proj(pk), rr = row(pk);
+      var W = p.wk || [], mxW = Math.max.apply(null, W.map(function (x) { return x[1]; }).concat([10]));
+      var bw = W.length ? Math.min(46, Math.floor(300 / W.length) - 6) : 30;
+      var bars = W.map(function (x, i) { var h = Math.max(2, Math.round(x[1] / mxW * 120)); var X = 20 + i * (bw + 6);
+        return { x: X, y: 140 - h, w: bw, h: h, v: String(x[1]), vy: 140 - h - 5, lx: X + bw / 2, lab: 'W' + x[0], opp: x[2] || '', fill: x[1] >= (p.ppg || 0) ? '#1D5FD6' : '#3A5285' }; });
+      var props = (NFL.legs || []).filter(function (l) { return l.k === 'prop' && !l.alt && l.label.indexOf(p.n + ' ') === 0; }).sort(function (a, b) { return (b.score || 0) - (a.score || 0); }).slice(0, 6)
+        .map(function (l) { return { label: l.label, odds: self.fmtOdds(l.odds), pick: !!l.pick, tag: l.pick ? 'Horseshoe pick' : '', open: function () { self.openMatchup(l.g, l.label, false, 'nfl'); } }; });
+      var g = pj && pj.game;
+      out.player = Object.assign(rr, {
+        sub: p.pos + ' · ' + p.tm + (p.age ? ' · age ' + p.age : '') + (p.g ? ' · ' + p.g + ' games' : ''),
+        why: (pj ? pj.why : []).map(function (x) { return { k: x.k, v: x.v }; }), hasWhy: !!(pj && pj.why.length),
+        game: g ? (g.home ? 'vs ' : '@ ') + g.opp + (g.spread != null ? ' · ' + p.tm + ' ' + (g.spread > 0 ? '+' + g.spread : g.spread === 0 ? 'PK' : g.spread) : '') + (g.tot != null ? ' · O/U ' + g.tot : '') : 'No game listed this week',
+        bars: bars, hasBars: bars.length > 0, chartW: Math.max(320, 20 + W.length * (bw + 6) + 10), avgY: 140 - Math.round((p.ppg || 0) / mxW * 120),
+        usageRows: [['Targets / game', p.u.tgt], ['Catches / game', p.u.rec], ['Target share (last 3)', p.u.ts != null ? Math.round(p.u.ts * 100) + '%' : null], ['Air-yards share', p.u.ays != null ? Math.round(p.u.ays * 100) + '%' : null], ['WOPR', p.u.wopr], ['Snap share (last 3)', p.u.snap != null ? Math.round(p.u.snap * 100) + '%' : null], ['Carries / game', p.u.car], ['Rush yards / game', p.u.ry], ['Receiving yards / game', p.u.rcy], ['Pass yards / game', p.u.py], ['Touchdowns', (p.u.ptd || 0) + (p.u.rtd || 0) + (p.u.rctd || 0) || null]]
+          .filter(function (x) { return x[1] != null && x[1] !== 0; }).map(function (x) { return { k: x[0], v: String(x[1]) }; }),
+        props: props, hasProps: props.length > 0, owned: u && lg ? (rostered[pk] ? 'Rostered in ' + lg.league.name : 'Available in ' + lg.league.name) : ''
+      });
+    }
+    out.closePlayer = function () { if (self._ffPushed && history.length > 1) history.back(); else { try { history.replaceState(null, '', location.pathname); } catch (e) {} self.setState({ ffP: null }); } };
+    return out;
   }
 
   dec(o) { return o > 0 ? 1 + o / 100 : 1 + 100 / (-o); }
@@ -2471,6 +2907,9 @@ class Component extends DCLogic {
       var on = boardF === o[0];
       return { label: o[1], on: on ? 'true' : 'false', pick: function () { self.setState({ cfBoardF: o[0] }); }, style: 'min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer; font: 600 14px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
     });
+    var isFantasy = st.page === 'fantasy';
+    if (isFantasy) this.ffEnsure();
+    var ffV = isFantasy ? this.ffVals(st) : { ready: false };
     var mxV = st.mxSport === 'nfl' ? this.mxData(this.data(), st, 'nfl') : this.mxData(this.cfData(), st, 'cf');
     var cfTicketCard = cfTicket.map(function (t, ix) {
       var c = t.c;
@@ -2820,7 +3259,7 @@ class Component extends DCLogic {
     };
     var go = function (id) { return function () {
       if (st.mxG) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} self._mxPushed = false; }
-      self.setState({ page: id, mxG: null, mxLeg: null, mxSport: null }); try { window.scrollTo(0, 0); } catch (e) {} }; };
+      self.setState({ page: id, mxG: null, mxLeg: null, mxSport: null, ffP: null }); try { window.scrollTo(0, 0); } catch (e) {} }; };
     var subTabStyle = function (on) { return 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF; font-weight: 600;' : 'background: transparent; color: ' + MUTED + ';'); };
     var nflTabs = [{ id: 'builder', label: 'Horseshoe Ticket' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
       var on = st.page === t.id;
@@ -2839,8 +3278,8 @@ class Component extends DCLogic {
       cfFeatherBtn: { label: 'Feather to target', on: cfFeatherOn, style: chipW(cfFeatherOn), pick: function () { self.setState({ cfFeather: !cfFeatherOn }); } },
       featherNote: featherN ? 'Feathered ' + featherN + ' leg' + (featherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (hitBefore * 100).toFixed(1) + '% → ' + (hitAfter * 100).toFixed(1) + '%' : '',
       cfFeatherNote: cfFeatherN ? 'Feathered ' + cfFeatherN + ' leg' + (cfFeatherN === 1 ? '' : 's') + ' to safer alt lines · hit chance ' + (cfHitBefore * 100).toFixed(1) + '% → ' + (function () { var h = 1; cfTicket.forEach(function (t) { h *= t.c.p; }); return (h * 100).toFixed(1); })() + '%' : '',
-      nflTop: { current: !isCollege && st.page !== 'record' ? 'page' : 'false', style: tabStyle(!isCollege && st.page !== 'record'), pick: go(st.nflLast || 'builder') },
-      isNfl: !isCollege && st.page !== 'record',
+      nflTop: { current: !isCollege && st.page !== 'record' && !isFantasy ? 'page' : 'false', style: tabStyle(!isCollege && st.page !== 'record' && !isFantasy), pick: go(st.nflLast || 'builder') },
+      isNfl: !isCollege && st.page !== 'record' && !isFantasy,
       isRecord: st.page === 'record',
       recordTab: { current: st.page === 'record' ? 'page' : 'false', style: tabStyle(st.page === 'record'), pick: go('record') },
       recSportVal: recSport, recSportOpts: [{ v: 'all', label: 'NFL + college' }, { v: 'nfl', label: 'NFL' }, { v: 'cfb', label: 'College' }], onRecSport: function (ev) { self.setState({ recSport: ev.target.value }); },
@@ -2990,7 +3429,8 @@ class Component extends DCLogic {
       cfOnFader: function (e) { var v = parseInt(e.target.value, 10); if (!isNaN(v)) self.setState({ cfLegs: v, cfLastLegs: v }); },
       cfSizeHint: cfIsAuto ? 'Horseshoe decides' : cfN + ' legs, one per game',
       cfTicket: cfRows, cfBench: cfBench,
-      mx: mxV, mxOpen: !!st.mxG && mxV.open,
+      mx: mxV, mxOpen: !!st.mxG && mxV.open, ff: ffV, isFantasy: isFantasy,
+      fantasyTab: { current: isFantasy ? 'page' : 'false', style: tabStyle(isFantasy), pick: go('fantasy') },
       cfBoard: cfBoard, cfBoardChips: cfBoardChips, cfBoardEmpty: !cfBoard.length, cfTicketCard: cfTicketCard,
       cfCustomOpen: !!st.cfCustom, cfCustomLabel: st.cfCustom ? 'Hide options' : 'Customize', toggleCfCustom: function () { self.setState({ cfCustom: !st.cfCustom }); },
       cfNotPicks: st.cfTab !== 'picks', cfLegWord: cfTicket.length + ' leg' + (cfTicket.length === 1 ? '' : 's'),
@@ -3020,7 +3460,7 @@ class Component extends DCLogic {
       cfFadeToggle: function () { self.setState({ cfFadeOnly: !st.cfFadeOnly }); }, cfFadeBtnStyle: chip(st.cfFadeOnly)
     };
     // a matchup page takes over the main area
-    if (RV.mxOpen) ['isNfl', 'isBuilder', 'isSpin', 'isOdds', 'isOvers', 'isFade', 'isCollege', 'isRecord'].forEach(function (k) { RV[k] = false; });
+    if (RV.mxOpen) ['isNfl', 'isBuilder', 'isSpin', 'isOdds', 'isOvers', 'isFade', 'isCollege', 'isRecord', 'isFantasy'].forEach(function (k) { RV[k] = false; });
     return RV;
   }
 }
@@ -3030,6 +3470,9 @@ class Component extends DCLogic {
   window.BHApp = app;
   // Matchup pages live at #m/<gameId>/<leg>, so back works and a page can be shared.
   function route() {
+    var fp = /^#fp\/(.+)$/.exec(location.hash || '');
+    if (fp) { var key = null; try { key = decodeURIComponent(fp[1]); } catch (e) {} if (app.state.ffP !== key) { app.setState({ page: 'fantasy', ffP: key, mxG: null }); try { window.scrollTo(0, 0); } catch (e) {} } return; }
+    else if (app.state.ffP) { app._ffPushed = false; app.setState({ ffP: null }); }
     var m = /^#([mn])\/(\d+)(?:\/(.*))?$/.exec(location.hash || '');
     if (m) { var leg = null; try { leg = m[3] ? decodeURIComponent(m[3]) : null; } catch (e) {}
       var sp = m[1] === 'n' ? 'nfl' : 'cf';

@@ -13,6 +13,7 @@ NFL and college football picks built from live lines. No server and no monthly c
 | Player props | `data/props.json` (edit by hand) | When you update it |
 | Public betting splits | `data/splits.json` (edit by hand) | When you update it |
 | Sam's Models (samthemodelman.smmodel.workers.dev): college and NFL projections and each game's margin breakdown | the refresh loop → `data/model.json` (college), `data/nfl-sources.json` (NFL) | Every 2 hours; game pages only re-read when Sam's board says it updated |
+| Fantasy tab: player stats, usage and defense vs position (nflverse), Sleeper player ids and injuries | the refresh loop → `data/fantasy.json` | Every 12 hours |
 | NFL team stats for the matchup page (EPA, success rate, explosiveness, havoc, finishing drives, pace, and an EPA power rating) | nflverse play-by-play on GitHub, via the refresh loop → `data/nfl-model.json` | Every 12 hours (no key needed) |
 | Horseshoe Model (college): our CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly's SP+ game projections (his public "2026 SP+" sheet, newest "FBS Week N" tab), David Sasser's model (davidsasser.com/cfb), and CFBD advanced stats for the matchup chart | the refresh loop (`scripts/refresh.mjs`) and `.github/workflows/model.yml` → `data/model.json` | Outside models every 2 hours; CFBD every 12 hours, saved in `data/cfbd-cache.json` (about 500 of the 1,000 free CFBD calls a month) |
 
@@ -62,6 +63,7 @@ Repo → **Actions** tab → enable workflows if asked → **Refresh lines → R
 - `scripts/model.mjs` + `.github/workflows/model.yml`: the Horseshoe Model (college)
 - `scripts/nfl-model.mjs`: NFL team stats for the matchup page
 - `scripts/sam.mjs`: reads Sam's Models boards and game pages
+- `scripts/fantasy.mjs` + `fantasy.js`: the Fantasy tab's data and its projections / Sleeper connection
 - `data/`: snapshot files the timer and you keep updated
 
 Lines move. Confirm every price at your sportsbook. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.

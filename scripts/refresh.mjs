@@ -291,6 +291,10 @@ if (since('modelAt') > 115 * 60e3) {
   try { const M = await import('./model.mjs'); await M.main(); meta.modelAt = new Date().toISOString(); }
   catch (e) { console.error('Model failed:', e.message); }
 }
+if (since('fantasyAt') > 11.5 * 36e5) {
+  try { const F = await import('./fantasy.mjs'); await F.main(); meta.fantasyAt = new Date().toISOString(); }
+  catch (e) { console.error('Fantasy data failed:', e.message); }
+}
 if (since('nflModelAt') > 11.5 * 36e5) {
   try { const N = await import('./nfl-model.mjs'); await N.main(); meta.nflModelAt = new Date().toISOString(); }
   catch (e) { console.error('NFL model failed:', e.message); }
