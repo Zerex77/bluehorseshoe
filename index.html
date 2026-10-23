@@ -21,6 +21,12 @@ h2.bh-sec{font-size:40px !important}
 h1.bh-hero2{font-size:56px !important;line-height:0.95 !important}
 h2.bh-sec2{font-size:30px !important}
 @media (max-width:600px){h1{font-size:28px !important}h2{font-size:22px !important}h1.bh-hero{font-size:46px !important}h1.bh-hero2{font-size:38px !important}h2.bh-sec{font-size:30px !important}h2.bh-sec2{font-size:26px !important}.bh-stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+.bh-mx-back{position:fixed;inset:0;background:rgba(4,8,18,0.72);z-index:50}
+.bh-mx{position:fixed;z-index:51;left:50%;top:4vh;transform:translateX(-50%);width:min(880px,calc(100vw - 32px));max-height:92vh;overflow-y:auto;background:#0A1020;border:1px solid #263556;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,0.55);box-sizing:border-box;overscroll-behavior:contain}
+.bh-mx-k{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#7D89A3}
+.bh-mx-v{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;line-height:1.1}
+h3.bh-mx-h{margin:0;font-family:'Barlow Condensed',Inter,sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:0.02em}
+@media (max-width:600px){.bh-mx{top:auto;bottom:0;left:0;transform:none;width:100%;max-height:94vh;border-radius:18px 18px 0 0;border-bottom:none}}
 a{color:#7FB0FF}a:hover{color:#B5D0FF}
 button{font:inherit}
 .fader{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;margin:0}
@@ -547,7 +553,7 @@ button{font:inherit}
               <sc-for list="{{slateRows}}" as="sr" hint-placeholder-count="12">
                 <div style="display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-bottom: 1px solid #1E2A45;">
                   <div style="flex: 1 1 170px; min-width: 0;">
-                    <span style="display: block; font-weight: 600; font-size: 14px;">{{sr.game}}</span>
+                    <button type="button" onClick="{{sr.open}}" style="all: unset; cursor: pointer; display: block; font-weight: 600; font-size: 14px; color: #EEF2FA;">{{sr.game}} <span style="color: #7FB0FF; font-size: 12px;">Breakdown ›</span></button>
                     <span style="display: block; font-size: 12px; color: #A9B5CF;">{{sr.conf}}</span>
                   </div>
                   <div style="flex: 4 1 520px; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
@@ -681,10 +687,10 @@ button{font:inherit}
                   <sc-for list="{{cfTicketCard}}" as="leg" hint-placeholder-count="4">
                     <li style="display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px dashed #2A3A5E;">
                       <span style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #3A5285; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #A9B5CF; flex: none;">{{leg.num}}</span>
-                      <div style="flex: 1 1 auto; min-width: 0;">
+                      <button type="button" onClick="{{leg.open}}" aria-label="Full breakdown: {{leg.label}}" style="all: unset; cursor: pointer; flex: 1 1 auto; min-width: 0; display: block;">
                         <div style="font-weight: 700; font-size: 17px;">{{leg.label}}</div>
-                        <div style="font-size: 13px; color: #A9B5CF;">{{leg.game}} · {{leg.tag}}</div>
-                      </div>
+                        <div style="font-size: 13px; color: #A9B5CF;">{{leg.game}} · {{leg.tag}} · <span style="color: #7FB0FF; font-weight: 600;">Breakdown ›</span></div>
+                      </button>
                       <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums;">{{leg.oddsStr}}</span>
                     </li>
                   </sc-for>
@@ -739,6 +745,7 @@ button{font:inherit}
                       <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; background: #13284F; color: #9CC2FF;">{{p.tag}}</span>
                       <span style="font-size: 14px; color: #A9B5CF;">{{p.note}}</span>
                     </div>
+                    <button type="button" onClick="{{p.open}}" style="align-self: flex-start; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3A5E; background: transparent; color: #7FB0FF; font: 600 14px Inter, sans-serif; cursor: pointer;">Full breakdown ›</button>
                   </article>
                 </sc-for>
               </div>
@@ -1101,11 +1108,174 @@ button{font:inherit}
       <span>{{footText}}</span>
     </footer>
   </main>
+
+  <sc-if value="{{mxOpen}}" hint-placeholder-val="{{ false }}">
+    <div class="bh-mx-back" onClick="{{mx.close}}"></div>
+    <section class="bh-mx" role="dialog" aria-modal="true" aria-labelledby="mx-title">
+      <div style="position: sticky; top: 0; z-index: 2; background: #0E1628; border-bottom: 1px solid #1E2A45; padding: 14px 18px; display: flex; align-items: flex-start; gap: 12px;">
+        <div style="flex: 1 1 auto; min-width: 0;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #7FB0FF;">Matchup breakdown · {{mx.conf}}</div>
+          <h2 id="mx-title" style="margin: 4px 0 2px;"><span style="color: #FFB86B;">{{mx.away}}</span> <span style="color: #7D89A3; font-size: 0.7em;">at</span> <span style="color: #7FB0FF;">{{mx.home}}</span></h2>
+          <div style="font-size: 13px; color: #A9B5CF;">{{mx.when}}</div>
+        </div>
+        <button type="button" onClick="{{mx.close}}" aria-label="Close" style="flex: none; width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font-size: 20px; cursor: pointer;">×</button>
+      </div>
+      <div style="padding: 18px; display: flex; flex-direction: column; gap: 22px;">
+
+        <sc-if value="{{mx.hasGameLegs}}" hint-placeholder-val="{{ true }}">
+          <div role="group" aria-label="Legs on this game" style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{mx.gameLegs}}" as="gl" hint-placeholder-count="3">
+              <button type="button" onClick="{{gl.pick}}" aria-pressed="{{gl.on}}" style="{{gl.style}}">{{gl.label}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{mx.hasLeg}}" hint-placeholder-val="{{ true }}">
+          <div style="background: #111A2E; border: 1px solid #263556; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;">
+              <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase;">{{mx.leg.label}} <span style="font-weight: 700; color: #C9D3E8;">{{mx.leg.oddsStr}}</span></div>
+              <span style="{{mx.leg.statusStyle}}">{{mx.leg.status}}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #1E2A45; border-radius: 10px; overflow: hidden;">
+              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Horseshoe</div><div class="bh-mx-v">{{mx.leg.hit}}</div></div>
+              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Book implies</div><div class="bh-mx-v">{{mx.leg.book}}</div></div>
+              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Value</div><div style="{{mx.leg.valueStyle}}">{{mx.leg.value}}</div></div>
+              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Confidence</div><div class="bh-mx-v">{{mx.leg.conf}}</div></div>
+            </div>
+            <sc-if value="{{mx.leg.hasReasons}}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="bh-mx-k">Why the Horseshoe likes it</div>
+                <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px;">
+                  <sc-for list="{{mx.leg.reasons}}" as="rs" hint-placeholder-count="3">
+                    <li style="display: flex; gap: 10px; align-items: baseline; font-size: 14px; line-height: 1.45;"><span aria-hidden="true" style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{rs.dot}}; transform: translateY(-1px);"></span><span>{{rs.txt}}</span></li>
+                  </sc-for>
+                </ul>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{mx.hasModel}}" hint-placeholder-val="{{ true }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+            <sc-for list="{{mx.tiles}}" as="ti" hint-placeholder-count="4">
+              <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 12px 14px; min-width: 0;">
+                <div class="bh-mx-k">{{ti.k}}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; margin-top: 4px; overflow-wrap: anywhere;">{{ti.v}}</div>
+                <div style="font-size: 12px; color: #A9B5CF; margin-top: 2px;">{{ti.sub}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{mx.hasRows}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px;">
+              <h3 class="bh-mx-h">The models</h3>
+              <span style="font-size: 13px; color: #A9B5CF;">{{mx.consensus}}</span>
+            </div>
+            <div style="overflow-x: auto; border: 1px solid #1E2A45; border-radius: 12px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 460px;">
+                <thead><tr style="background: #0E1628; color: #A9B5CF; text-align: left;"><th style="padding: 8px 12px; font-weight: 600;">Model</th><th style="padding: 8px 12px; font-weight: 600;">Projects</th><th style="padding: 8px 12px; font-weight: 600;">Against the spread</th><th style="padding: 8px 12px; font-weight: 600;">Total</th></tr></thead>
+                <tbody>
+                  <sc-for list="{{mx.rows}}" as="mr" hint-placeholder-count="3">
+                    <tr style="border-top: 1px solid #1E2A45;">
+                      <th scope="row" style="padding: 9px 12px; text-align: left; font-weight: 600;"><sc-if value="{{mr.hasUrl}}" hint-placeholder-val="{{ false }}"><a href="{{mr.url}}" target="_blank" rel="noopener noreferrer">{{mr.name}} ↗</a></sc-if><sc-if value="{{mr.noUrl}}" hint-placeholder-val="{{ true }}">{{mr.name}}</sc-if></th>
+                      <td style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace;">{{mr.line}}</td>
+                      <td style="padding: 9px 12px;"><span style="{{mr.sideStyle}}">{{mr.side}}</span> <span style="color: #7D89A3; font-size: 12px;">{{mr.edge}} pts</span></td>
+                      <td style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace;">{{mr.total}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{mx.hasChart}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+              <h3 class="bh-mx-h">Team identity</h3>
+              <div role="group" aria-label="Chart view" style="display: flex; gap: 2px; background: #1E2A45; padding: 2px; border-radius: 8px;">
+                <sc-for list="{{mx.views}}" as="vw" hint-placeholder-count="3">
+                  <button type="button" onClick="{{vw.pick}}" aria-pressed="{{vw.on}}" style="{{vw.style}}">{{vw.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+              <div style="flex: 1 1 300px; min-width: 0; background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 10px;">
+                <svg viewBox="0 0 340 300" width="100%" role="img" aria-label="Radar chart comparing {{mx.away}} and {{mx.home}}, 0 to 100 percentile, larger is stronger" style="display: block; max-width: 420px; margin: 0 auto; overflow: visible;">
+                  <sc-for list="{{mx.rings}}" as="rg" hint-placeholder-count="4"><polygon points="{{rg.pts}}" fill="none" stroke="#24314F" stroke-width="1"></polygon></sc-for>
+                  <sc-for list="{{mx.axes}}" as="ax" hint-placeholder-count="7"><line x1="170" y1="150" x2="{{ax.x2}}" y2="{{ax.y2}}" stroke="#24314F" stroke-width="1"></line><text x="{{ax.lx}}" y="{{ax.ly}}" text-anchor="{{ax.anchor}}" font-size="11" font-weight="{{ax.weight}}" fill="{{ax.fill}}" font-family="Inter, sans-serif">{{ax.label}}</text></sc-for>
+                  <polygon points="{{mx.polyH}}" fill="#7FB0FF" fill-opacity="0.16" stroke="#7FB0FF" stroke-width="2"></polygon>
+                  <polygon points="{{mx.polyA}}" fill="#FFB86B" fill-opacity="0.14" stroke="#FFB86B" stroke-width="2" stroke-dasharray="5 3"></polygon>
+                  <sc-for list="{{mx.dotsH}}" as="dt" hint-placeholder-count="7"><circle cx="{{dt.x}}" cy="{{dt.y}}" r="3" fill="{{dt.color}}"></circle></sc-for>
+                  <sc-for list="{{mx.dotsA}}" as="dt" hint-placeholder-count="7"><circle cx="{{dt.x}}" cy="{{dt.y}}" r="3" fill="{{dt.color}}"></circle></sc-for>
+                </svg>
+                <div style="display: flex; justify-content: center; gap: 18px; font-size: 12px; color: #A9B5CF; padding: 4px 0 2px;">
+                  <span style="display: inline-flex; align-items: center; gap: 6px;"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="#FFB86B" stroke-width="2" stroke-dasharray="5 3"></line></svg>{{mx.away}}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px;"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="#7FB0FF" stroke-width="2"></line></svg>{{mx.home}}</span>
+                </div>
+                <div style="font-size: 11px; color: #7D89A3; text-align: center;">Percentile among FBS teams, larger = stronger. Garbage time excluded.</div>
+              </div>
+              <div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 10px; padding: 8px 10px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; color: #FFB86B;">{{mx.advA}}</div><div style="font-size: 11px; color: #A9B5CF;">favor {{mx.away}}</div></div>
+                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 10px; padding: 8px 10px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1;">{{mx.advE}}</div><div style="font-size: 11px; color: #A9B5CF;">even (within 5)</div></div>
+                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 10px; padding: 8px 10px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; color: #7FB0FF;">{{mx.advH}}</div><div style="font-size: 11px; color: #A9B5CF;">favor {{mx.home}}</div></div>
+                </div>
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 6px;">
+                  <sc-for list="{{mx.advRows}}" as="av" hint-placeholder-count="7">
+                    <button type="button" onClick="{{av.pick}}" aria-pressed="{{av.on}}" style="{{av.rowStyle}}">
+                      <span style="font-size: 13px; font-weight: 600;">{{av.label}}</span>
+                      <span style="position: relative; height: 10px; background: #0E1628; border-radius: 3px;"><span style="position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #3A4A6B;"></span><span style="{{av.barStyle}}"></span></span>
+                      <span style="text-align: right; line-height: 1.2;"><span style="{{av.whoStyle}}">{{av.who}}</span><br><span style="font-size: 11px; color: #7D89A3;">{{av.gap}}</span></span>
+                    </button>
+                  </sc-for>
+                </div>
+                <sc-if value="{{mx.hasCat}}" hint-placeholder-val="{{ false }}">
+                  <div style="background: #17213A; border: 1px solid #263556; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                    <div style="font-weight: 700;">{{mx.catDetail.label}}</div>
+                    <div style="color: #A9B5CF; line-height: 1.45;">{{mx.catDetail.blurb}}</div>
+                    <sc-for list="{{mx.catDetail.rows}}" as="cr" hint-placeholder-count="2">
+                      <div style="display: grid; grid-template-columns: minmax(90px, 1fr) 1fr 1fr; gap: 8px; align-items: baseline;"><span style="{{cr.color}}">{{cr.team}}</span><span><span style="color: #7D89A3; font-size: 11px;">OFF </span><span style="font-family: 'IBM Plex Mono', monospace;">{{cr.off}}</span></span><span><span style="color: #7D89A3; font-size: 11px;">DEF </span><span style="font-family: 'IBM Plex Mono', monospace;">{{cr.def}}</span></span></div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <div style="font-size: 11px; color: #7D89A3;">Tap a row to see the numbers behind it. These compare team strengths, not points or win chances.</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{mx.hasRatings}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <h3 class="bh-mx-h">Ratings</h3>
+            <div style="overflow-x: auto; border: 1px solid #1E2A45; border-radius: 12px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead><tr style="background: #0E1628; text-align: left;"><th style="padding: 8px 12px; color: #A9B5CF; font-weight: 600;"></th><th style="padding: 8px 12px; color: #FFB86B;">{{mx.away}}</th><th style="padding: 8px 12px; color: #7FB0FF;">{{mx.home}}</th></tr></thead>
+                <tbody>
+                  <sc-for list="{{mx.ratings}}" as="rt" hint-placeholder-count="6">
+                    <tr style="border-top: 1px solid #1E2A45;"><th scope="row" style="padding: 8px 12px; text-align: left; font-weight: 500; color: #A9B5CF;">{{rt.lab}}</th><td style="padding: 8px 12px; font-family: 'IBM Plex Mono', monospace;">{{rt.a}}</td><td style="padding: 8px 12px; font-family: 'IBM Plex Mono', monospace;">{{rt.h}}</td></tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: #7D89A3; line-height: 1.5; border-top: 1px solid #1E2A45; padding-top: 12px;">
+          <span>Sources: SP+ by Bill Connelly, David Sasser’s model, CollegeFootballData.com. Models updated {{mx.asOf}}.</span>
+          <sc-if value="{{mx.hasDs}}" hint-placeholder-val="{{ true }}"><a href="{{mx.dsUrl}}" target="_blank" rel="noopener noreferrer">Sasser’s full matchup ↗</a></sc-if>
+          <span>Lines move. Confirm every price at Hard Rock Bet.</span>
+        </div>
+      </div>
+    </section>
+  </sc-if>
 </div>
 </script>
-<script>window.BH_VERSION='20261021180500';</script>
-<script src="runtime.js?v=20261021180500"></script>
-<script src="lines.js?v=20261021180500"></script>
+<script>window.BH_VERSION='20261023180000';</script>
+<script src="runtime.js?v=20261023180000"></script>
+<script src="lines.js?v=20261023180000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1116,6 +1286,149 @@ class Component extends DCLogic {
   data() { return window.BH.nfl; }
 
   cfData() { return window.BH.cf; }
+
+  // ---- Matchup breakdown (college): everything behind one leg, from data/model.json and the live line.
+  mxData(CF, st) {
+    var self = this;
+    var close = function () { try { document.body.style.overflow = ''; } catch (e) {} self.setState({ mxG: null, mxLeg: null, mxCat: null }); };
+    var s = (CF.slate || []).filter(function (x) { return x.id === st.mxG; })[0];
+    if (!s) return { open: false, close: close };
+    var A = '#FFB86B', H = '#7FB0FF', MUTED = '#A9B5CF';
+    var model = CF.model || {}, mx = s.mx || null, srcs = s.mxSrcs || [];
+    var T = (model.teams || {});
+    var tA = mx ? T[mx.a] : null, tH = mx ? T[mx.h] : null;
+    var r1 = function (v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); };
+    var sgn = function (v) { return v > 0 ? '+' + r1(v) : v < 0 ? '−' + r1(-v) : 'PK'; };
+    var pctS = function (p) { return p == null ? '—' : Math.round(p * 100) + '%'; };
+    var favLine = function (m) { if (m == null) return '—'; if (Math.abs(m) < 0.05) return 'Pick’em'; return (m > 0 ? s.h : s.a) + ' −' + r1(Math.abs(m)); };
+    var game = s.a + (s.n ? ' vs ' : ' @ ') + s.h;
+    var when = ''; try { when = new Date(s.date).toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET'; } catch (e) {}
+
+    // the leg that was tapped
+    var leg = st.mxLeg ? (CF.legs || []).filter(function (l) { return l.g === s.id && l.label === st.mxLeg; })[0] : null;
+    var legBox = null;
+    if (leg) {
+      var dec = this.dec(leg.odds), ev = leg.p * dec - 1;
+      var status = leg.held ? 'Held: shown, but not a Horseshoe pick' : leg.pick ? 'Horseshoe pick' : leg.bar ? 'Passes the Horseshoe’s checks' : 'On the board, no Horseshoe signal';
+      var reasons = String(leg.note || '').split('; ').filter(Boolean).map(function (t) {
+        var held = /^held: /.test(t), mod = /^Model|^Model edge|Model total/.test(t);
+        return { txt: held ? t.replace(/^held: /, 'Held: ') : t, dot: held ? '#FF9F43' : mod ? '#3FD18A' : '#7FB0FF' };
+      });
+      legBox = {
+        label: leg.label, oddsStr: this.fmtOdds(leg.odds), status: status,
+        statusStyle: 'font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; ' + (leg.held ? 'background: #33240E; color: #FFB86B;' : leg.pick ? 'background: #0F3A25; color: #3FD18A;' : 'background: #1A2644; color: #9CC2FF;'),
+        hit: pctS(leg.p), book: pctS(1 / dec), value: (ev >= 0 ? '+' : '') + (Math.round(ev * 1000) / 10).toFixed(1) + '%',
+        valueStyle: 'font-family: \'Barlow Condensed\', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.1; color: ' + (ev > 0 ? '#3FD18A' : ev < 0 ? '#FF9F43' : '#EEF2FA') + ';',
+        conf: String(leg.conf || Math.round(leg.p * 100)), reasons: reasons, hasReasons: reasons.length > 0
+      };
+    }
+    // other legs on this game the Horseshoe likes, to hop between
+    var gameLegs = (CF.legs || []).filter(function (l) { return l.g === s.id && !l.alt && (l.pick || l.bar || l.label === st.mxLeg); }).map(function (l) {
+      var on = l.label === st.mxLeg;
+      return { label: l.label + ' ' + self.fmtOdds(l.odds), on: on ? 'true' : 'false', pick: function () { self.setState({ mxLeg: l.label, mxCat: null }); },
+        style: 'min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; font: 600 13px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
+    });
+
+    // projections
+    var m = mx ? mx.m : null, t = mx ? mx.t : null;
+    var hsP = m != null && t != null ? (t + m) / 2 : null, asP = m != null && t != null ? (t - m) / 2 : null;
+    var edgeH = m != null ? Math.round((m + s.hs) * 10) / 10 : null;
+    var mSide = edgeH > 0 ? 'h' : edgeH < 0 ? 'a' : null;
+    var lineFor = function (side) { var l = side === 'a' ? -s.hs : s.hs; return (side === 'a' ? s.a : s.h) + ' ' + (l > 0 ? '+' + l : l === 0 ? 'PK' : '−' + Math.abs(l)); };
+    var tiles = [
+      { k: 'Projected score', v: hsP != null ? r1(asP) + ' / ' + r1(hsP) : '—', sub: s.a + ' / ' + s.h },
+      { k: 'Model line', v: favLine(m), sub: m != null ? 'Wins ' + pctS(Math.abs(m) < 0.05 ? 0.5 : (m > 0 ? mx.pH : 1 - mx.pH)) : '' },
+      { k: 'Market line', v: favLine(-s.hs), sub: 'O/U ' + (s.tot == null ? '—' : s.tot) + (t != null ? ' · model ' + r1(t) : '') },
+      { k: 'Model pick', v: mSide && Math.abs(edgeH) >= 1 ? lineFor(mSide) : 'No edge', sub: edgeH != null ? Math.abs(edgeH).toFixed(1) + ' pts vs the line' : '' }
+    ];
+    // every model's view
+    var rows = srcs.map(function (x) {
+      var url = x.k === 'ds' && mx.ds && mx.ds.url ? mx.ds.url : x.k === 'spx' ? 'https://docs.google.com/spreadsheets/d/1vwoVl-Dxy0es87Z9I1RTvFzr72Lb1fAkREfbLxbK-eg/htmlview' : '';
+      return { name: x.name, line: favLine(x.m), side: x.side ? lineFor(x.side) : 'Even', edge: Math.abs(x.edge).toFixed(1), total: x.t != null ? r1(x.t) + ' ' + (x.tSide ? '(' + x.tSide.toLowerCase() + ')' : '') : '—', url: url, hasUrl: !!url, noUrl: !url,
+        sideStyle: 'font-weight: 600; color: ' + (x.side === 'a' ? A : x.side === 'h' ? H : MUTED) + ';' };
+    });
+    if (mx && srcs.length > 1) rows.unshift({ name: 'Horseshoe blend', line: favLine(m), side: mSide ? lineFor(mSide) : 'Even', edge: edgeH == null ? '0.0' : Math.abs(edgeH).toFixed(1),
+      total: t != null ? r1(t) + (s.tot != null && t !== s.tot ? ' (' + (t > s.tot ? 'over' : 'under') + ')' : '') : '—', url: '', hasUrl: false, noUrl: true,
+      sideStyle: 'font-weight: 800; color: ' + (mSide === 'a' ? A : mSide === 'h' ? H : MUTED) + ';' });
+    var withM = srcs.filter(function (x) { return x.side === mSide; }).length;
+    var consensus = !srcs.length ? 'No model projection for this game yet.' : srcs.length === 1 ? 'One model so far.' : withM === srcs.length ? 'All ' + srcs.length + ' models land on ' + (mSide === 'a' ? s.a : s.h) + ' against the spread.' : withM + ' of ' + srcs.length + ' models land on ' + (mSide === 'a' ? s.a : s.h) + ' against the spread.';
+
+    // team identity chart (0-100 percentiles; larger = stronger)
+    var cats = model.cats || [];
+    var view = st.mxView || 'all';
+    var val = function (tm, k) {
+      if (!tm || !tm.pct) return null;
+      var o = tm.pct.o[k], d = tm.pct.d[k];
+      if (view === 'o') return o; if (view === 'd') return d;
+      return o == null || d == null ? (o == null ? d : o) : (o + d) / 2;
+    };
+    var hasChart = !!(tA && tA.pct && tH && tH.pct && cats.length);
+    var cx = 170, cy = 150, R = 104, n = cats.length || 1;
+    var pt = function (i, v) { var ang = -Math.PI / 2 + i * 2 * Math.PI / n, rr = R * Math.max(0, Math.min(100, v || 0)) / 100; return [Math.round((cx + rr * Math.cos(ang)) * 10) / 10, Math.round((cy + rr * Math.sin(ang)) * 10) / 10]; };
+    var poly = function (tm) { return cats.map(function (c, i) { return pt(i, val(tm, c[0])).join(','); }).join(' '); };
+    var rings = [25, 50, 75, 100].map(function (v) { return { pts: cats.map(function (c, i) { return pt(i, v).join(','); }).join(' ') }; });
+    var axes = cats.map(function (c, i) {
+      var e = pt(i, 100), l = pt(i, 122), ang = -Math.PI / 2 + i * 2 * Math.PI / n, cs = Math.cos(ang);
+      var on = st.mxCat === c[0];
+      return { x2: e[0], y2: e[1], lx: l[0], ly: Math.round((l[1] + (Math.sin(ang) > 0.3 ? 8 : Math.sin(ang) < -0.3 ? -2 : 4)) * 10) / 10,
+        anchor: cs > 0.3 ? 'start' : cs < -0.3 ? 'end' : 'middle', label: c[1], weight: on ? '700' : '500', fill: on ? '#FFFFFF' : MUTED };
+    });
+    var dots = function (tm, color) { return cats.map(function (c, i) { var p = pt(i, val(tm, c[0])); return { x: p[0], y: p[1], color: color }; }); };
+    var views = [['all', 'Overall'], ['o', 'Offense'], ['d', 'Defense']].map(function (v) {
+      var on = view === v[0];
+      return { label: v[1], on: on ? 'true' : 'false', pick: function () { self.setState({ mxView: v[0] }); },
+        style: 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font: 600 13px Inter, sans-serif; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF;' : 'background: transparent; color: ' + MUTED + ';') };
+    });
+    // matchup advantages: percentile gap per category, 5 points or less counts as even
+    var adv = { a: 0, e: 0, h: 0 };
+    var advRows = cats.map(function (c) {
+      var va = val(tA, c[0]), vh = val(tH, c[0]);
+      if (va == null || vh == null) return null;
+      var d = Math.round((vh - va) * 10) / 10, even = Math.abs(d) <= 5;
+      if (even) adv.e++; else if (d > 0) adv.h++; else adv.a++;
+      var w = Math.min(50, Math.abs(d) / 2);
+      var on = st.mxCat === c[0];
+      return {
+        label: c[1], who: even ? 'Even' : d > 0 ? s.h : s.a, gap: Math.abs(d).toFixed(1) + ' pts', on: on ? 'true' : 'false',
+        whoStyle: 'font-size: 12px; font-weight: 600; color: ' + (even ? MUTED : d > 0 ? H : A) + ';',
+        barStyle: 'position: absolute; top: 0; bottom: 0; border-radius: 3px; background: ' + (even ? '#3A4A6B' : d > 0 ? H : A) + '; ' + (d >= 0 ? 'left: 50%;' : 'right: 50%;') + ' width: ' + Math.max(1, w) + '%;',
+        pick: function () { self.setState({ mxCat: on ? null : c[0] }); },
+        rowStyle: 'all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: minmax(96px, 1.1fr) 2fr minmax(70px, auto); align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; ' + (on ? 'background: #17213A;' : '')
+      };
+    }).filter(Boolean);
+    // detail for the selected category
+    var catDetail = null;
+    if (st.mxCat && hasChart) {
+      var c0 = cats.filter(function (c) { return c[0] === st.mxCat; })[0];
+      var raw = function (tm, ix) { var r = tm.pct && tm.pct.raw && tm.pct.raw[st.mxCat]; return r && r[ix] != null ? String(r[ix]) : '—'; };
+      var pc = function (v) { return v == null ? '—' : Math.round(v) + 'th pct'; };
+      catDetail = { label: c0 ? c0[1] : '', blurb: ({ eff: 'Predicted points added per play: how much each snap moves the scoreboard.', sr: 'Share of plays that stay on schedule (50% of yards needed on 1st down, 70% on 2nd, all of it on 3rd and 4th).', pass: 'Predicted points added on passing plays.', rush: 'Predicted points added on running plays.', expl: 'How big the successful plays are.', havoc: 'Share of plays with a tackle for loss, forced fumble, interception or pass breakup. Offense: allowed (lower is better). Defense: created.', finish: 'Points per trip inside the opponent’s 40.' })[st.mxCat] || '',
+        rows: [[s.a, tA, A], [s.h, tH, H]].map(function (r) { return { team: r[0], color: 'font-weight: 700; color: ' + r[2] + ';', off: raw(r[1], 0) + ' · ' + pc(r[1].pct.o[st.mxCat]), def: raw(r[1], 1) + ' · ' + pc(r[1].pct.d[st.mxCat]) }; }) };
+    }
+    // SP+ and power ratings table
+    var spRow = function (lab, f) { return { lab: lab, a: tA ? f(tA) : '—', h: tH ? f(tH) : '—' }; };
+    var rk = function (v, r) { return v == null ? '—' : r1(v) + (r != null ? ' (#' + r + ')' : ''); };
+    var ratings = [
+      spRow('SP+ overall', function (x) { return x.sp ? rk(x.sp.r, x.sp.rk) : '—'; }),
+      spRow('Offense', function (x) { return x.sp ? rk(x.sp.off, x.sp.offRk) : '—'; }),
+      spRow('Defense (lower is better)', function (x) { return x.sp ? rk(x.sp.def, x.sp.defRk) : '—'; }),
+      spRow('Special teams', function (x) { return x.sp ? rk(x.sp.st, x.sp.stRk) : '—'; }),
+      spRow('Record', function (x) { return x.sp && x.sp.rec ? x.sp.rec : '—'; }),
+      spRow('FPI', function (x) { return x.fpi == null ? '—' : r1(x.fpi); }),
+      spRow('Pace (plays a game)', function (x) { return x.pct && x.pct.raw && x.pct.raw.pace != null ? r1(x.pct.raw.pace) : '—'; })
+    ];
+    var asOf = model.updated ? new Date(model.updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET' : '';
+    return {
+      open: true, close: close, game: game, away: s.a, home: s.h, when: when, conf: s.cf, A: A, H: H,
+      leg: legBox, hasLeg: !!legBox, gameLegs: gameLegs, hasGameLegs: gameLegs.length > 0,
+      tiles: tiles, rows: rows, hasRows: rows.length > 0, consensus: consensus, hasModel: !!mx,
+      hasChart: hasChart, views: views, rings: rings, axes: axes, polyA: hasChart ? poly(tA) : '', polyH: hasChart ? poly(tH) : '',
+      dotsA: hasChart ? dots(tA, A) : [], dotsH: hasChart ? dots(tH, H) : [],
+      advRows: advRows, advA: String(adv.a), advE: String(adv.e), advH: String(adv.h), catDetail: catDetail, hasCat: !!catDetail,
+      ratings: ratings, hasRatings: !!(tA || tH), asOf: asOf,
+      dsUrl: mx && mx.ds && mx.ds.url ? mx.ds.url : '', hasDs: !!(mx && mx.ds && mx.ds.url)
+    };
+  }
 
   dec(o) { return o > 0 ? 1 + o / 100 : 1 + 100 / (-o); }
   amer(d) {
@@ -1553,6 +1866,7 @@ class Component extends DCLogic {
 
     // ---- college: Blue Horseshoe
     var CF = this.cfData();
+    var openMx = function (g, label) { return function () { try { document.body.style.overflow = 'hidden'; } catch (e) {} self.setState({ mxG: g, mxLeg: label || null, mxCat: null }); }; };
     var cfSlotNames = { week: 'Before Friday', fri: 'Friday', satnoon: 'Saturday noon', satafternoon: 'Saturday afternoon', satnight: 'Saturday night' };
     var cfSlotSel = st.cfSlot || 'all';
     var cfSlotOpts = slotOptsFor(cfSlotNames, ['week', 'fri', 'satnoon', 'satafternoon', 'satnight'], CF.slate, cfSlot);
@@ -1717,16 +2031,17 @@ class Component extends DCLogic {
       var prim = c.fade ? 'fade' : c.dogOk ? 'dog' : 'lean';
       var tagTxt = c.fade ? 'Fade the public' : (c.dogOk || c.odds > 0) ? 'Live dog' : c.k === 'total' ? 'Total' : 'Horseshoe lean';
       var cf = Math.max(1, Math.min(99, Math.round(c.conf || c.p * 100)));
-      return { label: c.label, game: cfGameMap[c.g].label, time: cfDateMap[c.g] ? cfWhen(cfDateMap[c.g]) : '', oddsStr: self.fmtOdds(c.odds), conf: String(cf), barStyle: 'height: 100%; border-radius: 4px; background: #1D5FD6; width: ' + cf + '%;', tag: tagTxt, note: c.note || '' };
+      return { label: c.label, game: cfGameMap[c.g].label, time: cfDateMap[c.g] ? cfWhen(cfDateMap[c.g]) : '', oddsStr: self.fmtOdds(c.odds), conf: String(cf), barStyle: 'height: 100%; border-radius: 4px; background: #1D5FD6; width: ' + cf + '%;', tag: tagTxt, note: c.note || '', open: openMx(c.g, c.label) };
     });
     var cfBoardChips = [['all', 'All'], ['spread', 'Spreads'], ['ml', 'Moneylines'], ['total', 'Totals'], ['dogs', 'Underdogs']].map(function (o) {
       var on = boardF === o[0];
       return { label: o[1], on: on ? 'true' : 'false', pick: function () { self.setState({ cfBoardF: o[0] }); }, style: 'min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer; font: 600 14px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
     });
+    var mxV = this.mxData(this.cfData(), st);
     var cfTicketCard = cfTicket.map(function (t, ix) {
       var c = t.c;
       var tg = t.pillar === 'fade' ? 'Fade the public' : t.pillar === 'dog' ? 'Live dog' : 'Horseshoe lean';
-      return { num: String(ix + 1), label: c.label, game: cfGameMap[c.g].label, tag: tg + (c.featheredFrom ? ' · feathered' : ''), oddsStr: self.fmtOdds(c.odds) };
+      return { num: String(ix + 1), label: c.label, game: cfGameMap[c.g].label, tag: tg + (c.featheredFrom ? ' · feathered' : ''), oddsStr: self.fmtOdds(c.odds), open: openMx(c.g, c.label) };
     });
     var segW = function (on) {
       return 'min-height: 32px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; box-sizing: border-box; ' + (on ? 'background: #111A2E; color: ' + B + '; border: 1px solid #FFFFFF;' : 'background: transparent; color: #FFFFFF; border: 1px solid rgba(255,255,255,0.45);');
@@ -1867,6 +2182,7 @@ class Component extends DCLogic {
         game: s.a + (s.n ? ' vs ' : ' @ ') + s.h, conf: s.cf,
         spreadLine: fav, totalLine: 'O/U ' + s.tot, mlLine: self.fmtOdds(s.aml) + ' / ' + self.fmtOdds(s.hml),
         sp: sp, tt: tt, ml: ml,
+        open: openMx(s.id, sp.has ? sp.label : ml.has ? ml.label : tt.has ? tt.label : null),
         hasLean: strongs.length > 0,
         sortKey: strongs.length ? Math.max.apply(null, strongs.map(function (x) { return x.sc; })) : -9
       };
@@ -2235,6 +2551,7 @@ class Component extends DCLogic {
       cfOnFader: function (e) { var v = parseInt(e.target.value, 10); if (!isNaN(v)) self.setState({ cfLegs: v, cfLastLegs: v }); },
       cfSizeHint: cfIsAuto ? 'Horseshoe decides' : cfN + ' legs, one per game',
       cfTicket: cfRows, cfBench: cfBench,
+      mx: mxV, mxOpen: st.page === 'college' && mxV.open,
       cfBoard: cfBoard, cfBoardChips: cfBoardChips, cfBoardEmpty: !cfBoard.length, cfTicketCard: cfTicketCard,
       cfCustomOpen: !!st.cfCustom, cfCustomLabel: st.cfCustom ? 'Hide options' : 'Customize', toggleCfCustom: function () { self.setState({ cfCustom: !st.cfCustom }); },
       cfNotPicks: st.cfTab !== 'picks', cfLegWord: cfTicket.length + ' leg' + (cfTicket.length === 1 ? '' : 's'),
@@ -2269,6 +2586,9 @@ class Component extends DCLogic {
 (function () {
   var app = BHRuntime.mount(Component, document.getElementById('tpl').textContent, document.getElementById('app'));
   window.BHApp = app;
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && app.state.mxG) { try { document.body.style.overflow = ''; } catch (x) {} app.setState({ mxG: null, mxLeg: null, mxCat: null }); }
+  });
   function refresh() { return BHLines.load().then(function () { app.forceUpdate(); }); }
   refresh();
   setInterval(function () { if (!document.hidden) refresh(); }, BHLines.REFRESH_MS);

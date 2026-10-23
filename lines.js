@@ -545,15 +545,32 @@
     var hc = CONF[e.h.conferenceId], ac = CONF[e.a.conferenceId];
     return hc || ac || 'Group of 5';
   }
-  // ---------- Horseshoe Model (data/model.json, from CFBD power ratings)
-  // The top CFBD Pick'em models hit about 75% straight up but only about 52% against the spread, so the model
-  // gets a real say on moneylines and only a small one on spreads, where it mostly acts as a filter:
+  // ---------- Horseshoe Model (data/model.json)
+  // Three projections per game: our CFBD ratings blend, Bill Connelly's SP+ and David Sasser's model, averaged into one
+  // projected margin (and a projected total from SP+ and Sasser). The top CFBD Pick'em models hit about 75% straight up
+  // but only about 52-56% against the spread, so the model gets a real say on moneylines and a small one elsewhere:
   //  - moneylines: the Horseshoe chance becomes 70% market, 30% model
-  //  - spreads the model backs by 2+ pts: small nudge up; by 3+ pts with no other signal: a "Model edge" leg
-  //  - spreads the model disagrees with by 4+ pts: held (shown, not a Horseshoe pick); by 2-4 pts: small nudge down
-  // Every touched leg logs l.model (projected edge in points for that side, or model win chance for MLs) so the
-  // tracker can show whether the model helps.
-  var MODEL_EDGE = 3, MODEL_HOLD = 4, MODEL_ML_W = 0.3;
+  //  - spreads: a "Model edge" leg needs 3+ pts of edge AND most of the models on that side; spreads that 4+ pts and most
+  //    models disagree with are held (shown, not a Horseshoe pick); smaller agreements and disagreements are small nudges
+  //  - totals: same idea against the projected total, 3+ pts to nudge, 4+ pts with both models agreeing for a leg or a hold
+  // Every touched leg logs l.model (edge in points, or model win chance on MLs) so the tracker can show whether it helps.
+  var MODEL_EDGE = 3, MODEL_HOLD = 4, MODEL_ML_W = 0.3, MODEL_T_EDGE = 3, MODEL_T_HOLD = 4;
+  var MODEL_NAMES = { own: 'Horseshoe ratings', spx: 'SP+', ds: 'Sasser' };
+  function modelView(s, mp) {
+    // Each model's projected margin (home minus away) and its side against the current spread and total.
+    var hs = s.hs, srcs = [];
+    if (mp.own && mp.own.m != null) srcs.push({ k: 'own', m: mp.own.m, t: null });
+    if (mp.spx && mp.spx.m != null) srcs.push({ k: 'spx', m: mp.spx.m, t: mp.spx.total });
+    if (mp.ds && mp.ds.m != null) srcs.push({ k: 'ds', m: mp.ds.m, t: mp.ds.total });
+    if (!srcs.length && mp.m != null) srcs.push({ k: 'own', m: mp.m, t: mp.t });
+    srcs.forEach(function (x) {
+      x.edge = Math.round((x.m + hs) * 10) / 10;
+      x.side = x.edge > 0 ? 'h' : x.edge < 0 ? 'a' : null;
+      x.tSide = x.t != null && s.tot != null ? (x.t > s.tot ? 'Over' : x.t < s.tot ? 'Under' : null) : null;
+      x.name = MODEL_NAMES[x.k];
+    });
+    return srcs;
+  }
   function modelLegs(legs, slate, byId, model) {
     var G = (model && model.games) || {};
     var sd = (model && model.sd) || 15.5;
@@ -565,52 +582,65 @@
     };
     var hold = function (l, why) { if (l.held) return; l.held = why; l.sOrig = l.s; l.s = [0, 0, 0]; l.note = (l.note ? l.note + '; ' : '') + 'held: ' + why; };
     var add = function (l, why) { l.note = (l.note ? l.note + '; ' : '') + why; };
+    var bump = function (l, d) { l.p = clamp(l.p + d, 0.01, 0.97); l.conf = clamp(Math.round((l.conf || 50) + d * 100), 5, 95); };
     slate.forEach(function (s) {
       var mp = G[s.id], e = byId[s.id];
       if (!mp || typeof mp.m !== 'number' || !e) return;
       var m = mp.m, o = e.odds;
-      s.mp = m; // projected home margin
+      var srcs = modelView(s, mp);
+      s.mp = m; s.mx = mp; s.mxSrcs = srcs;
       var fav = m >= 0 ? s.h : s.a;
       var proj = 'Model: ' + fav + ' by ' + Math.abs(m).toFixed(1);
-      var edgeH = Math.round((m + s.hs) * 10) / 10; // > 0 means the model likes the home side vs the spread
+      var edgeH = Math.round((m + s.hs) * 10) / 10; // > 0 means the blend likes the home side vs the spread
       var mSide = edgeH > 0 ? 'h' : edgeH < 0 ? 'a' : null, edge = Math.abs(edgeH);
+      var withM = srcs.filter(function (x) { return x.side === mSide; }).length, nS = srcs.length;
+      var most = nS < 2 || withM * 2 > nS;
+      var agreeTxt = nS > 1 ? withM + ' of ' + nS + ' models' : '';
       var pH = phi(m / sd);
       var mine = legs.filter(function (l) { return l.g === s.id && !l.alt; });
+      var tProj = mp.t, tEdge = tProj != null && s.tot != null ? Math.round((tProj - s.tot) * 10) / 10 : null;
+      var tSide = tEdge > 0 ? 'Over' : tEdge < 0 ? 'Under' : null;
+      var tSrcs = srcs.filter(function (x) { return x.tSide; });
+      var tWith = tSrcs.filter(function (x) { return x.tSide === tSide; }).length;
+      var tAll = tSrcs.length && tWith === tSrcs.length;
       mine.forEach(function (l) {
         var side = sideOfLabel(s, l.label);
-        if (!side) return;
-        if (l.k === 'ml') {
+        if (l.k === 'ml' && side) {
           var pm = side === 'h' ? pH : 1 - pH;
           l.model = Math.round(pm * 1000) / 1000;
           var before = l.p;
           l.p = clamp(l.p * (1 - MODEL_ML_W) + pm * MODEL_ML_W, 0.01, 0.97);
           l.conf = clamp(Math.round((l.conf || 50) + (l.p - before) * 100), 5, 95);
           add(l, proj + ', wins ' + pct(pm));
-        } else if (l.k === 'spread' && mSide) {
+        } else if (l.k === 'spread' && side && mSide) {
           var agree = side === mSide;
           l.model = agree ? edge : -edge;
-          if (agree && edge >= 2) {
-            var up = Math.min(0.03, (edge - 1) * 0.006);
-            l.p = clamp(l.p + up, 0.01, 0.97); l.conf = clamp(Math.round(l.conf + up * 100), 5, 95);
-            add(l, proj + ', ' + edge + ' pts of edge');
-          } else if (!agree && edge >= MODEL_HOLD) {
-            hold(l, proj + ', disagrees by ' + edge + ' pts');
-          } else if (!agree && edge >= 2) {
-            l.p = clamp(l.p - 0.01, 0.01, 0.97); l.conf = clamp(l.conf - 1, 5, 95);
-            add(l, proj + ', leans the other way');
-          }
+          if (agree && edge >= 2) { bump(l, Math.min(0.03, (edge - 1) * 0.006) * (most ? 1 : 0.5)); add(l, proj + ', ' + edge + ' pts of edge' + (agreeTxt ? ' (' + agreeTxt + ' agree)' : '')); }
+          else if (!agree && edge >= MODEL_HOLD && most) hold(l, proj + ', disagrees by ' + edge + ' pts' + (agreeTxt ? ' (' + agreeTxt + ' on the other side)' : ''));
+          else if (!agree && edge >= 2) { bump(l, -0.01); add(l, proj + ', leans the other way'); }
+        } else if (l.k === 'total' && tSide) {
+          var dir = /^over/i.test(l.label) ? 'Over' : 'Under', te = Math.abs(tEdge), tAgree = dir === tSide;
+          l.model = tAgree ? te : -te;
+          var tTxt = 'Model total ' + tProj.toFixed(1);
+          if (tAgree && te >= MODEL_T_EDGE) {
+            bump(l, Math.min(0.025, (te - 2) * 0.008) * (tAll ? 1 : 0.5));
+            var sig0 = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
+            if (!sig0 && !l.held && tAll && te >= MODEL_T_HOLD) { l.s = [1, 0, te >= 6 ? 1 : 0]; l.modelPick = true; }
+            add(l, tTxt + ', ' + te + ' pts ' + (dir === 'Over' ? 'over' : 'under') + ' the number');
+          } else if (!tAgree && te >= MODEL_T_HOLD && tAll) hold(l, tTxt + ', ' + te + ' pts the other way');
+          else if (!tAgree && te >= 2) { bump(l, -0.01); add(l, tTxt + ', leans the other way'); }
         }
       });
-      // A spread the model likes by 3+ pts: upgrade the plain board leg if there is one, or add it.
-      if (mSide && edge >= MODEL_EDGE && o) {
+      // A spread most models like by 3+ pts: upgrade the plain board leg if there is one, or add it.
+      if (mSide && edge >= MODEL_EDGE && most && o) {
         var line = mSide === 'a' ? o.aNow : -o.aNow;
         var label = nmOf(s, mSide) + ' ' + signed(line);
         var odds = mSide === 'a' ? o.aSpOdds : o.hSpOdds;
         if (odds == null) odds = -110;
-        var mp2 = 0.5 + Math.min(0.04, (edge - 2) * 0.008);
-        var why = 'Model edge: ' + proj.replace('Model: ', '') + ' vs the ' + signed(line) + ' line (' + edge + ' pts)';
+        var mp2 = 0.5 + Math.min(0.04, (edge - 2) * 0.008) * (withM === nS ? 1 : 0.75);
+        var why = 'Model edge: ' + proj.replace('Model: ', '') + ' vs the ' + signed(line) + ' line (' + edge + ' pts' + (agreeTxt ? ', ' + agreeTxt : '') + ')';
         var ex = mine.filter(function (l) { return l.k === 'spread' && l.label === label; })[0];
-        var sig = [1, mSide === 'h' ? 1 : 0, edge >= 5 ? 1 : 0];
+        var sig = [1, withM === nS && nS > 1 ? 1 : 0, edge >= 5 ? 1 : 0];
         if (ex && !ex.held) {
           var had = ex.s ? ex.s[0] + ex.s[1] + ex.s[2] : 0;
           if (!had) { ex.s = sig; ex.p = Math.max(ex.p, mp2); ex.conf = Math.round(ex.p * 100) + 5; ex.note = why; }
@@ -618,6 +648,17 @@
         } else if (!ex) {
           legs.push({ g: s.id, k: 'spread', label: label, odds: odds, p: mp2, conf: Math.round(mp2 * 100) + 5, s: sig, dog: line > 0,
             model: edge, modelPick: true, note: why });
+        }
+      }
+      // A total both models put 4+ pts past the number, with no leg on that side yet.
+      if (tSide && tAll && tSrcs.length > 1 && Math.abs(tEdge) >= MODEL_T_HOLD && o && o.tot != null) {
+        var tl = tSide + ' ' + o.tot;
+        if (!mine.some(function (l) { return l.k === 'total' && l.label === tl; })) {
+          var iO = imp(o.oOdds), iU = imp(o.uOdds), base = (tSide === 'Over' ? iO : iU) / (iO + iU);
+          var tp = clamp(base + Math.min(0.03, (Math.abs(tEdge) - 2) * 0.008), 0.01, 0.97);
+          legs.push({ g: s.id, k: 'total', label: tl, odds: tSide === 'Over' ? o.oOdds : o.uOdds, p: tp, conf: Math.round(tp * 100) + 4,
+            s: [1, 0, Math.abs(tEdge) >= 6 ? 1 : 0], model: Math.abs(tEdge), modelPick: true,
+            note: 'Model total ' + tProj.toFixed(1) + ' vs ' + o.tot + ' (SP+ and Sasser agree)' });
         }
       }
     });
@@ -759,7 +800,7 @@
     rateLegs(legs, false);
     var games = slate.map(function (s) { return { id: s.id, label: s.a + (s.n ? ' vs ' : ' @ ') + s.h }; });
     var span = firstDate ? etDate(firstDate) + (lastDate && etDate(lastDate) !== etDate(firstDate) ? ' – ' + etDate(lastDate) : '') : '';
-    return { games: games, legs: legs, publicBoard: publicBoard, slate: slate, chip: 'NCAAF' + (span ? ' · ' + span : ''), count: slate.length };
+    return { games: games, legs: legs, publicBoard: publicBoard, slate: slate, model: extra.model || null, chip: 'NCAAF' + (span ? ' · ' + span : ''), count: slate.length };
   }
 
   // ---------- fetching
@@ -861,6 +902,6 @@
 
   root.BHLines = {
     load: load, stamp: stamp, REFRESH_MS: REFRESH_MS, etTime: etTime,
-    rateLegs: rateLegs, _test: { readEvent: readEvent, buildNfl: buildNfl, buildCollege: buildCollege, buildLineCheck: buildLineCheck, mlFromSpread: mlFromSpread, modelLegs: modelLegs }
+    rateLegs: rateLegs, modelView: modelView, phi: phi, _test: { readEvent: readEvent, buildNfl: buildNfl, buildCollege: buildCollege, buildLineCheck: buildLineCheck, mlFromSpread: mlFromSpread, modelLegs: modelLegs, modelView: modelView }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

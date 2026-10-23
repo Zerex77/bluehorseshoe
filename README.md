@@ -12,7 +12,7 @@ NFL and college football picks built from live lines. No server and no monthly c
 | Line check (Hard Rock vs. other books) | The Odds API free plan, via the GitHub Action → `data/books.json` | Every 4 hours (about 360 of the 500 free monthly credits) |
 | Player props | `data/props.json` (edit by hand) | When you update it |
 | Public betting splits | `data/splits.json` (edit by hand) | When you update it |
-| Horseshoe Model (college projected margins from SP+, FPI, SRS and Elo) | CollegeFootballData.com free API, via `.github/workflows/model.yml` → `data/model.json` | Once a day, plus Friday and Saturday mornings (about 230 of the 1,000 free monthly calls) |
+| Horseshoe Model (college): our CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly's SP+ game projections (his public "2026 SP+" sheet, newest "FBS Week N" tab), David Sasser's model (davidsasser.com/cfb), and CFBD advanced stats for the matchup chart | `.github/workflows/model.yml` → `data/model.json` | Once a day, plus Friday and Saturday mornings (about 300 of the 1,000 free CFBD calls a month) |
 
 Picks recalculate in the browser every time the lines change. Games drop off once they kick off.
 
@@ -43,7 +43,7 @@ Same as playsproutle.com:
 2. Repo → **Settings → Secrets and variables → Actions → New repository secret**. Name: `CFBD_API_KEY`. Value: your key.
 3. **Actions → Horseshoe Model → Run workflow** once. After that it runs on its own every morning.
 
-What it does to college picks: moneylines become 70% market, 30% model. Spreads the model backs by 3+ points show up as **Model edge** legs, and spreads it disagrees with by 4+ points are held (still shown, not a Horseshoe pick). The model's view is in each leg's "why" note, and the tracker logs it so the record shows whether it helps.
+What it does to college picks: the three projections are averaged. Moneylines become 70% market, 30% model. Spreads with 3+ points of edge, and most of the models on that side, show up as **Model edge** legs; spreads 4+ points the wrong way with most models against them are held (still shown, not a Horseshoe pick). Totals work the same way against the SP+ and Sasser projected totals. Tap any college leg (or **Breakdown** on the full slate) for the matchup breakdown: projected score, every model's line, the team identity chart, matchup advantages and SP+ ratings. The model's view is in each leg's "why" note, and the tracker logs it so the record shows whether it helps.
 
 ### 6. Start the timer
 Repo → **Actions** tab → enable workflows if asked → **Refresh lines → Run workflow**. After that it runs on its own every 15 minutes.
