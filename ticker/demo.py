@@ -16,6 +16,7 @@ Anywhere without panels:  python3 demo.py --preview frames
 """
 import argparse
 import os
+import re
 import sys
 import threading
 import time
@@ -40,7 +41,9 @@ def game(gid, a, h, state, a_s=0, h_s=0, detail='', period=0, clock='0:00', poss
 
 
 def leg(label, market, g, team, cls, right, sub='', prog=None):
-    r = {'label': label, 'market': market, 'g': g, 'team': T[team], 'odds': None, 'cls': cls, 'right': right, 'sub': sub}
+    player = re.split(r'\s+(?=\d)|\s+anytime', label)[0] if market == 'prop' else None
+    r = {'label': label, 'market': market, 'g': g, 'team': T[team], 'odds': None, 'cls': cls, 'right': right, 'sub': sub,
+         'player': player, 'inj': None}
     if prog is not None:
         r['prog'] = prog
     return r
@@ -110,6 +113,16 @@ def stages():
                ('win', 'HIT 88', '', 1), ('win', 'WON', 'GB 20-30 DET Final'), ('win', 'WON', 'GB 20-30 DET Final')),
         bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'),
              ('lost', 'LOST 46', '', 0.92))]))
+    # injuries: Gibbs is questionable on the report before his game; Swift gets hurt in the 3rd quarter
+    q = {'tag': 'Q', 'rank': 1, 'text': 'QUESTIONABLE - ANKLE'}
+    hurt = {'tag': 'INJ', 'rank': 3, 'text': 'INJURED - RETURN QUESTIONABLE'}
+    for n, (_, snap) in enumerate(out):
+        for sl in snap:
+            for r in sl['legs']:
+                if r['player'] == 'Jahmyr Gibbs' and n < 2:
+                    r['inj'] = q
+                if r['player'] == "D'Andre Swift" and n >= 2:
+                    r['inj'] = hurt
     return out
 
 
@@ -153,7 +166,8 @@ REEL = [
     ('dime', 'Caleb Williams 199.5 pass yds'), ('catch', 'Rome Odunze 24.5 rec. yds'),
     ('breakaway', 'Jahmyr Gibbs 69.5 rush yds'), ('touchdown', 'Jahmyr Gibbs anytime TD'),
     ('winner', 'Bears ML'), ('covered', 'Lions -3.5'), ('over', 'Over 44.5'), ('under', 'Under 44.5'),
-    ('nogood', 'Patriots ML'), ('short:46:49.5', "D'Andre Swift 49.5 rush yds"), ('fieldgoal', 'CASHED $155'),
+    ('injury', "D'Andre Swift"), ('nogood', 'Patriots ML'), ('short:46:49.5', "D'Andre Swift 49.5 rush yds"),
+    ('fieldgoal', 'CASHED $155'),
 ]
 
 

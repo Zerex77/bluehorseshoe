@@ -398,6 +398,73 @@ def in_box(summ, player):
     return any(player_stat(summ, player, w) is not None for w in ('pass yds', 'rush yds', 'rec yds'))
 
 
+# ---------------------------------------------------------------- injuries
+INJ_TAGS = [  # (pattern on ESPN status, short tag, rank: higher = worse)
+    (r'questionable', 'Q', 1), (r'day.to.day', 'DTD', 1), (r'probable', 'P', 0), (r'doubtful', 'D', 2),
+    (r'injured reserve|\bir\b', 'IR', 3), (r'physically unable|\bpup\b', 'PUP', 3), (r'suspend', 'SUSP', 3),
+    (r'non.football|reserve', 'IR', 3), (r'\bout\b', 'OUT', 3),
+]
+
+
+def inj_tag(status):
+    st = str(status or '').lower()
+    for pat, tag, rank in INJ_TAGS:
+        if re.search(pat, st):
+            return tag, rank
+    return None, 0
+
+
+def _play_name_re(player):
+    """Regex for how play-by-play writes a player: 'J.Gibbs', 'A.St. Brown', or the full name."""
+    toks = [t for t in re.split(r'\s+', str(player).strip()) if not re.fullmatch(r'(jr|sr|ii|iii|iv|v)\.?', t, re.I)]
+    if len(toks) < 2:
+        return re.compile(r'\b%s\b' % re.escape(toks[0] if toks else player), re.I)
+    first, last = toks[0], toks[1:]
+    last_re = r'[\s.]*'.join(re.escape(t.rstrip('.')) for t in last)
+    return re.compile(r'(?:\b%s\.?\s?|\b%s\s+)%s\b' % (re.escape(first[0]), re.escape(first), last_re), re.I)
+
+
+def _plays(summ):
+    """Every play text in an ESPN summary (NFL drives or college plays)."""
+    out = []
+    dr = (summ or {}).get('drives') or {}
+    for d in (dr.get('previous') or []) + ([dr['current']] if isinstance(dr.get('current'), dict) else []):
+        for p in d.get('plays') or []:
+            if p.get('text'):
+                out.append(p['text'])
+    for p in (summ or {}).get('plays') or []:
+        if isinstance(p, dict) and p.get('text'):
+            out.append(p['text'])
+    return out
+
+
+def game_injury(summ, player):
+    """In-game injury from the play-by-play -> {'tag', 'rank', 'text'} or None.
+    Looks for lines like 'J.Gibbs was injured during the play. His return is Questionable.'"""
+    if not summ or not player:
+        return None
+    name = _play_name_re(player)
+    hit = None
+    for text in _plays(summ):
+        for m in name.finditer(text):
+            # from his name to the next player's name (or 140 chars): covers 'His return is ...'
+            low = text[m.start():m.start() + 140].lower()
+            nxt = re.search(r'\.\s+[A-Z]\.\s?[A-Z][a-z]', text[m.end():m.start() + 140])
+            if nxt:
+                low = text[m.start():m.end() + nxt.start() + 1].lower()
+            if re.search(r'injur|ruled out|will not return', low):
+                hit = low
+            elif re.search(r'returned to the game|has returned|is back in', low) and hit:
+                hit = None  # back in the game
+    if not hit:
+        return None
+    if 'ruled out' in hit or 'will not return' in hit or re.search(r'return is (out|unlikely)', hit):
+        return {'tag': 'OUT', 'rank': 4, 'text': 'OUT FOR GAME'}
+    m = re.search(r'return is (questionable|probable|doubtful)', hit)
+    ret = m.group(1).upper() if m else ''
+    return {'tag': 'INJ', 'rank': 4 if ret == 'DOUBTFUL' else 3, 'text': 'INJURED' + (' - RETURN ' + ret if ret else '')}
+
+
 # ---------------------------------------------------------------- grading
 def frac(g):
     if g['state'] == 'post':
@@ -547,6 +614,8 @@ class Board:
         self.player_game = {}
         self.last_scan = {}
         self.ok_at = 0
+        self.injuries = []       # NFL injury report: [{'name', 'status', 'type', 'team'}]
+        self.inj_at = 0
 
     def fetch_boards(self):
         now = datetime.now(ET)
@@ -586,6 +655,34 @@ class Board:
                 rec['offBoard'] = off_board
                 self.games[gid] = rec
 
+    def fetch_injuries(self):
+        """ESPN's NFL injury report, refreshed every 10 minutes."""
+        if time.time() - self.inj_at < 600:
+            return
+        self.inj_at = time.time()
+        try:
+            j = self.get_json(ESPN + 'nfl/injuries')
+        except Exception:
+            return
+        out = []
+        for t in j.get('injuries') or []:
+            for i in t.get('injuries') or []:
+                a = i.get('athlete') or {}
+                if a.get('displayName') and i.get('status'):
+                    out.append({'name': a['displayName'], 'status': i['status'],
+                                'type': ((i.get('details') or {}).get('type') or ''), 'team': t.get('displayName') or ''})
+        self.injuries = out
+
+    def report_injury(self, player):
+        """Injury-report entry for a player on a slip -> {'tag', 'rank', 'text'} or None."""
+        is_him = _matcher(player)
+        for e in self.injuries:
+            if is_him(e['name']):
+                tag, rank = inj_tag(e['status'])
+                if tag and rank > 0:
+                    return {'tag': tag, 'rank': rank, 'text': (e['status'] + (' - ' + e['type'] if e['type'] else '')).upper()}
+        return None
+
     def legs_of(self, slip):
         out = []
         for l in slip.get('legs') or []:
@@ -599,6 +696,8 @@ class Board:
 
     def refresh(self, slips):
         self.fetch_boards()
+        if any(l.get('market') == 'prop' for sl in slips for l in self.legs_of(sl)):
+            self.fetch_injuries()
         now = time.time()
         want = {}
         for s in slips:
@@ -664,8 +763,15 @@ class Board:
                     tm = player_team(sm['json'], l['player']) if sm else None
                     if tm:
                         team = g['a'] if str(tm.get('id')) == str(g['a'].get('id')) else g['h'] if str(tm.get('id')) == str(g['h'].get('id')) else tm
+                inj = None
+                if l.get('market') == 'prop' and l.get('player'):
+                    sm = self.summaries.get(g['id']) if g else None
+                    if g and g['state'] != 'pre' and sm:
+                        inj = game_injury(sm['json'], l['player'])
+                    elif not g or g['state'] == 'pre':
+                        inj = self.report_injury(l['player'])
                 rows.append({'label': l['label'], 'market': l.get('market'), 'g': l.get('g') if g else None,
-                             'team': team, 'odds': l.get('odds'), **e})
+                             'team': team, 'odds': l.get('odds'), 'player': l.get('player'), 'inj': inj, **e})
             won = sum(1 for e in evs if e['cls'] in ('win', 'push'))
             out.append({'id': s.get('id'), 'name': s.get('name') or 'Slip', 'status': st, 'won': won, 'n': len(legs),
                         'pay': po['pay'], 'price': amer(po['d']) if po['d'] else None, 'stake': po['stake'], 'legs': rows})

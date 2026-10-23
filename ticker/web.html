@@ -26,6 +26,8 @@
   .leg { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
   .leg span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .leg .r { font-family: ui-monospace, Menlo, monospace; font-weight: 700; white-space: nowrap; }
+  .leg .inj { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #ff464b; color: #000; }
+  .leg .inj.r1 { background: #ffb020; } .leg .inj.r2 { background: #ff781e; }
   .c-win, .c-good { color: var(--green); } .c-close { color: var(--amber); } .c-bad, .c-lost { color: var(--red); } .c-pre, .c-unk, .c-push { color: var(--mut); }
   .x { padding: 2px 8px; font-size: 12px; color: var(--mut); }
 </style>
@@ -94,7 +96,7 @@
       $('slips').innerHTML = s.snap.map(function (sl) {
         return '<div class="card"><div class="slip-h"><span class="tag ' + sl.status + '">' + { live: 'LIVE', busted: 'BUSTED', cashed: 'CASHED', pre: 'UPCOMING' }[sl.status] + '</span><b>' + esc(sl.name) + '</b>' +
           '<span class="st">' + sl.won + '/' + sl.n + (sl.pay ? ' · $' + sl.pay.toFixed(2) : '') + '</span><button class="x" data-rm="' + esc(sl.id) + '" type="button">Remove</button></div>' +
-          sl.legs.map(function (l) { return '<div class="leg"><span>' + esc(l.label) + '</span><span class="r c-' + l.cls + '">' + esc(l.right) + '</span></div>'; }).join('') + '</div>';
+          sl.legs.map(function (l) { return '<div class="leg"><span>' + esc(l.label) + (l.inj ? ' <span class="inj r' + l.inj.rank + '">' + esc(l.inj.text) + '</span>' : '') + '</span><span class="r c-' + l.cls + '">' + esc(l.right) + '</span></div>'; }).join('') + '</div>';
       }).join('') || '<div class="st">No slips yet. Send them from the Live page on bluehorseshoebet.com (More → Send to LED ticker), or add one below.</div>';
     }).catch(function () { $('st').textContent = "Can't reach the ticker."; });
   }

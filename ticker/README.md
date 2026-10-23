@@ -37,6 +37,12 @@ When a leg hits, the ticker plays a short animation picked by what the leg is, t
 - A leg loses: the ref waves it off, **NO GOOD**. On a near miss (within 15% of the line), the runner dives and is spotted **JUST SHORT** of the first-down marker, with the stat and line shown.
 - A slip cashes: the game-winning field goal, **IT'S GOOD!**, then money rain with the payout.
 
+## Injuries
+For every player on your slips, the ticker checks ESPN's NFL injury report (every 10 minutes) and each game's play-by-play:
+- Before kickoff, a badge shows next to the leg: **Q** questionable, **D** doubtful, **OUT**, **IR**.
+- If a player gets hurt during the game, the leg shows **INJ** (with his return status when ESPN posts it), and the medical cart drives out with an **INJURY** alert. You also get an alert if his report status gets worse (like questionable to out).
+College players aren't on ESPN's injury report, but in-game injuries are still picked up from the play-by-play.
+
 Turn them off with `"animations": false` in `/var/lib/bhticker/config.json`. They live in `anim.py`.
 
 ## Demo

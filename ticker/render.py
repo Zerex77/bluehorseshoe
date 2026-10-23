@@ -195,7 +195,13 @@ def item_leg(row, game, logos):
         # the score bug already shows the score and clock
         sub = re.sub(r'^[A-Z0-9&.]+ \d+-\d+ [A-Z0-9&.]+ ?', '', sub)
         sub = sub.replace(_clock(game), '').strip(' -')
-    lw = text_w(F_BIG, label) + (text_w(F_SMALL, label_odds) + 2 if label_odds else 0)
+    inj = row.get('inj') or {}
+    inj_tag = ascii_safe(inj.get('tag') or '')
+    inj_col = {1: (255, 176, 32), 2: (255, 120, 30)}.get(inj.get('rank'), RED)
+    inj_w = text_w(F_SMALL, inj_tag) + 4 if inj_tag else 0
+    lw = text_w(F_BIG, label) + (text_w(F_SMALL, label_odds) + 2 if label_odds else 0) + (inj_w + 4 if inj_tag else 0)
+    if inj.get('text') and inj.get('rank', 0) >= 3:
+        sub = (sub + '  ' if sub else '') + ascii_safe(inj['text'])
     l2 = right + ('  ' + sub if sub else '')
     has_bar = row.get('prog') is not None and row['cls'] not in ('win', 'lost')
     w2 = text_w(F_SMALL, l2) + (34 if has_bar else 0)
@@ -220,6 +226,10 @@ def item_leg(row, game, logos):
     d.text((x0, 1), label, font=F_BIG, fill=WHITE)
     if label_odds:
         d.text((x0 + text_w(F_BIG, label) + 2, 4), label_odds, font=F_SMALL, fill=DIM)
+    if inj_tag:  # injury badge: Q / D / OUT / IR / INJ
+        bx = x0 + text_w(F_BIG, label) + (text_w(F_SMALL, label_odds) + 2 if label_odds else 0) + 4
+        d.rectangle((bx, 3, bx + inj_w, 13), fill=inj_col)
+        d.text((bx + 2, 3), inj_tag, font=F_SMALL, fill=(0, 0, 0))
     y2 = 19
     x = x0
     if has_bar:

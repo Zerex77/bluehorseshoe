@@ -234,6 +234,14 @@ class Ticker:
                     elif r['cls'] == 'lost':
                         self.alerts.append((r['label'] + ' lost', 'lost', A.pick_loss(r)))
                 self.prev[k] = r['cls']
+                # injuries: alert when a player on a slip gets hurt in-game or his status gets worse
+                ik = k + ':inj'
+                inj = r.get('inj') or {}
+                rank, oldrank = inj.get('rank', 0), self.prev.get(ik)
+                if not first and oldrank is not None and rank > oldrank and r['cls'] not in ('win', 'lost'):
+                    who = r.get('player') or r['label']
+                    self.alerts.append(('%s %s' % (who, inj.get('text') or inj.get('tag')), 'lost', 'injury'))
+                self.prev[ik] = rank
 
     def build_items(self, snap):
         """Order: slip header, then each game's score bug followed by that game's legs (live games first)."""

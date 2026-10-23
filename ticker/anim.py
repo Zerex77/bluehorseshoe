@@ -471,6 +471,44 @@ def anim_hit(w, text):
         yield img, DT
 
 
+# ---------------------------------------------------------------- injury
+def _cart(d, x, i):
+    """Medical cart driving left: white body, red cross, blinking light."""
+    d.rectangle((x, 14, x + 30, 25), fill=WHITE)                 # body
+    d.rectangle((x + 4, 8, x + 16, 14), outline=(150, 160, 180))  # windshield frame / roof
+    d.line((x + 4, 8, x + 22, 8), fill=(150, 160, 180))
+    d.rectangle((x + 19, 16, x + 27, 18), fill=RED)              # red cross
+    d.rectangle((x + 22, 13, x + 24, 21), fill=RED)
+    d.ellipse((x + 3, 23, x + 9, 29), fill=(30, 30, 30))         # wheels
+    d.ellipse((x + 21, 23, x + 27, 29), fill=(30, 30, 30))
+    d.rectangle((x + 9, 5, x + 11, 7), fill=(255, 176, 32) if (i // 4) % 2 else (90, 60, 10))  # light
+
+
+def anim_injury(w, text):
+    """A player on a slip got hurt: he's down, the medical cart drives out. INJURY."""
+    drive, hold = int(1.2 * FPS), int(1.3 * FPS)
+    px = w // 2 - 30
+    for i in range(drive + hold):
+        img, d = canvas(w, TURF)
+        for k in range(0, w, 30):
+            d.line((k, 0, k, H), fill=TURF_LINE)
+        # player down on the field, a trainer kneeling next to him
+        d.ellipse((px - 22, 23, px - 16, 29), fill=GOLD)
+        d.line((px - 16, 26, px - 2, 27), fill=BLUE, width=3)
+        d.line((px - 2, 27, px + 6, 29), fill=WHITE, width=2)
+        d.ellipse((px + 2, 13, px + 7, 18), fill=(225, 190, 150))
+        d.line((px + 4, 18, px + 4, 24), fill=(200, 40, 40), width=2)
+        d.line((px + 4, 24, px + 9, 29), fill=(30, 30, 30), width=2)
+        t = min(1.0, i / drive)
+        _cart(d, w + 4 - (w + 4 - (px + 16)) * ease_out(t), i)
+        if i > drive - 6:
+            k = i - (drive - 6)
+            word = 'INJURY'
+            tw = R.text_w(R.F_FLASH, word)
+            outline_text(d, w, word, [(255, 176, 32), WHITE][(k // 6) % 2], x=px + 60 + max(0, 30 - k * 5) if px + 60 + tw < w else 4)
+        yield img, DT
+
+
 # ---------------------------------------------------------------- field goal (a slip cashed)
 def anim_fieldgoal(w, text):
     """Slip cashed: the game-winning field goal. Snap, kick, it splits the uprights,
@@ -630,7 +668,7 @@ def anim_short(w, text):
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
-    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short,
+    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury,
 }
 
 
