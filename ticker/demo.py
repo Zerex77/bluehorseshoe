@@ -23,7 +23,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bhticker as B  # noqa: E402
 
-STAGE_SECONDS = 35
+STAGE_SECONDS = 40
 
 T = {
     'NE': {'id': '17', 'abbreviation': 'NE', 'displayName': 'New England Patriots', 'shortDisplayName': 'Patriots', 'name': 'Patriots'},
@@ -68,11 +68,13 @@ def stages():
             leg('Lions ML', 'ml', 'g2', 'DET', *lions),
             leg('Lions -3.5', 'spread', 'g2', 'DET', *lions_spread)])
 
-    def bust(odunze, total, pats):
-        return slip('b', 'Demo Bust', 5, '+500', 30, [
+    def bust(odunze, total, pats, swift=None):
+        swift = swift or P1
+        return slip('b', 'Demo Bust', 5, '+650', 37.5, [
             leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', *odunze),
             leg('Over 33.5', 'total', 'g1', 'CHI', *total),
-            leg('Patriots ML', 'ml', 'g1', 'NE', *pats)])
+            leg('Patriots ML', 'ml', 'g1', 'NE', *pats),
+            leg("D'Andre Swift 49.5 rush yds", 'prop', 'g1', 'CHI', *swift)])
 
     out = []
     # 1: everything upcoming
@@ -82,28 +84,32 @@ def stages():
     g1 = game('g1', 'NE', 'CHI', 'in', 7, 10, '6:12 - 2nd', 2, '6:12', poss='CHI', rz=True)
     out.append(({'g1': g1, 'g2': g2}, [
         parlay(('close', 'Up 3'), ('close', '112/200', 'pace 214', 0.56), P2, P2, P2, P2),
-        bust(('good', '18/25', 'pace 33', 0.72), ('close', '17/33.5', 'pace 36', 0.5), ('close', 'Down 3'))]))
+        bust(('good', '18/25', 'pace 33', 0.72), ('close', '17/33.5', 'pace 36', 0.5), ('close', 'Down 3'),
+             ('close', '24/50', 'pace 51', 0.48))]))
     # 3: 3rd quarter -> pass yds (DIME) and rec yds (CAUGHT IT) hit, Lions game kicks off
     g1 = game('g1', 'NE', 'CHI', 'in', 10, 17, '9:40 - 3rd', 3, '9:40', poss='NE')
     g2 = game('g2', 'GB', 'DET', 'in', 3, 0, '11:05 - 1st', 1, '11:05', poss='DET')
     out.append(({'g1': g1, 'g2': g2}, [
         parlay(('good', 'Up 7'), ('win', 'HIT 214', '', 1), ('close', '0/1', ''), ('close', '14/70', 'pace 68', 0.2),
                ('close', 'Down 3'), ('bad', 'Short 6.5')),
-        bust(('win', 'HIT 41', '', 1), ('close', '27/33.5', 'pace 38', 0.8), ('bad', 'Down 7'))]))
+        bust(('win', 'HIT 41', '', 1), ('close', '27/33.5', 'pace 38', 0.8), ('bad', 'Down 7'),
+             ('close', '38/50', 'pace 50', 0.76))]))
     # 4: Bears final -> ML hits (WINNER), total goes over (scoreboard), Gibbs scores (TOUCHDOWN),
-    #    Patriots ML loses (FUMBLE) and Demo Bust busts
+    #    Patriots ML loses (NO GOOD), Swift falls just short (JUST SHORT) and Demo Bust busts
     g1 = game('g1', 'NE', 'CHI', 'post', 13, 24, 'Final', 4, '0:00')
     g2 = game('g2', 'GB', 'DET', 'in', 20, 27, '4:51 - 4th', 4, '4:51', poss='DET')
     out.append(({'g1': g1, 'g2': g2}, [
         parlay(('win', 'WON', 'NE 13-24 CHI Final'), ('win', 'HIT 248', '', 1), ('win', 'HIT 1', '', 1),
                ('close', '64/70', 'pace 71', 0.91), ('good', 'Up 7'), ('good', 'Covering +3.5')),
-        bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'))]))
+        bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'),
+             ('lost', 'LOST 46', '', 0.92))]))
     # 5: Lions final -> rush yds (BREAKAWAY), ML (WINNER), spread (COVERED), then the field goal + cash
     g2 = game('g2', 'GB', 'DET', 'post', 20, 30, 'Final', 4, '0:00')
     out.append(({'g1': g1, 'g2': g2}, [
         parlay(('win', 'WON', 'NE 13-24 CHI Final'), ('win', 'HIT 248', '', 1), ('win', 'HIT 1', '', 1),
                ('win', 'HIT 88', '', 1), ('win', 'WON', 'GB 20-30 DET Final'), ('win', 'WON', 'GB 20-30 DET Final')),
-        bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'))]))
+        bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'),
+             ('lost', 'LOST 46', '', 0.92))]))
     return out
 
 
@@ -147,7 +153,7 @@ REEL = [
     ('dime', 'Caleb Williams 199.5 pass yds'), ('catch', 'Rome Odunze 24.5 rec. yds'),
     ('breakaway', 'Jahmyr Gibbs 69.5 rush yds'), ('touchdown', 'Jahmyr Gibbs anytime TD'),
     ('winner', 'Bears ML'), ('covered', 'Lions -3.5'), ('over', 'Over 44.5'), ('under', 'Under 44.5'),
-    ('fumble', 'Patriots ML'), ('fieldgoal', 'CASHED $155'),
+    ('nogood', 'Patriots ML'), ('short:46:49.5', "D'Andre Swift 49.5 rush yds"), ('fieldgoal', 'CASHED $155'),
 ]
 
 

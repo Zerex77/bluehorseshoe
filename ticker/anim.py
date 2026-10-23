@@ -1,7 +1,7 @@
 """Football celebration animations for the LED ticker.
 
 Each animation is a generator of (PIL image, seconds to hold it). bhticker.py plays one before the
-regular text flash when a leg hits, a leg loses (fumble), or a slip cashes (game-winning field goal).
+regular text flash when a leg hits, a leg loses (ref waves it off, or just short of the marker on a near miss), or a slip cashes (game-winning field goal).
 
     pick(row)  -> animation name for a leg that hit, based on what the leg is
     play(name, width, text) -> frames
@@ -32,6 +32,19 @@ CONFETTI = [GOLD, BLUE, GREEN, RED, (255, 120, 200), WHITE]
 
 
 # ---------------------------------------------------------------- picking
+def pick_loss(row):
+    """Which animation fits a leg that just lost: JUST SHORT for a near miss, NO GOOD otherwise."""
+    lab = (row.get('label') or '')
+    m_cur = re.search(r'(\d+(?:\.\d+)?)', row.get('right') or '')
+    m_line = re.search(r'(\d+(?:\.\d+)?)', lab)
+    if (row.get('market') in ('prop', 'total') and m_cur and m_line
+            and not re.search(r'\bunder\b', lab, re.I)):
+        cur, line = float(m_cur.group(1)), float(m_line.group(1))
+        if line > 0 and 0.85 <= cur / line < 1.0:
+            return 'short:%g:%g' % (cur, line)
+    return 'nogood'
+
+
 def pick(row):
     """Which celebration fits a leg that just hit."""
     m = row.get('market')
@@ -532,63 +545,98 @@ def _money_rain(w, text):
         yield img, DT
 
 
-# ---------------------------------------------------------------- fumble (a leg lost)
-def anim_fumble(w, text):
-    """A leg lost: the ball carrier gets blown up, the ball pops loose and bounces away."""
-    run, after = int(0.9 * FPS), int(1.5 * FPS)
-    hit_x = w * 0.42
-    dust = Particles()
-    ball = None   # [x, y, vx, vy, spin]
-    for i in range(run + after):
+# ---------------------------------------------------------------- losses
+STRIPE = (20, 20, 20)
+
+
+def _ref(d, x, ground, arms):
+    """Referee in stripes. arms: 0..1 sweep for the wave-off (arms crossing in front)."""
+    d.ellipse((x - 3, ground - 26, x + 3, ground - 20), fill=(225, 190, 150))   # face
+    d.rectangle((x - 3, ground - 27, x + 3, ground - 25), fill=WHITE)           # cap
+    d.line((x + 3, ground - 25, x + 5, ground - 25), fill=WHITE)                # bill
+    for k in range(5):                                                          # striped shirt
+        d.line((x - 2, ground - 19 + k * 2, x + 2, ground - 19 + k * 2), fill=WHITE if k % 2 == 0 else STRIPE, width=1)
+        d.line((x - 2, ground - 18 + k * 2, x + 2, ground - 18 + k * 2), fill=STRIPE if k % 2 == 0 else WHITE, width=1)
+    d.line((x - 1, ground - 9, x - 3, ground), fill=STRIPE, width=2)            # legs
+    d.line((x + 1, ground - 9, x + 3, ground), fill=STRIPE, width=2)
+    sw = math.sin(arms * math.pi * 2) * 13                                      # arms sweep across, waist high
+    sh = ground - 18
+    skin = (225, 190, 150)
+    for side in (-1, 1):
+        hx, hy = x + side * 3 + side * sw, sh + 4
+        d.line((x + side * 3, sh, hx, hy), fill=STRIPE, width=2)
+        d.rectangle((hx - 1, hy - 1, hx + 1, hy + 1), fill=skin)
+
+
+def anim_nogood(w, text):
+    """A leg lost: the referee waves it off. NO GOOD."""
+    n = int(2.4 * FPS)
+    rx = 44
+    for i in range(n):
         img, d = canvas(w, TURF)
-        for k in range(0, w + 24, 24):
-            x = k - (i * 6 if i < run else run * 6) % 24
-            d.line((x, 0, x, H), fill=TURF_LINE)
-        if i < run:
-            t = i / run
-            cx = 10 + (hit_x - 10) * t
-            dx = w - 10 - (w - 10 - hit_x - 8) * t     # defender closing in
-            _player(d, cx, 30, 'run', i)
-            football(d, cx + 3, 14, 0, 0.6)
-            _player(d, dx, 30, 'run', i, jersey=RED)
+        for k in range(0, w, 30):
+            d.line((k, 0, k, H), fill=TURF_LINE)
+        _ref(d, rx, 30, i / 14.0)
+        if i > 8:
+            outline_text(d, w, 'NO GOOD', [RED, WHITE][(i // 6) % 2], x=rx + 40)
+        yield img, DT
+
+
+def anim_short(w, text):
+    """A near miss: the runner dives for the marker and the ball is spotted just short.
+    text is 'cur:line' (e.g. '64:69.5')."""
+    try:
+        cur, line = [float(v) for v in (text or '').split(':')[:2]]
+    except ValueError:
+        cur, line = 0.0, 0.0
+    marker_x = int(w * 0.62)
+    spot_x = marker_x - 4                       # the ball's nose stops just shy of the line
+    dash, dive = int(0.8 * FPS), int(0.5 * FPS)
+    for i in range(dash + dive + int(1.6 * FPS)):
+        img, d = canvas(w, TURF)
+        for k in range(0, w, 30):
+            d.line((k, 0, k, H), fill=TURF_LINE)
+        d.line((marker_x, 0, marker_x, H), fill=(255, 215, 0), width=2)        # TV first-down line
+        d.rectangle((marker_x - 1, 0, marker_x + 1, 4), fill=(255, 120, 0))   # chain stick on the sideline
+        if i < dash:
+            t = i / dash
+            x = 10 + (spot_x - 34 - 10) * t
+            _player(d, x, 30, 'run', i)
+            football(d, x + 3, 14, 0, 0.6)
         else:
-            k = i - run
-            if ball is None:
-                ball = [hit_x + 4, 14, 2.6, -3.2, 0]
-                dust.burst(hit_x + 4, 18, 26, speed=(0.8, 2.6), cols=[WHITE, (150, 170, 120), RED], up=1)
-            # carrier knocked flat, defender standing over him
-            d.line((hit_x - 14, 28, hit_x + 2, 28), fill=BLUE, width=3)
-            d.ellipse((hit_x - 19, 25, hit_x - 13, 31), fill=GOLD)
-            d.line((hit_x + 2, 28, hit_x + 9, 30), fill=WHITE, width=2)
-            _player(d, hit_x + 8, 30, 'arms_up' if (k // 6) % 2 else 'stand', k, jersey=RED)
-            # loose ball bouncing away unpredictably
-            ball[0] += ball[2]
-            ball[1] += ball[3]
-            ball[3] += 0.35
-            ball[4] += 1
-            if ball[1] > 27:
-                ball[1] = 27
-                ball[3] = -abs(ball[3]) * random.uniform(0.45, 0.8)
-                ball[2] = ball[2] * random.uniform(0.5, 1.3) * random.choice([1, 1, -1])
-            ball[2] = max(-3.0, min(3.0, ball[2]))
-            if ball[0] < 4 or ball[0] > w - 4:
-                ball[2] = -ball[2]
-            dust.step(d)
-            if k > 5:
-                outline_text(d, w, 'FUMBLE!', [RED, (255, 150, 150)][(k // 5) % 2], x=w - 12 - R.text_w(R.F_FLASH, 'FUMBLE!'))
-            football(d, ball[0], ball[1], ball[4])  # on top, so it bounces across the word
+            k = i - dash
+            t = min(1.0, k / dive)
+            bx = spot_x - 34 + 28 * ease_out(t)   # body slides forward on the dive
+            # diving runner, stretched out flat with the ball out in front
+            d.ellipse((bx - 30, 20, bx - 24, 26), fill=GOLD)
+            d.line((bx - 24, 24, bx - 8, 25), fill=BLUE, width=3)
+            d.line((bx - 8, 25, bx + 2, 25), fill=BLUE, width=2)
+            d.line((bx - 36, 25, bx - 30, 27), fill=WHITE, width=2)
+            football(d, bx + 1, 25, 0, 0.8)
+            if t >= 1:
+                gap_l, gap_r = bx + 6, marker_x - 1
+                if (k // 4) % 2:
+                    d.line((gap_l, 29, gap_r, 29), fill=RED)     # the measurement: this much short
+                    d.line((gap_l, 27, gap_l, 31), fill=RED)
+                    d.line((gap_r, 27, gap_r, 31), fill=RED)
+                if k > dive + 6:
+                    if line:
+                        stat = '%s / %s' % (('%g' % cur), ('%g' % line))
+                        d.text((marker_x + 8, 1), stat, font=R.F_SMALL, fill=WHITE)
+                    d.text((marker_x + 8, 13), 'JUST SHORT', font=R.F_SCORE, fill=[RED, WHITE][(k // 6) % 2])
         yield img, DT
 
 
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
-    'fieldgoal': anim_fieldgoal, 'fumble': anim_fumble,
+    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short,
 }
 
 
 def play(name, width, text=''):
+    name, _, arg = (name or '').partition(':')   # e.g. 'short:64:69.5'
     fn = ANIMS.get(name)
     if not fn:
         return iter(())
-    return fn(width, text)
+    return fn(width, arg or text)
