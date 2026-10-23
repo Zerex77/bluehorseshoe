@@ -47,12 +47,11 @@ Turn them off with `"animations": false` in `/var/lib/bhticker/config.json`. The
 
 ## Demo
 Plays a scripted game with two fake slips so you can see every feature in about 3 minutes: upcoming, live progress bars, legs hitting, a leg losing, a slip busting and a slip cashing.
+The demo pauses the real ticker while it runs and starts it again when you quit, so they never fight over the panels.
 ```
-sudo systemctl stop bhticker
 sudo python3 /opt/bhticker/demo.py      # Ctrl+C to quit
 sudo python3 /opt/bhticker/demo.py --reel   # just the animations, back to back (~30s)
 sudo python3 /opt/bhticker/demo.py --stage 3   # start the full demo partway (stages 1-5)
-sudo systemctl start bhticker
 ```
 
 ## Troubleshooting

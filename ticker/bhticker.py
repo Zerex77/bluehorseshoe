@@ -418,10 +418,31 @@ def make_handler(app):
     return H
 
 
+def wait_for_demo():
+    """Don't grab the panels while demo.py is using them (two programs at once = garbage lines).
+    The demo writes its pid to demo.pid in the data folder while it runs."""
+    told = False
+    while True:
+        try:
+            pid = int(open(os.path.join(DATA, 'demo.pid')).read().strip())
+            with open('/proc/%d/cmdline' % pid, 'rb') as f:
+                running = b'demo.py' in f.read()
+        except (OSError, ValueError):
+            running = False
+        if not running:
+            return
+        if not told:
+            print('A demo is using the panels; waiting for it to finish...', flush=True)
+            told = True
+        time.sleep(3)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--preview', help='no LED hardware: write frames to this folder')
     args = ap.parse_args()
+    if not args.preview:
+        wait_for_demo()
     app = Ticker(args.preview)
     srv = ThreadingHTTPServer(('0.0.0.0', int(app.cfg['port'])), make_handler(app))
     threading.Thread(target=srv.serve_forever, daemon=True).start()

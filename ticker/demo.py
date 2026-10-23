@@ -5,18 +5,18 @@ Two fake slips go from upcoming -> live -> legs hitting -> a leg losing -> one s
 -> the other CASHED, then it starts over. Every leg type has its own celebration animation
 (see anim.py), so the demo shows all of them. No real scores are used.
 
-Run on the Pi (stop the real ticker first so they don't fight over the panels):
-    sudo systemctl stop bhticker
+Run on the Pi. It pauses the real ticker while it runs and starts it again when you quit:
     sudo python3 /opt/bhticker/demo.py           (full demo, loops until Ctrl+C)
     sudo python3 /opt/bhticker/demo.py --reel    (just the animations, ~30 seconds)
     sudo python3 /opt/bhticker/demo.py --stage 3 (start the full demo at stage 3)
-    sudo systemctl start bhticker
 
 Anywhere without panels:  python3 demo.py --preview frames
 """
 import argparse
 import os
 import re
+import signal
+import subprocess
 import sys
 import threading
 import time
@@ -185,6 +185,55 @@ def reel(app, loops=1):
     app.panel.show(B.Image.new('RGB', (W, app.panel.height)))
 
 
+PIDFILE = os.path.join(B.DATA, 'demo.pid')
+
+
+def demo_pid():
+    """pid of a demo that is still running (from its lock file), else None."""
+    try:
+        pid = int(open(PIDFILE).read().strip())
+        with open('/proc/%d/cmdline' % pid, 'rb') as f:
+            return pid if b'demo.py' in f.read() else None
+    except (OSError, ValueError):
+        return None
+
+
+def take_panels():
+    """Make sure nothing else is driving the panels (two programs at once = garbage lines).
+    Pauses the real ticker if it's running and stops any other demo. Returns True if the
+    ticker was running, so it can be started again when the demo ends."""
+    other = demo_pid()
+    if other and other != os.getpid():
+        print('Stopping the other demo that was using the panels...', flush=True)
+        try:
+            os.kill(other, signal.SIGTERM)
+        except OSError:
+            pass
+        for _ in range(30):
+            if not demo_pid():
+                break
+            time.sleep(0.1)
+    os.makedirs(B.DATA, exist_ok=True)
+    with open(PIDFILE, 'w') as f:
+        f.write(str(os.getpid()))
+    was_running = subprocess.run(['systemctl', 'is-active', '--quiet', 'bhticker']).returncode == 0
+    if was_running:
+        print('Pausing the real ticker while the demo runs...', flush=True)
+        subprocess.run(['systemctl', 'stop', 'bhticker'])
+    return was_running
+
+
+def give_back_panels(was_running):
+    try:
+        if demo_pid() == os.getpid():
+            os.remove(PIDFILE)
+    except OSError:
+        pass
+    if was_running:
+        print('Starting the real ticker again.', flush=True)
+        subprocess.run(['systemctl', 'start', 'bhticker'])
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--preview', help='no LED hardware: write frames to this folder')
@@ -192,19 +241,28 @@ def main():
     ap.add_argument('--loops', type=int, default=1, help='with --reel: how many times to play it')
     ap.add_argument('--stage', type=int, default=1, help='start the full demo at this stage (1-5)')
     args = ap.parse_args()
-    app = Demo(args.preview, args.stage)
-    if args.reel:
-        try:
-            reel(app, args.loops)
-        except KeyboardInterrupt:
-            pass
-        return
-    threading.Thread(target=app.data_loop, daemon=True).start()
-    print('Blue Horseshoe demo running. Ctrl+C to stop.', flush=True)
+    was_running = False if args.preview else take_panels()
+
+    def stop(*_):  # closing the SSH window or a kill still hands the panels back
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGHUP, stop)
     try:
+        app = Demo(args.preview, args.stage)
+        if args.reel:
+            reel(app, args.loops)
+            return
+        threading.Thread(target=app.data_loop, daemon=True).start()
+        print('Blue Horseshoe demo running. Ctrl+C to stop.', flush=True)
         app.scroll_loop()
     except KeyboardInterrupt:
         pass
+    finally:
+        try:
+            app.panel.show(B.Image.new('RGB', (app.panel.width, app.panel.height)))
+        except Exception:
+            pass
+        give_back_panels(was_running)
 
 
 if __name__ == '__main__':
