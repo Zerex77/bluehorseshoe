@@ -152,7 +152,7 @@ def item_slip(slip):
     return img
 
 
-TAB_MAX = 54   # widest the compact pinned slip tab gets
+TAB_MAX = 64   # widest a slip header gets
 TAB_MIN = 30
 
 
@@ -162,9 +162,17 @@ def _clip(font, s, maxw):
     return s
 
 
+def _money(v):
+    if v >= 1000:
+        k = v / 1000.0 + 1e-9   # round halves up ($1,450 -> $1.5K)
+        return '$%sK' % (('%.1f' % k).rstrip('0').rstrip('.') if k < 100 else '%.0f' % k)
+    return '$' + format(v, ',.0f') if v >= 100 else '$%.2f' % v
+
+
 def item_slip_tab(slip):
-    """Compact slip tab that stays pinned at the left edge: name in small type on up to two lines,
-    with the live count under it, colored by status."""
+    """Compact slip header. It scrolls in and then stays pinned at the left edge in the same
+    form while the slip's legs scroll behind it: name in small type (up to two lines), the
+    count (or WON / BUST) and the payout, with a status-colored stripe."""
     st = slip['status']
     col = {'live': COL['win'], 'busted': RED, 'cashed': GOLD, 'pre': DIM}[st]
     inner = TAB_MAX - 8
@@ -178,20 +186,27 @@ def item_slip_tab(slip):
     if len(lines) > 2:
         lines = [lines[0], ' '.join(lines[1:])]
     lines = [_clip(F_SMALL, ln, inner) for ln in lines]
-    count = '%d/%d' % (slip['won'], slip['n'])
-    if st == 'cashed':
-        count = 'WON'
-    elif st == 'busted':
-        count = 'BUST'
-    count = _clip(F_SMALL, count, inner)
-    tab_w = max(TAB_MIN, min(TAB_MAX, max(text_w(F_SMALL, x) for x in lines + [count]) + 8))
+    count = {'cashed': 'WON', 'busted': 'BUST'}.get(st, '%d/%d' % (slip['won'], slip['n']))
+    pay = _money(slip['pay']) if slip.get('pay') else (slip.get('price') or '')
+    rows = [(ln, GOLD) for ln in lines]
+    if len(lines) == 1:
+        rows += [(count, col), (pay, WHITE)] if pay else [(count, col)]
+    else:
+        both = count + ' ' + pay if pay else count
+        rows.append((both if text_w(F_SMALL, both) <= inner else count, col))
+    rows = [(_clip(F_SMALL, t, inner), c) for t, c in rows if t]
+    tab_w = max(TAB_MIN, min(TAB_MAX, max(text_w(F_SMALL, t) for t, _ in rows) + 8))
     img = Image.new('RGB', (tab_w, H))
     d = _draw(img)
     d.rectangle((0, 2, 1, H - 3), fill=col)                        # status stripe
-    y0 = 1 if len(lines) == 2 else 5
-    for k, ln in enumerate(lines):
-        d.text((4, y0 + k * 10), ln, font=F_SMALL, fill=GOLD)
-    d.text((4, 21), count, font=F_SMALL, fill=col)
+    y0 = 1 if len(rows) == 3 else 6
+    for k, (t, c) in enumerate(rows):
+        if len(lines) == 2 and k == 2 and ' ' in t:   # count + payout share the last row
+            cnt, rest = t.split(' ', 1)
+            d.text((4, y0 + k * 10), cnt, font=F_SMALL, fill=col)
+            d.text((4 + text_w(F_SMALL, cnt + ' '), y0 + k * 10), rest, font=F_SMALL, fill=WHITE)
+        else:
+            d.text((4, y0 + k * 10), t, font=F_SMALL, fill=c)
     d.line((tab_w - 3, 3, tab_w - 3, H - 4), fill=SEP)
     return img
 
