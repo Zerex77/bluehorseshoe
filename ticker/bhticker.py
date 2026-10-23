@@ -221,7 +221,7 @@ class Ticker:
             key = 'slip:%s' % s['id']
             if not first and self.prev.get(key) not in (None, s['status']):
                 if s['status'] == 'cashed':
-                    self.alerts.append(('CASHED ' + ('$' + format(s['pay'], ',.0f') if s.get('pay') else s['name']), 'cashed', 'strike'))
+                    self.alerts.append(('CASHED ' + ('$' + format(s['pay'], ',.0f') if s.get('pay') else s['name']), 'cashed', 'fieldgoal'))
                 elif s['status'] == 'busted':
                     self.alerts.append((s['name'] + ' busted', 'lost', None))
             self.prev[key] = s['status']
@@ -326,7 +326,7 @@ class Ticker:
             except Exception as e:  # never let an animation stop the ticker
                 print('animation %s failed: %s' % (anim, e), flush=True)
         if played and kind == 'cashed':
-            return  # the strike animation already shows the payout
+            return  # the field goal animation already shows the payout
         end = time.time() + (2.5 if played else 5)
         on = True
         while time.time() < end:

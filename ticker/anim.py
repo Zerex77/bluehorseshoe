@@ -1,7 +1,7 @@
 """Bowling-alley style celebration animations for the LED ticker.
 
 Each animation is a generator of (PIL image, seconds to hold it). bhticker.py plays one before the
-regular text flash when a leg hits, a leg loses, or a slip cashes.
+regular text flash when a leg hits, a leg loses (gutter ball), or a slip cashes (game-winning field goal).
 
     pick(row)  -> animation name for a leg that hit, based on what the leg is
     play(name, width, text) -> frames
@@ -261,28 +261,116 @@ def anim_dime(w, text):
         yield f
 
 
+PX_PER_YD = 6
+GOAL_X = 75 * PX_PER_YD          # world x of the goal line (ball snapped at our own 25)
+ENDZONE = (16, 40, 100)
+
+
+def _field_world(d, w, cam):
+    """Football field in world coordinates, drawn from camera position cam."""
+    d.rectangle((0, 0, w, H), fill=TURF)
+    ez0 = GOAL_X - cam
+    ez1 = GOAL_X + 10 * PX_PER_YD - cam
+    if ez0 < w:
+        d.rectangle((ez0, 0, ez1, H), fill=ENDZONE)
+        for k in range(int(ez0) - 40, int(ez1), 8):  # end zone hash
+            d.line((k, H, k + 20, 0), fill=dim(ENDZONE, 1.35))
+        horseshoe(d, ez0 + 4, 4, dim(GOLD, 0.8), 0.9)
+        if ez1 < w:
+            d.rectangle((ez1, 0, w, H), fill=(6, 18, 8))
+    first = int(cam // (5 * PX_PER_YD))
+    for k in range(first, first + w // (5 * PX_PER_YD) + 2):
+        wx = k * 5 * PX_PER_YD
+        yd = 25 + k * 5
+        if yd > 100:
+            break
+        x = wx - cam
+        d.line((x, 0, x, H), fill=WHITE if yd == 100 else TURF_LINE)
+        if yd % 10 == 0 and yd < 100:
+            n = str(min(yd, 100 - yd))
+            d.text((x - R.text_w(R.F_SMALL, n) // 2, 0), n, font=R.F_SMALL, fill=dim(WHITE, 0.55))
+        for hx in range(1, 5):  # hash marks
+            xx = x + hx * PX_PER_YD
+            d.point((xx, 13), fill=TURF_LINE)
+            d.point((xx, 19), fill=TURF_LINE)
+
+
+def _player(d, x, ground, pose, i=0, jersey=BLUE):
+    """Little football player. pose: run / throw_back / throw / arms_up / catch."""
+    d.ellipse((x - 3, ground - 26, x + 3, ground - 20), fill=GOLD)
+    d.line((x + 2, ground - 23, x + 4, ground - 23), fill=WHITE)
+    d.line((x, ground - 20, x, ground - 10), fill=jersey, width=3)
+    hip = (x, ground - 10)
+    if pose == 'run':
+        st = (i // 3) % 2
+        d.line((hip, (x + (5 if st else 2), ground)), fill=WHITE, width=2)
+        d.line((hip, (x - (6 if st else 3), ground - (3 if st else 1))), fill=WHITE, width=2)
+    else:
+        d.line((hip, (x + 3, ground)), fill=WHITE, width=2)
+        d.line((hip, (x - 3, ground)), fill=WHITE, width=2)
+    sh = (x, ground - 18)
+    if pose == 'throw_back':
+        d.line((sh, (x - 5, ground - 24)), fill=jersey, width=2)
+        d.line((sh, (x + 4, ground - 15)), fill=jersey, width=2)
+    elif pose == 'throw':
+        d.line((sh, (x + 6, ground - 25)), fill=jersey, width=2)
+        d.line((sh, (x - 3, ground - 14)), fill=jersey, width=2)
+    elif pose in ('arms_up', 'catch'):
+        d.line((sh, (x - 4, ground - 28)), fill=jersey, width=2)
+        d.line((sh, (x + 4, ground - 28)), fill=jersey, width=2)
+    else:
+        d.line((sh, (x - 5, ground - 13 + (i // 3) % 2 * 2)), fill=jersey, width=2)
+
+
 def anim_touchdown(w, text):
-    """TDs: ball sails through the uprights, then fireworks."""
-    n = int(1.2 * FPS)
-    px = w // 2
+    """TDs: the QB drops back and lets it fly, the camera rides with the ball downfield,
+    and the receiver hauls it in in the end zone. Then fireworks."""
+    qb_x = 46
+    rec_x = GOAL_X + 40
+    cam_max = GOAL_X + 10 * PX_PER_YD + 20 - w
+    drop, flight = int(0.7 * FPS), int(1.9 * FPS)
     fw = Particles()
-    for i in range(n + int(1.6 * FPS)):
+    trail = []
+    for i in range(drop + flight + int(1.8 * FPS)):
+        if i < drop:  # dropback + throw
+            img, d = canvas(w)
+            _field_world(d, w, 0)
+            pose = 'throw' if i > drop - 5 else 'throw_back'
+            _player(d, qb_x - min(i, 12) * 0.6, 30, pose)
+            if pose == 'throw_back':
+                football(d, qb_x - min(i, 12) * 0.6 - 6, 6, 0, 0.6)
+            yield img, DT
+            continue
+        f = min(1.0, (i - drop) / flight)
+        t = f * f * (3 - 2 * f) * 0.35 + f * 0.65            # quick release, slight settle at the end
+        bx = qb_x + 6 + (rec_x - qb_x - 6) * t
+        by = 6 - 3 * t + 7 * math.sin(math.pi * t)            # leaves the QB's hand, rides mid-screen, drops into the hands
+        size = 0.8 + 0.35 * math.sin(math.pi * t)              # 3rd person: ball looms bigger mid-flight
+        cam = max(0.0, min(cam_max, bx - 110))
         img, d = canvas(w)
-        d.line((px, 31, px, 22), fill=GOLD, width=2)       # post
-        d.line((px - 14, 22, px + 14, 22), fill=GOLD, width=2)  # crossbar
-        d.line((px - 14, 22, px - 14, 0), fill=GOLD, width=2)   # uprights
-        d.line((px + 14, 22, px + 14, 0), fill=GOLD, width=2)
-        if i < n:
-            t = i / n
-            x = 8 + (px - 8) * t
-            y = 28 - 22 * math.sin(math.pi * t * 0.62)
-            football(d, x, y, i // 2, 1.0 - 0.35 * t)
-        if i >= n and (i - n) % 7 == 0:
-            fw.burst(random.randint(10, w - 10), random.randint(5, 16), 34, speed=(1.2, 3.2),
-                     cols=[random.choice(CONFETTI)], life=(16, 26))
-        fw.step(d, gravity=0.05, drag=0.93)
-        if i >= n + 10:
-            outline_text(d, w, 'TOUCHDOWN!', [GOLD, WHITE, GREEN][((i - n) // 4) % 3])
+        _field_world(d, w, cam)
+        if qb_x - cam > -10:
+            _player(d, qb_x - 7 - cam, 30, 'throw')
+        rx = rec_x - cam
+        caught = f >= 1
+        if rx < w + 10:
+            run_in = 0 if t > 0.85 else (0.85 - t) * 60
+            _player(d, rx - run_in, 30, 'catch' if t > 0.8 else 'run', i)
+        trail.append((bx, by))
+        for k, (tx, ty) in enumerate(trail[-12::2]):
+            d.point((tx - cam, ty), fill=dim(WHITE, 0.2 + k * 0.1))
+        if caught:
+            football(d, rx, 3, 0, 0.8)
+        else:
+            football(d, bx - cam, by, i, size)
+        if caught:
+            k = i - drop - flight
+            if k % 6 == 0:
+                fw.burst(random.randint(20, w - 20), random.randint(4, 14), 30, speed=(1.2, 3.0),
+                         cols=[random.choice(CONFETTI)], life=(14, 24))
+            fw.step(d, gravity=0.05, drag=0.93)
+            if k >= 6:
+                outline_text(d, w, 'TOUCHDOWN!', [GOLD, WHITE, GREEN][(k // 4) % 3], x=12)
         yield img, DT
 
 
@@ -370,7 +458,7 @@ def anim_hit(w, text):
         yield img, DT
 
 
-# ---------------------------------------------------------------- bowling: strike / gutter
+# ---------------------------------------------------------------- bowling: gutter ball (a leg lost)
 PIN_SPOTS = [(0, 0), (6, -1), (6, 1), (12, -2), (12, 0), (12, 2), (18, -3), (18, -1), (18, 1), (18, 3)]
 
 
@@ -406,36 +494,49 @@ def _ball(d, x, y, roll, col=(40, 70, 210)):
             d.point((hx, hy), fill=(5, 5, 20))
 
 
-def anim_strike(w, text):
-    """Slip cashed: STRIKE, then money rains with the payout."""
-    px = w - 40
-    pins = [[px + dx, 24 + dy, 0.0, 0.0, 0.0, 0.0] for dx, dy in PIN_SPOTS]  # x y vx vy ang spin
-    n = int(1.2 * FPS)
-    hit_at = None
-    boom = Particles()
-    for i in range(n + int(1.0 * FPS)):
-        img, d = canvas(w)
-        _lane(d, w)
-        bx = -6 + (px + 2 + 6) * min(1.0, i / n)
-        if hit_at is None and bx >= px - 2:
-            hit_at = i
-            for q in pins:
-                q[2] = random.uniform(-1.0, 3.5)
-                q[3] = random.uniform(-4.5, -1.5)
-                q[5] = random.uniform(-0.5, 0.5)
-            boom.burst(px + 6, 18, 30, cols=[GOLD, WHITE], up=1)
-        for q in pins:
-            if hit_at is not None:
-                q[0] += q[2]
-                q[1] += q[3]
-                q[3] += 0.25
-                q[4] += q[5]
-            _pin(d, q[0], q[1], q[4])
-        if hit_at is None or i - hit_at < 6:
-            _ball(d, min(bx, px + 4), 21, i * 0.6)
-        boom.step(d)
-        if hit_at is not None and i - hit_at > 4:
-            outline_text(d, w, 'STRIKE!', [GOLD, WHITE, RED][((i - hit_at) // 3) % 3])
+def anim_fieldgoal(w, text):
+    """Slip cashed: the game-winning field goal. Snap, kick, it splits the uprights,
+    IT'S GOOD! and then money rains with the payout."""
+    post_x = w - 46
+    hold_x = 36
+    approach, flight = int(0.6 * FPS), int(1.3 * FPS)
+    sp = Particles()
+    for i in range(approach + flight + int(1.0 * FPS)):
+        img, d = canvas(w, TURF)
+        for k in range(0, w, 30):
+            d.line((k, 0, k, H), fill=TURF_LINE)
+        # goal post (side view, the ball flies away from us through it)
+        good = i >= approach + int(flight * 0.62)
+        pc = GOLD if not good or (i // 3) % 2 else WHITE
+        d.line((post_x, 31, post_x, 20), fill=pc, width=2)
+        d.line((post_x - 12, 20, post_x + 12, 20), fill=pc, width=2)
+        d.line((post_x - 12, 20, post_x - 12, 0), fill=pc, width=2)
+        d.line((post_x + 12, 20, post_x + 12, 0), fill=pc, width=2)
+        # holder kneeling
+        d.ellipse((hold_x + 3, 16, hold_x + 9, 22), fill=GOLD)
+        d.line((hold_x + 6, 22, hold_x + 6, 27), fill=BLUE, width=3)
+        d.line((hold_x + 6, 27, hold_x + 11, 30), fill=WHITE, width=2)
+        if i < approach:  # kicker's run-up and swing
+            kx = hold_x - 30 + i * (24 / approach)
+            _player(d, kx, 30, 'run', i, jersey=(220, 220, 230))
+            football(d, hold_x + 1, 27, 0, 0.7)
+            if i > approach - 4:
+                d.line((kx, 20, kx + 8, 24), fill=WHITE, width=2)  # leg swing
+        else:
+            _player(d, hold_x - 4, 30, 'arms_up' if good else 'stand', i, jersey=(220, 220, 230))
+            t = (i - approach) / flight
+            if t <= 1:
+                bx = hold_x + 1 + (post_x - hold_x + 6) * t
+                by = 27 - 30 * math.sin(math.pi * t * 0.62)
+                football(d, bx, by, i, max(0.35, 0.9 - 0.55 * t))
+            if good and i == approach + int(flight * 0.62):
+                sp.burst(post_x, 6, 40, cols=[GOLD, WHITE], up=1)
+                sp.burst(post_x, 6, 20, cols=[GREEN], up=1)
+        sp.step(d)
+        if good:
+            k = i - (approach + int(flight * 0.62))
+            if k > 3:
+                outline_text(d, w, "IT'S GOOD!", [GOLD, WHITE][(k // 4) % 2], x=hold_x + 30)
         yield img, DT
     for f in _money_rain(w, text):
         yield f
@@ -488,7 +589,7 @@ def anim_gutter(w, text):
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
-    'strike': anim_strike, 'gutter': anim_gutter,
+    'fieldgoal': anim_fieldgoal, 'gutter': anim_gutter,
 }
 
 

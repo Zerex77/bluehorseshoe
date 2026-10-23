@@ -31,10 +31,11 @@ When a leg hits, the ticker plays a short animation picked by what the leg is, t
 - Rushing yds / carries: **BREAKAWAY!** (runner sprints across the field)
 - Receiving yds / receptions: **CAUGHT IT!** (ball arcs into waiting hands)
 - Passing yds / attempts / completions: **DIME!** (spiral into a bullseye)
-- Touchdowns: **TOUCHDOWN!** (through the uprights, then fireworks)
+- Touchdowns: **TOUCHDOWN!** (QB drops back and throws, the camera follows the ball downfield to the receiver in the end zone, then fireworks)
 - Moneyline: **WINNER!** / Spread: **COVERED!** (Blue Horseshoes drop in)
 - Totals: **OVER!** / **UNDER!** (scoreboard counts past the line)
-- A leg loses: **GUTTER BALL**. A slip cashes: **STRIKE!**, then money rain with the payout.
+- A leg loses: **GUTTER BALL**.
+- A slip cashes: the game-winning field goal, **IT'S GOOD!**, then money rain with the payout.
 
 Turn them off with `"animations": false` in `/var/lib/bhticker/config.json`. They live in `anim.py`.
 
