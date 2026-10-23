@@ -21,12 +21,19 @@ h2.bh-sec{font-size:40px !important}
 h1.bh-hero2{font-size:56px !important;line-height:0.95 !important}
 h2.bh-sec2{font-size:30px !important}
 @media (max-width:600px){h1{font-size:28px !important}h2{font-size:22px !important}h1.bh-hero{font-size:46px !important}h1.bh-hero2{font-size:38px !important}h2.bh-sec{font-size:30px !important}h2.bh-sec2{font-size:26px !important}.bh-stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
-.bh-mx-back{position:fixed;inset:0;background:rgba(4,8,18,0.72);z-index:50}
-.bh-mx{position:fixed;z-index:51;left:50%;top:4vh;transform:translateX(-50%);width:min(880px,calc(100vw - 32px));max-height:92vh;overflow-y:auto;background:#0A1020;border:1px solid #263556;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,0.55);box-sizing:border-box;overscroll-behavior:contain}
+.bh-mp{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px;padding-bottom:24px}
+.bh-mp-kicker{font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#7FB0FF;text-align:center}
+.bh-mp-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#1E2A45;border:1px solid #1E2A45;border-radius:14px;overflow:hidden}
+.bh-mp-tile{background:#111A2E;padding:14px;min-width:0}
+.bh-mp-tv{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:17px;margin-top:6px;overflow-wrap:anywhere}
+.bh-mp-ts{font-size:12px;color:#A9B5CF;margin-top:3px}
+h2.bh-mp-h{margin:0;font-size:22px !important;letter-spacing:0.06em}
+h2.bh-mp-h span{color:#7FB0FF}
+.bh-sr{position:absolute !important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (min-width:700px){.bh-mp-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .bh-mx-k{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#7D89A3}
 .bh-mx-v{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;line-height:1.1}
 h3.bh-mx-h{margin:0;font-family:'Barlow Condensed',Inter,sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:0.02em}
-@media (max-width:600px){.bh-mx{top:auto;bottom:0;left:0;transform:none;width:100%;max-height:94vh;border-radius:18px 18px 0 0;border-bottom:none}}
 a{color:#7FB0FF}a:hover{color:#B5D0FF}
 button{font:inherit}
 .fader{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;margin:0}
@@ -506,6 +513,217 @@ button{font:inherit}
           </table>
         </div>
       </div>
+    </sc-if>
+
+    <sc-if value="{{mxOpen}}" hint-placeholder-val="{{ false }}">
+      <article class="bh-mp" aria-labelledby="mp-title">
+        <button type="button" onClick="{{mx.close}}" style="all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #7FB0FF; font-weight: 600; font-size: 14px;">← Back to picks</button>
+
+        <div class="bh-mp-kicker">{{mx.kicker}}</div>
+        <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; text-align: center;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0;">
+            <sc-if value="{{mx.hasALogo}}" hint-placeholder-val="{{ true }}"><img src="{{mx.aLogo}}" alt="" width="64" height="64" style="width: 64px; height: 64px; object-fit: contain;"></sc-if>
+            <div style="{{mx.aStyle}}"><span style="font-size: 0.6em; color: #A9B5CF;">{{mx.aRank}}</span>{{mx.away}}</div>
+          </div>
+          <div style="font-size: 13px; color: #7D89A3; font-weight: 600;">at</div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0;">
+            <sc-if value="{{mx.hasHLogo}}" hint-placeholder-val="{{ true }}"><img src="{{mx.hLogo}}" alt="" width="64" height="64" style="width: 64px; height: 64px; object-fit: contain;"></sc-if>
+            <div style="{{mx.hStyle}}"><span style="font-size: 0.6em; color: #A9B5CF;">{{mx.hRank}}</span>{{mx.home}}</div>
+          </div>
+        </div>
+        <h1 id="mp-title" class="bh-sr">{{mx.away}} at {{mx.home}} matchup</h1>
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;"><span style="{{mx.aRecStyle}}">{{mx.aRecLine}}</span><span style="{{mx.hRecStyle}}">{{mx.hRecLine}}</span></div>
+        <div style="font-size: 14px; color: #A9B5CF; line-height: 1.5;">{{mx.when}}<br>{{mx.venue}}</div>
+
+        <div class="bh-mp-tiles">
+          <div class="bh-mp-tile"><div class="bh-mx-k">Projected score <span style="font-weight: 500;">(away / home)</span></div><sc-if value="{{mx.hasProj}}" hint-placeholder-val="{{ true }}"><div style="margin-top: 6px;"><span style="{{mx.projAStyle}}">{{mx.projA}}</span> <span style="color: #4A5878; font-size: 20px;">/</span> <span style="{{mx.projHStyle}}">{{mx.projH}}</span></div></sc-if><sc-if value="{{mx.noModel}}" hint-placeholder-val="{{ false }}"><div class="bh-mp-tv">—</div></sc-if></div>
+          <div class="bh-mp-tile"><div class="bh-mx-k">Model line</div><div class="bh-mp-tv">{{mx.modelLine}}</div><div class="bh-mp-ts">{{mx.modelWin}}</div></div>
+          <div class="bh-mp-tile"><div class="bh-mx-k">Market line</div><div class="bh-mp-tv">{{mx.marketLine}}</div><div class="bh-mp-ts">{{mx.marketSub}}</div></div>
+          <div class="bh-mp-tile"><div class="bh-mx-k">Model pick</div><div style="{{mx.modelPickStyle}}; margin-top: 6px; overflow-wrap: anywhere;">{{mx.modelPick}}</div><div class="bh-mp-ts">{{mx.modelPickSub}}</div></div>
+        </div>
+
+        <sc-if value="{{mx.hasGameLegs}}" hint-placeholder-val="{{ true }}">
+          <section style="display: flex; flex-direction: column; gap: 10px;">
+            <h2 class="bh-mp-h"><span>01</span> / The pick</h2>
+            <div role="group" aria-label="Legs on this game" style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{mx.gameLegs}}" as="gl" hint-placeholder-count="3">
+                <button type="button" onClick="{{gl.pick}}" aria-pressed="{{gl.on}}" style="{{gl.style}}">{{gl.label}}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{mx.hasLeg}}" hint-placeholder-val="{{ true }}">
+              <div style="background: #111A2E; border: 1px solid #263556; border-radius: 14px; overflow: hidden;">
+                <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #1E2A45;">
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+                    <span style="font-size: 12px; color: #7D89A3; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">{{mx.leg.kind}}</span>
+                    <span style="{{mx.leg.statusStyle}}">{{mx.leg.status}}</span>
+                  </div>
+                  <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase;">{{mx.leg.label}} <span style="color: #C9D3E8; font-weight: 700;">{{mx.leg.oddsStr}}</span></div>
+                  <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                    <div style="position: relative; height: 10px; border-radius: 4px; background: #1E2A45;"><span style="{{mx.leg.hitBar}}"></span><span style="{{mx.leg.bookMark}}" title="Book implies"></span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #A9B5CF;"><span><b style="color: #EEF2FA;">{{mx.leg.hit}}</b> Horseshoe chance</span><span>white line = book implies <b style="color: #EEF2FA;">{{mx.leg.book}}</b></span></div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #1E2A45;">
+                  <div style="background: #0E1628; padding: 12px 14px;"><div class="bh-mx-k">Value</div><div style="{{mx.leg.valueStyle}}">{{mx.leg.value}}</div></div>
+                  <div style="background: #0E1628; padding: 12px 14px;"><div class="bh-mx-k">Confidence</div><div class="bh-mx-v">{{mx.leg.conf}}</div></div>
+                  <div style="background: #0E1628; padding: 12px 14px;"><div class="bh-mx-k">Book implies</div><div class="bh-mx-v">{{mx.leg.book}}</div></div>
+                </div>
+                <sc-if value="{{mx.leg.hasReasons}}" hint-placeholder-val="{{ true }}">
+                  <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #1E2A45;">
+                    <div class="bh-mx-k">Why the Horseshoe likes it</div>
+                    <sc-for list="{{mx.leg.reasons}}" as="rs" hint-placeholder-count="3">
+                      <div style="display: flex; gap: 12px;">
+                        <span style="{{rs.bar}}"></span>
+                        <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                          <div style="font-size: 15px; font-weight: 700; line-height: 1.35;"><span style="font-family: 'IBM Plex Mono', monospace; color: #7D89A3; font-weight: 500; margin-right: 6px;">{{rs.n}}</span>{{rs.title}}</div>
+                          <div style="font-size: 13px; color: #A9B5CF; line-height: 1.5;">{{rs.why}}</div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{mx.hasRows}}" hint-placeholder-val="{{ true }}">
+          <section style="display: flex; flex-direction: column; gap: 10px;">
+            <h2 class="bh-mp-h"><span>02</span> / The models</h2>
+            <div style="font-size: 14px; color: #A9B5CF;">{{mx.consensus}}</div>
+            <div style="display: flex; flex-direction: column; border: 1px solid #1E2A45; border-radius: 12px; overflow: hidden; background: #111A2E;">
+              <sc-for list="{{mx.rows}}" as="mr" hint-placeholder-count="4">
+                <div style="{{mr.rowStyle}}; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: baseline;">
+                  <div style="font-weight: 700; font-size: 14px;"><sc-if value="{{mr.hasUrl}}" hint-placeholder-val="{{ false }}"><a href="{{mr.url}}" target="_blank" rel="noopener noreferrer">{{mr.name}} ↗</a></sc-if><sc-if value="{{mr.noUrl}}" hint-placeholder-val="{{ true }}">{{mr.name}}</sc-if></div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; text-align: right;">{{mr.line}}</div>
+                  <div style="font-size: 13px;"><span style="{{mr.sideStyle}}">{{mr.side}}</span> <span style="color: #7D89A3;">· {{mr.edge}} pts</span></div>
+                  <div style="font-size: 12px; color: #A9B5CF; text-align: right;">Total {{mr.total}}</div>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{mx.hasChart}}" hint-placeholder-val="{{ true }}">
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 class="bh-mp-h"><span>03</span> / Team identity</h2>
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 14px; overflow: hidden;">
+              <div style="padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+                <div role="group" aria-label="Chart view" style="display: flex; gap: 2px; background: #0E1628; border: 1px solid #1E2A45; padding: 3px; border-radius: 8px;">
+                  <sc-for list="{{mx.views}}" as="vw" hint-placeholder-count="3">
+                    <button type="button" onClick="{{vw.pick}}" aria-pressed="{{vw.on}}" style="{{vw.style}}">{{vw.label}}</button>
+                  </sc-for>
+                </div>
+                <div style="font-size: 12px; color: #7D89A3;">{{mx.viewNote}}</div>
+                <div style="display: flex; justify-content: center; gap: 18px; font-size: 13px; font-weight: 600; padding-top: 6px; flex-wrap: wrap;">
+                  <span style="display: inline-flex; align-items: center; gap: 6px; color: {{mx.A}};"><svg width="24" height="6" aria-hidden="true"><line x1="0" y1="3" x2="24" y2="3" stroke="{{mx.A}}" stroke-width="2.5" stroke-dasharray="5 3"></line></svg>{{mx.away}}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; color: {{mx.H}};"><svg width="24" height="6" aria-hidden="true"><line x1="0" y1="3" x2="24" y2="3" stroke="{{mx.H}}" stroke-width="2.5"></line></svg>{{mx.home}}</span>
+                </div>
+                <svg viewBox="0 0 340 300" width="100%" role="img" aria-label="Radar chart: {{mx.away}} and {{mx.home}} by category, 0 to 100, larger is stronger" style="display: block; max-width: 440px; margin: 0 auto; overflow: visible;">
+                  <sc-for list="{{mx.rings}}" as="rg" hint-placeholder-count="4"><polygon points="{{rg.pts}}" fill="none" stroke="#24314F" stroke-width="1"></polygon><text x="{{rg.lx}}" y="{{rg.ly}}" font-size="8" fill="#4A5878" font-family="Inter, sans-serif">{{rg.label}}</text></sc-for>
+                  <sc-for list="{{mx.axes}}" as="ax" hint-placeholder-count="8"><line x1="170" y1="155" x2="{{ax.x2}}" y2="{{ax.y2}}" stroke="#24314F" stroke-width="1"></line><text x="{{ax.lx}}" y="{{ax.ly}}" text-anchor="{{ax.anchor}}" font-size="11" font-weight="{{ax.weight}}" fill="{{ax.fill}}" font-family="Inter, sans-serif"><tspan x="{{ax.lx}}">{{ax.l1}}</tspan><tspan x="{{ax.lx}}" dy="12">{{ax.l2}}</tspan></text></sc-for>
+                  <polygon points="{{mx.polyH}}" fill="{{mx.H}}" fill-opacity="0.16" stroke="{{mx.H}}" stroke-width="2"></polygon>
+                  <polygon points="{{mx.polyA}}" fill="{{mx.A}}" fill-opacity="0.14" stroke="{{mx.A}}" stroke-width="2" stroke-dasharray="5 3"></polygon>
+                  <sc-for list="{{mx.dotsH}}" as="dt" hint-placeholder-count="8"><circle cx="{{dt.x}}" cy="{{dt.y}}" r="3" fill="{{dt.color}}"></circle></sc-for>
+                  <sc-for list="{{mx.dotsA}}" as="dt" hint-placeholder-count="8"><circle cx="{{dt.x}}" cy="{{dt.y}}" r="3" fill="{{dt.color}}"></circle></sc-for>
+                </svg>
+                <div style="font-size: 12px; color: #7D89A3; text-align: center; line-height: 1.5;">Larger = stronger. On pace, larger = faster.<br>Select a category to explore its underlying numbers.</div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 64px 64px; gap: 8px; padding: 10px 14px; background: #0E1628; border-top: 1px solid #1E2A45; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #7D89A3;"><span>Category / 0–100</span><span style="text-align: right; color: {{mx.A}};">Away</span><span style="text-align: right; color: {{mx.H}};">Home</span></div>
+              <sc-for list="{{mx.catRows}}" as="cr" hint-placeholder-count="8">
+                <button type="button" onClick="{{cr.pick}}" aria-pressed="{{cr.on}}" style="{{cr.rowStyle}}">
+                  <span style="font-size: 14px; font-weight: 600;">{{cr.label}} <span style="{{cr.style2}} font-size: 11px; color: #7D89A3; font-weight: 500;">style</span></span>
+                  <span style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">{{cr.a}}</span>
+                  <span style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">{{cr.h}}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{mx.hasCat}}" hint-placeholder-val="{{ true }}">
+                <div style="padding: 16px 14px; border-top: 1px solid #1E2A45; background: #0E1628; display: flex; flex-direction: column; gap: 12px;">
+                  <div style="font-weight: 700; font-size: 16px;">{{mx.catDetail.label}}</div>
+                  <div style="font-size: 13px; color: #A9B5CF; line-height: 1.5;">{{mx.catDetail.blurb}}</div>
+                  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+                    <sc-for list="{{mx.catDetail.teams}}" as="ct" hint-placeholder-count="2">
+                      <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                        <div style="{{ct.color}}; font-size: 14px;">{{ct.team}}</div>
+                        <sc-for list="{{ct.rows}}" as="cv" hint-placeholder-count="2">
+                          <div style="display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 11px; color: #7D89A3;">{{cv.k}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; overflow-wrap: anywhere;">{{cv.v}}</span><span style="font-size: 11px; color: #A9B5CF;">{{cv.p}}</span></div>
+                        </sc-for>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <h2 class="bh-mp-h"><span>04</span> / Matchup advantages</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #1E2A45; border: 1px solid #1E2A45; border-radius: 14px; overflow: hidden; text-align: center;">
+              <div style="background: #111A2E; padding: 14px 8px;"><div style="{{mx.advAStyle}}">{{mx.advA}}</div><div style="font-size: 12px; color: #A9B5CF; margin-top: 4px;">area(s) favor<br><b style="color: {{mx.A}};">{{mx.away}}</b></div></div>
+              <div style="background: #111A2E; padding: 14px 8px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 40px; line-height: 1;">{{mx.advE}}</div><div style="font-size: 12px; color: #A9B5CF; margin-top: 4px;">closely matched<br>5-point threshold</div></div>
+              <div style="background: #111A2E; padding: 14px 8px;"><div style="{{mx.advHStyle}}">{{mx.advH}}</div><div style="font-size: 12px; color: #A9B5CF; margin-top: 4px;">area(s) favor<br><b style="color: {{mx.H}};">{{mx.home}}</b></div></div>
+            </div>
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 14px; overflow: hidden;">
+              <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #0E1628; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;"><span style="color: {{mx.A}};">← {{mx.away}}</span><span style="color: #7D89A3;">Edge · percentile pts</span><span style="color: {{mx.H}};">{{mx.home}} →</span></div>
+              <sc-for list="{{mx.advRows}}" as="av" hint-placeholder-count="7">
+                <div style="border-top: 1px solid #1E2A45;">
+                  <button type="button" onClick="{{av.pick}}" aria-expanded="{{av.on}}" style="all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 14px;">
+                    <span style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"><span style="font-size: 15px; font-weight: 700;">{{av.label}}</span><span style="text-align: right;"><span style="{{av.whoStyle}}">{{av.who}}</span><br><span style="font-size: 12px; color: #7D89A3; font-family: 'IBM Plex Mono', monospace;">{{av.gap}} <span style="color: #7FB0FF; font-weight: 700;">{{av.sign}}</span></span></span></span>
+                    <span style="position: relative; display: block; height: 12px; background: #0E1628; border-radius: 3px;"><span style="position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #3A4A6B;"></span><span style="{{av.barStyle}}"></span></span>
+                  </button>
+                  <sc-if value="{{av.isOpen}}" hint-placeholder-val="{{ false }}">
+                    <div style="padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px;">
+                      <div style="font-size: 13px; color: #C9D3E8; line-height: 1.5;">{{av.why}}</div>
+                      <sc-for list="{{av.face}}" as="fc" hint-placeholder-count="2">
+                        <div style="background: #0E1628; border: 1px solid #1E2A45; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+                          <span style="font-size: 11px; color: #7D89A3; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">{{fc.who}}</span>
+                          <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px;"><span style="{{fc.lStyle}}">{{fc.l}}</span><span style="color: #A9B5CF;">{{fc.edge}}</span><span style="{{fc.rStyle}}">{{fc.r}}</span></span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div style="display: flex; justify-content: space-between; padding: 8px 14px; border-top: 1px solid #1E2A45; font-size: 11px; color: #7D89A3; font-family: 'IBM Plex Mono', monospace;"><span>−100</span><span>0 / even</span><span>+100</span></div>
+              <div style="padding: 0 14px 14px; font-size: 12px; color: #7D89A3; line-height: 1.5;">Bars point toward the team with the edge. Tap a row to see why: each side’s offense against the other’s defense. These are statistical comparisons, not scoring margins or win chances.</div>
+            </div>
+          </section>
+        </sc-if>
+        <sc-if value="{{mx.noChart}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 14px; padding: 16px; font-size: 14px; color: #A9B5CF;">The team identity chart shows up after the Horseshoe Model’s next run.</div>
+        </sc-if>
+
+        <sc-if value="{{mx.hasRatings}}" hint-placeholder-val="{{ true }}">
+          <section style="display: flex; flex-direction: column; gap: 10px;">
+            <h2 class="bh-mp-h"><span>05</span> / Ratings</h2>
+            <div style="border: 1px solid #1E2A45; border-radius: 12px; overflow: hidden; background: #111A2E;">
+              <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; padding: 10px 14px; background: #0E1628; font-size: 12px; font-weight: 700;"><span></span><span style="color: {{mx.A}};">{{mx.away}}</span><span style="color: {{mx.H}};">{{mx.home}}</span></div>
+              <sc-for list="{{mx.ratings}}" as="rt" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; padding: 10px 14px; border-top: 1px solid #1E2A45; font-size: 13px;"><span style="color: #A9B5CF;">{{rt.lab}}</span><span style="font-family: 'IBM Plex Mono', monospace;">{{rt.a}}</span><span style="font-family: 'IBM Plex Mono', monospace;">{{rt.h}}</span></div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
+        <div style="border: 1px solid #1E2A45; border-radius: 12px; background: #111A2E;">
+          <button type="button" onClick="{{mx.toggleHelp}}" aria-expanded="{{mx.help}}" style="all: unset; box-sizing: border-box; cursor: pointer; display: flex; justify-content: space-between; width: 100%; padding: 14px; font-weight: 700;"><span>How to read this page</span><span style="color: #7FB0FF;">{{mx.helpSign}}</span></button>
+          <sc-if value="{{mx.help}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 0 14px 14px; font-size: 13px; color: #A9B5CF; line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+              <p style="margin: 0;"><b style="color: #EEF2FA;">Model line</b> averages three projections: the Horseshoe’s own CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly’s SP+ game projection and David Sasser’s model. <b style="color: #EEF2FA;">Model pick</b> is the side of the current line the average lands on.</p>
+              <p style="margin: 0;"><b style="color: #EEF2FA;">Horseshoe chance</b> is what the Horseshoe thinks the leg hits after every check; the white line is what the price implies. <b style="color: #EEF2FA;">Value</b> is the expected return per dollar at that price.</p>
+              <p style="margin: 0;"><b style="color: #EEF2FA;">Team identity</b> ranks each team against every FBS team from 0 to 100 on CFBD advanced stats with garbage time removed. Overall averages offense and defense. <b style="color: #EEF2FA;">Matchup advantages</b> compare those overall grades; 5 points or less is even.</p>
+              <p style="margin: 0;">Even the best public models hit about 52–56% against the spread. Use this to choose between legs, not as a lock.</p>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #7D89A3; line-height: 1.5; border-top: 1px solid #1E2A45; padding-top: 14px;">
+          <span>Sources: SP+ by Bill Connelly · David Sasser’s model · CollegeFootballData.com · ESPN. Models updated {{mx.asOf}}.</span>
+          <sc-if value="{{mx.hasDs}}" hint-placeholder-val="{{ true }}"><a href="{{mx.dsUrl}}" target="_blank" rel="noopener noreferrer">Sasser’s full matchup page ↗</a></sc-if>
+          <span>Lines move. Confirm every price at Hard Rock Bet. 21+. Gambling problem? Call 1-800-GAMBLER.</span>
+          <button type="button" onClick="{{mx.close}}" style="all: unset; cursor: pointer; color: #7FB0FF; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center;">← Back to picks</button>
+        </div>
+      </article>
     </sc-if>
 
     <sc-if value="{{isCollege}}" hint-placeholder-val="{{ false }}">
@@ -1109,173 +1327,11 @@ button{font:inherit}
     </footer>
   </main>
 
-  <sc-if value="{{mxOpen}}" hint-placeholder-val="{{ false }}">
-    <div class="bh-mx-back" onClick="{{mx.close}}"></div>
-    <section class="bh-mx" role="dialog" aria-modal="true" aria-labelledby="mx-title">
-      <div style="position: sticky; top: 0; z-index: 2; background: #0E1628; border-bottom: 1px solid #1E2A45; padding: 14px 18px; display: flex; align-items: flex-start; gap: 12px;">
-        <div style="flex: 1 1 auto; min-width: 0;">
-          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #7FB0FF;">Matchup breakdown · {{mx.conf}}</div>
-          <h2 id="mx-title" style="margin: 4px 0 2px;"><span style="color: #FFB86B;">{{mx.away}}</span> <span style="color: #7D89A3; font-size: 0.7em;">at</span> <span style="color: #7FB0FF;">{{mx.home}}</span></h2>
-          <div style="font-size: 13px; color: #A9B5CF;">{{mx.when}}</div>
-        </div>
-        <button type="button" onClick="{{mx.close}}" aria-label="Close" style="flex: none; width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3A5E; background: #111A2E; color: #EEF2FA; font-size: 20px; cursor: pointer;">×</button>
-      </div>
-      <div style="padding: 18px; display: flex; flex-direction: column; gap: 22px;">
-
-        <sc-if value="{{mx.hasGameLegs}}" hint-placeholder-val="{{ true }}">
-          <div role="group" aria-label="Legs on this game" style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <sc-for list="{{mx.gameLegs}}" as="gl" hint-placeholder-count="3">
-              <button type="button" onClick="{{gl.pick}}" aria-pressed="{{gl.on}}" style="{{gl.style}}">{{gl.label}}</button>
-            </sc-for>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{mx.hasLeg}}" hint-placeholder-val="{{ true }}">
-          <div style="background: #111A2E; border: 1px solid #263556; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;">
-              <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase;">{{mx.leg.label}} <span style="font-weight: 700; color: #C9D3E8;">{{mx.leg.oddsStr}}</span></div>
-              <span style="{{mx.leg.statusStyle}}">{{mx.leg.status}}</span>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #1E2A45; border-radius: 10px; overflow: hidden;">
-              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Horseshoe</div><div class="bh-mx-v">{{mx.leg.hit}}</div></div>
-              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Book implies</div><div class="bh-mx-v">{{mx.leg.book}}</div></div>
-              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Value</div><div style="{{mx.leg.valueStyle}}">{{mx.leg.value}}</div></div>
-              <div style="background: #0E1628; padding: 10px 12px;"><div class="bh-mx-k">Confidence</div><div class="bh-mx-v">{{mx.leg.conf}}</div></div>
-            </div>
-            <sc-if value="{{mx.leg.hasReasons}}" hint-placeholder-val="{{ true }}">
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="bh-mx-k">Why the Horseshoe likes it</div>
-                <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px;">
-                  <sc-for list="{{mx.leg.reasons}}" as="rs" hint-placeholder-count="3">
-                    <li style="display: flex; gap: 10px; align-items: baseline; font-size: 14px; line-height: 1.45;"><span aria-hidden="true" style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{rs.dot}}; transform: translateY(-1px);"></span><span>{{rs.txt}}</span></li>
-                  </sc-for>
-                </ul>
-              </div>
-            </sc-if>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{mx.hasModel}}" hint-placeholder-val="{{ true }}">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-            <sc-for list="{{mx.tiles}}" as="ti" hint-placeholder-count="4">
-              <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 12px 14px; min-width: 0;">
-                <div class="bh-mx-k">{{ti.k}}</div>
-                <div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; margin-top: 4px; overflow-wrap: anywhere;">{{ti.v}}</div>
-                <div style="font-size: 12px; color: #A9B5CF; margin-top: 2px;">{{ti.sub}}</div>
-              </div>
-            </sc-for>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{mx.hasRows}}" hint-placeholder-val="{{ true }}">
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px;">
-              <h3 class="bh-mx-h">The models</h3>
-              <span style="font-size: 13px; color: #A9B5CF;">{{mx.consensus}}</span>
-            </div>
-            <div style="overflow-x: auto; border: 1px solid #1E2A45; border-radius: 12px;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 460px;">
-                <thead><tr style="background: #0E1628; color: #A9B5CF; text-align: left;"><th style="padding: 8px 12px; font-weight: 600;">Model</th><th style="padding: 8px 12px; font-weight: 600;">Projects</th><th style="padding: 8px 12px; font-weight: 600;">Against the spread</th><th style="padding: 8px 12px; font-weight: 600;">Total</th></tr></thead>
-                <tbody>
-                  <sc-for list="{{mx.rows}}" as="mr" hint-placeholder-count="3">
-                    <tr style="border-top: 1px solid #1E2A45;">
-                      <th scope="row" style="padding: 9px 12px; text-align: left; font-weight: 600;"><sc-if value="{{mr.hasUrl}}" hint-placeholder-val="{{ false }}"><a href="{{mr.url}}" target="_blank" rel="noopener noreferrer">{{mr.name}} ↗</a></sc-if><sc-if value="{{mr.noUrl}}" hint-placeholder-val="{{ true }}">{{mr.name}}</sc-if></th>
-                      <td style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace;">{{mr.line}}</td>
-                      <td style="padding: 9px 12px;"><span style="{{mr.sideStyle}}">{{mr.side}}</span> <span style="color: #7D89A3; font-size: 12px;">{{mr.edge}} pts</span></td>
-                      <td style="padding: 9px 12px; font-family: 'IBM Plex Mono', monospace;">{{mr.total}}</td>
-                    </tr>
-                  </sc-for>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{mx.hasChart}}" hint-placeholder-val="{{ true }}">
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
-              <h3 class="bh-mx-h">Team identity</h3>
-              <div role="group" aria-label="Chart view" style="display: flex; gap: 2px; background: #1E2A45; padding: 2px; border-radius: 8px;">
-                <sc-for list="{{mx.views}}" as="vw" hint-placeholder-count="3">
-                  <button type="button" onClick="{{vw.pick}}" aria-pressed="{{vw.on}}" style="{{vw.style}}">{{vw.label}}</button>
-                </sc-for>
-              </div>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
-              <div style="flex: 1 1 300px; min-width: 0; background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 10px;">
-                <svg viewBox="0 0 340 300" width="100%" role="img" aria-label="Radar chart comparing {{mx.away}} and {{mx.home}}, 0 to 100 percentile, larger is stronger" style="display: block; max-width: 420px; margin: 0 auto; overflow: visible;">
-                  <sc-for list="{{mx.rings}}" as="rg" hint-placeholder-count="4"><polygon points="{{rg.pts}}" fill="none" stroke="#24314F" stroke-width="1"></polygon></sc-for>
-                  <sc-for list="{{mx.axes}}" as="ax" hint-placeholder-count="7"><line x1="170" y1="150" x2="{{ax.x2}}" y2="{{ax.y2}}" stroke="#24314F" stroke-width="1"></line><text x="{{ax.lx}}" y="{{ax.ly}}" text-anchor="{{ax.anchor}}" font-size="11" font-weight="{{ax.weight}}" fill="{{ax.fill}}" font-family="Inter, sans-serif">{{ax.label}}</text></sc-for>
-                  <polygon points="{{mx.polyH}}" fill="#7FB0FF" fill-opacity="0.16" stroke="#7FB0FF" stroke-width="2"></polygon>
-                  <polygon points="{{mx.polyA}}" fill="#FFB86B" fill-opacity="0.14" stroke="#FFB86B" stroke-width="2" stroke-dasharray="5 3"></polygon>
-                  <sc-for list="{{mx.dotsH}}" as="dt" hint-placeholder-count="7"><circle cx="{{dt.x}}" cy="{{dt.y}}" r="3" fill="{{dt.color}}"></circle></sc-for>
-                  <sc-for list="{{mx.dotsA}}" as="dt" hint-placeholder-count="7"><circle cx="{{dt.x}}" cy="{{dt.y}}" r="3" fill="{{dt.color}}"></circle></sc-for>
-                </svg>
-                <div style="display: flex; justify-content: center; gap: 18px; font-size: 12px; color: #A9B5CF; padding: 4px 0 2px;">
-                  <span style="display: inline-flex; align-items: center; gap: 6px;"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="#FFB86B" stroke-width="2" stroke-dasharray="5 3"></line></svg>{{mx.away}}</span>
-                  <span style="display: inline-flex; align-items: center; gap: 6px;"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="#7FB0FF" stroke-width="2"></line></svg>{{mx.home}}</span>
-                </div>
-                <div style="font-size: 11px; color: #7D89A3; text-align: center;">Percentile among FBS teams, larger = stronger. Garbage time excluded.</div>
-              </div>
-              <div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
-                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 10px; padding: 8px 10px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; color: #FFB86B;">{{mx.advA}}</div><div style="font-size: 11px; color: #A9B5CF;">favor {{mx.away}}</div></div>
-                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 10px; padding: 8px 10px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1;">{{mx.advE}}</div><div style="font-size: 11px; color: #A9B5CF;">even (within 5)</div></div>
-                  <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 10px; padding: 8px 10px;"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; color: #7FB0FF;">{{mx.advH}}</div><div style="font-size: 11px; color: #A9B5CF;">favor {{mx.home}}</div></div>
-                </div>
-                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; padding: 6px;">
-                  <sc-for list="{{mx.advRows}}" as="av" hint-placeholder-count="7">
-                    <button type="button" onClick="{{av.pick}}" aria-pressed="{{av.on}}" style="{{av.rowStyle}}">
-                      <span style="font-size: 13px; font-weight: 600;">{{av.label}}</span>
-                      <span style="position: relative; height: 10px; background: #0E1628; border-radius: 3px;"><span style="position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #3A4A6B;"></span><span style="{{av.barStyle}}"></span></span>
-                      <span style="text-align: right; line-height: 1.2;"><span style="{{av.whoStyle}}">{{av.who}}</span><br><span style="font-size: 11px; color: #7D89A3;">{{av.gap}}</span></span>
-                    </button>
-                  </sc-for>
-                </div>
-                <sc-if value="{{mx.hasCat}}" hint-placeholder-val="{{ false }}">
-                  <div style="background: #17213A; border: 1px solid #263556; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-                    <div style="font-weight: 700;">{{mx.catDetail.label}}</div>
-                    <div style="color: #A9B5CF; line-height: 1.45;">{{mx.catDetail.blurb}}</div>
-                    <sc-for list="{{mx.catDetail.rows}}" as="cr" hint-placeholder-count="2">
-                      <div style="display: grid; grid-template-columns: minmax(90px, 1fr) 1fr 1fr; gap: 8px; align-items: baseline;"><span style="{{cr.color}}">{{cr.team}}</span><span><span style="color: #7D89A3; font-size: 11px;">OFF </span><span style="font-family: 'IBM Plex Mono', monospace;">{{cr.off}}</span></span><span><span style="color: #7D89A3; font-size: 11px;">DEF </span><span style="font-family: 'IBM Plex Mono', monospace;">{{cr.def}}</span></span></div>
-                    </sc-for>
-                  </div>
-                </sc-if>
-                <div style="font-size: 11px; color: #7D89A3;">Tap a row to see the numbers behind it. These compare team strengths, not points or win chances.</div>
-              </div>
-            </div>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{mx.hasRatings}}" hint-placeholder-val="{{ true }}">
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <h3 class="bh-mx-h">Ratings</h3>
-            <div style="overflow-x: auto; border: 1px solid #1E2A45; border-radius: 12px;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead><tr style="background: #0E1628; text-align: left;"><th style="padding: 8px 12px; color: #A9B5CF; font-weight: 600;"></th><th style="padding: 8px 12px; color: #FFB86B;">{{mx.away}}</th><th style="padding: 8px 12px; color: #7FB0FF;">{{mx.home}}</th></tr></thead>
-                <tbody>
-                  <sc-for list="{{mx.ratings}}" as="rt" hint-placeholder-count="6">
-                    <tr style="border-top: 1px solid #1E2A45;"><th scope="row" style="padding: 8px 12px; text-align: left; font-weight: 500; color: #A9B5CF;">{{rt.lab}}</th><td style="padding: 8px 12px; font-family: 'IBM Plex Mono', monospace;">{{rt.a}}</td><td style="padding: 8px 12px; font-family: 'IBM Plex Mono', monospace;">{{rt.h}}</td></tr>
-                  </sc-for>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </sc-if>
-
-        <div style="display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: #7D89A3; line-height: 1.5; border-top: 1px solid #1E2A45; padding-top: 12px;">
-          <span>Sources: SP+ by Bill Connelly, David Sasser’s model, CollegeFootballData.com. Models updated {{mx.asOf}}.</span>
-          <sc-if value="{{mx.hasDs}}" hint-placeholder-val="{{ true }}"><a href="{{mx.dsUrl}}" target="_blank" rel="noopener noreferrer">Sasser’s full matchup ↗</a></sc-if>
-          <span>Lines move. Confirm every price at Hard Rock Bet.</span>
-        </div>
-      </div>
-    </section>
-  </sc-if>
 </div>
 </script>
-<script>window.BH_VERSION='20261023180000';</script>
-<script src="runtime.js?v=20261023180000"></script>
-<script src="lines.js?v=20261023180000"></script>
+<script>window.BH_VERSION='20261023190000';</script>
+<script src="runtime.js?v=20261023190000"></script>
+<script src="lines.js?v=20261023190000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1287,147 +1343,242 @@ class Component extends DCLogic {
 
   cfData() { return window.BH.cf; }
 
-  // ---- Matchup breakdown (college): everything behind one leg, from data/model.json and the live line.
+  // ---- Matchup page (college): everything behind one leg, from data/model.json and the live line.
+  // Opened by tapping a leg; lives at #m/<gameId>/<leg> so the phone's back button works and the page can be shared.
   mxData(CF, st) {
     var self = this;
-    var close = function () { try { document.body.style.overflow = ''; } catch (e) {} self.setState({ mxG: null, mxLeg: null, mxCat: null }); };
+    var close = function () { if (self._mxPushed && history.length > 1) history.back(); else { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} self.setState({ mxG: null, mxLeg: null }); } };
     var s = (CF.slate || []).filter(function (x) { return x.id === st.mxG; })[0];
     if (!s) return { open: false, close: close };
-    var A = '#FFB86B', H = '#7FB0FF', MUTED = '#A9B5CF';
+    var info = s.info || {};
+    var MUTED = '#A9B5CF', FAINT = '#7D89A3';
+    // team colors from ESPN, swapped for the alternate (or a default) when too dark to read on navy
+    var lum = function (hex) { if (!hex || !/^[0-9a-f]{6}$/i.test(hex)) return -1; var c = [0, 2, 4].map(function (i) { var v = parseInt(hex.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+    var pickCol = function (c1, c2, dflt) { if (lum(c1) >= 0.12 && lum(c1) < 0.92) return '#' + c1; if (lum(c2) >= 0.12 && lum(c2) < 0.92) return '#' + c2; return dflt; };
+    var A = pickCol(info.aColor, info.aAlt, '#FFB86B'), H = pickCol(info.hColor, info.hAlt, '#7FB0FF');
+    var dist = function (x, y) { var p = function (h, i) { return parseInt(h.substr(1 + i * 2, 2), 16); }; return Math.abs(p(x, 0) - p(y, 0)) + Math.abs(p(x, 1) - p(y, 1)) + Math.abs(p(x, 2) - p(y, 2)); };
+    if (dist(A, H) < 120) { A = '#FFB86B'; H = '#7FB0FF'; }
     var model = CF.model || {}, mx = s.mx || null, srcs = s.mxSrcs || [];
-    var T = (model.teams || {});
+    var T = model.teams || {};
     var tA = mx ? T[mx.a] : null, tH = mx ? T[mx.h] : null;
     var r1 = function (v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); };
-    var sgn = function (v) { return v > 0 ? '+' + r1(v) : v < 0 ? '−' + r1(-v) : 'PK'; };
     var pctS = function (p) { return p == null ? '—' : Math.round(p * 100) + '%'; };
     var favLine = function (m) { if (m == null) return '—'; if (Math.abs(m) < 0.05) return 'Pick’em'; return (m > 0 ? s.h : s.a) + ' −' + r1(Math.abs(m)); };
-    var game = s.a + (s.n ? ' vs ' : ' @ ') + s.h;
-    var when = ''; try { when = new Date(s.date).toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET'; } catch (e) {}
+    var when = ''; try { when = new Date(s.date).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET'; } catch (e) {}
+    var wk = (BH.cf && BH.cf.model && BH.cf.model.week) || null;
+    var year = (model.year || new Date(s.date).getFullYear());
 
-    // the leg that was tapped
+    // ---- 01 the pick: the leg, its numbers, and every reason in plain English
+    var WHY = [
+      [/^Sharp move/, 'The line moved toward this side. A 1–7 point move without the public piling on usually means bettors the books respect got there first.'],
+      [/sweet-spot move/, 'In the Horseshoe’s own record, spreads that moved 1–2.5 points our way have been the best spot (17–7 the first week).'],
+      [/already moved|priced in/, 'Once a line has moved 3+ points, most of the value is gone. Those spreads went 6–9, so the Horseshoe holds them.'],
+      [/home dog/, 'Home underdogs have covered often in the Horseshoe’s college record (8–3 through Oct 20).'],
+      [/home favorite tax/, 'Home favorites have been close to a coin flip on the spread (6–7), so they’re marked down a little.'],
+      [/big college dog/, 'College underdogs getting 14+ points went 4–0 through Oct 20.'],
+      [/laying 14\+/, 'College favorites laying 14+ went 4–5, so the Horseshoe trims them.'],
+      [/ML favorite tax/, 'College moneyline favorites hit 59% when the Horseshoe expected 71%, and their prices carry heavy juice, so they’re marked down.'],
+      [/Money moving to the dog/, 'The line moved toward the underdog, which can mean sharp money on an outright upset.'],
+      [/^(Home|Road) favorite/, 'The market’s favorite to win outright. Moneyline favorites are the Horseshoe’s safer parlay legs.'],
+      [/^Total moved/, 'How far the total has moved since it opened. Moves of 1.5+ points point to where the money went.'],
+      [/^Total steady/, 'The total hasn’t moved, so the read comes from the price instead.'],
+      [/shading/, 'The book charges more juice on this side, a sign it expects (or fears) action there.'],
+      [/movement only/, 'College totals backed only by line movement went 16–20, so they’re held unless the books shade them too.'],
+      [/small rise/, 'A small rise with no shading from the books hasn’t meant much for overs.'],
+      [/wind/i, 'Strong wind at kickoff cuts passing and kicking, which helps unders.'],
+      [/^Model edge/, 'Our ratings, Bill Connelly’s SP+ and David Sasser’s model, averaged, say this line is off by 3+ points, with most of them on the same side.'],
+      [/^Model total/, 'SP+ and Sasser’s projected totals, averaged, compared with the posted total.'],
+      [/^Model:/, 'The averaged model projection. Top models hit about 75% straight up but only 52–56% against the spread, so treat it as a lean, not a lock.'],
+      [/^Public|fade/i, 'Most bets are on one side but most of the money is on the other. Fading the public follows the money.'],
+      [/no Horseshoe signal/, 'On the board so bigger slips can use it. No Horseshoe checks behind it.'],
+      [/^Alternate line/, 'An alternate line, used to buy safety when a parlay already beats its target price.']
+    ];
+    var explain = function (t) { for (var i = 0; i < WHY.length; i++) if (WHY[i][0].test(t)) return WHY[i][1]; return ''; };
     var leg = st.mxLeg ? (CF.legs || []).filter(function (l) { return l.g === s.id && l.label === st.mxLeg; })[0] : null;
     var legBox = null;
     if (leg) {
       var dec = this.dec(leg.odds), ev = leg.p * dec - 1;
-      var status = leg.held ? 'Held: shown, but not a Horseshoe pick' : leg.pick ? 'Horseshoe pick' : leg.bar ? 'Passes the Horseshoe’s checks' : 'On the board, no Horseshoe signal';
-      var reasons = String(leg.note || '').split('; ').filter(Boolean).map(function (t) {
-        var held = /^held: /.test(t), mod = /^Model|^Model edge|Model total/.test(t);
-        return { txt: held ? t.replace(/^held: /, 'Held: ') : t, dot: held ? '#FF9F43' : mod ? '#3FD18A' : '#7FB0FF' };
+      var status = leg.held ? 'Held · shown, not a Horseshoe pick' : leg.pick ? 'Horseshoe pick' : leg.bar ? 'Passes the Horseshoe’s checks' : 'On the board · no Horseshoe signal';
+      var parts = String(leg.note || '').split('; ').reduce(function (acc, t) {
+        // "Sharp move: ..., sweet-spot move, home dog" carries several reasons; split the trailing tags off
+        if (/^held: /.test(t)) { acc.push({ t: 'Held: ' + t.replace(/^held: /, ''), held: true }); return acc; }
+        var bits = t.split(', '), head = bits.shift(), rest = [];
+        bits.forEach(function (b) { if (WHY.some(function (w) { return w[0].test(b); }) && !/^\d|pts|wins|agree/.test(b)) rest.push(b); else head += ', ' + b; });
+        acc.push({ t: head }); rest.forEach(function (r) { acc.push({ t: r }); });
+        return acc;
+      }, []);
+      var reasons = parts.map(function (x, i) {
+        var mod = /^Model/.test(x.t);
+        return { n: String(i + 1).padStart ? String(i + 1).padStart(2, '0') : String(i + 1), title: x.t.charAt(0).toUpperCase() + x.t.slice(1), why: x.held ? 'Held legs still show and can fill a slip, but they don’t count as Horseshoe picks or on the record.' : explain(x.t),
+          bar: 'flex: none; width: 4px; align-self: stretch; border-radius: 2px; background: ' + (x.held ? '#FF9F43' : mod ? '#3FD18A' : '#1D5FD6') + ';' };
       });
+      var chance = Math.round(leg.p * 100), bk = Math.round(100 / dec);
       legBox = {
-        label: leg.label, oddsStr: this.fmtOdds(leg.odds), status: status,
-        statusStyle: 'font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 6px; ' + (leg.held ? 'background: #33240E; color: #FFB86B;' : leg.pick ? 'background: #0F3A25; color: #3FD18A;' : 'background: #1A2644; color: #9CC2FF;'),
-        hit: pctS(leg.p), book: pctS(1 / dec), value: (ev >= 0 ? '+' : '') + (Math.round(ev * 1000) / 10).toFixed(1) + '%',
-        valueStyle: 'font-family: \'Barlow Condensed\', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.1; color: ' + (ev > 0 ? '#3FD18A' : ev < 0 ? '#FF9F43' : '#EEF2FA') + ';',
-        conf: String(leg.conf || Math.round(leg.p * 100)), reasons: reasons, hasReasons: reasons.length > 0
+        label: leg.label, oddsStr: this.fmtOdds(leg.odds), status: status, kind: leg.k === 'ml' ? 'Moneyline' : leg.k === 'spread' ? 'Spread' : 'Total',
+        statusStyle: 'display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 10px; border-radius: 6px; ' + (leg.held ? 'background: #33240E; color: #FFB86B;' : leg.pick ? 'background: #0F3A25; color: #3FD18A;' : 'background: #1A2644; color: #9CC2FF;'),
+        hit: chance + '%', book: bk + '%', value: (ev >= 0 ? '+' : '') + (Math.round(ev * 1000) / 10).toFixed(1) + '%',
+        valueStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 30px; line-height: 1; color: " + (ev > 0 ? '#3FD18A' : ev < 0 ? '#FF9F43' : '#EEF2FA') + ';',
+        conf: String(leg.conf || chance),
+        hitBar: 'position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: #1D5FD6; width: ' + Math.max(1, Math.min(100, chance)) + '%;',
+        bookMark: 'position: absolute; top: -4px; bottom: -4px; width: 2px; background: #EEF2FA; left: ' + Math.max(0, Math.min(100, bk)) + '%;',
+        reasons: reasons, hasReasons: reasons.length > 0
       };
     }
-    // other legs on this game the Horseshoe likes, to hop between
     var gameLegs = (CF.legs || []).filter(function (l) { return l.g === s.id && !l.alt && (l.pick || l.bar || l.label === st.mxLeg); }).map(function (l) {
       var on = l.label === st.mxLeg;
-      return { label: l.label + ' ' + self.fmtOdds(l.odds), on: on ? 'true' : 'false', pick: function () { self.setState({ mxLeg: l.label, mxCat: null }); },
-        style: 'min-height: 36px; padding: 0 12px; border-radius: 999px; cursor: pointer; font: 600 13px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
+      return { label: l.label + ' ' + self.fmtOdds(l.odds), on: on ? 'true' : 'false', pick: function () { self.openMatchup(s.id, l.label, true); },
+        style: 'min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; font: 600 13px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
     });
 
-    // projections
+    // ---- headline tiles
     var m = mx ? mx.m : null, t = mx ? mx.t : null;
     var hsP = m != null && t != null ? (t + m) / 2 : null, asP = m != null && t != null ? (t - m) / 2 : null;
     var edgeH = m != null ? Math.round((m + s.hs) * 10) / 10 : null;
     var mSide = edgeH > 0 ? 'h' : edgeH < 0 ? 'a' : null;
     var lineFor = function (side) { var l = side === 'a' ? -s.hs : s.hs; return (side === 'a' ? s.a : s.h) + ' ' + (l > 0 ? '+' + l : l === 0 ? 'PK' : '−' + Math.abs(l)); };
-    var tiles = [
-      { k: 'Projected score', v: hsP != null ? r1(asP) + ' / ' + r1(hsP) : '—', sub: s.a + ' / ' + s.h },
-      { k: 'Model line', v: favLine(m), sub: m != null ? 'Wins ' + pctS(Math.abs(m) < 0.05 ? 0.5 : (m > 0 ? mx.pH : 1 - mx.pH)) : '' },
-      { k: 'Market line', v: favLine(-s.hs), sub: 'O/U ' + (s.tot == null ? '—' : s.tot) + (t != null ? ' · model ' + r1(t) : '') },
-      { k: 'Model pick', v: mSide && Math.abs(edgeH) >= 1 ? lineFor(mSide) : 'No edge', sub: edgeH != null ? Math.abs(edgeH).toFixed(1) + ' pts vs the line' : '' }
-    ];
-    // every model's view
+    var pickColor = mSide === 'a' ? A : mSide === 'h' ? H : '#EEF2FA';
+
+    // ---- 02 the models
     var rows = srcs.map(function (x) {
       var url = x.k === 'ds' && mx.ds && mx.ds.url ? mx.ds.url : x.k === 'spx' ? 'https://docs.google.com/spreadsheets/d/1vwoVl-Dxy0es87Z9I1RTvFzr72Lb1fAkREfbLxbK-eg/htmlview' : '';
-      return { name: x.name, line: favLine(x.m), side: x.side ? lineFor(x.side) : 'Even', edge: Math.abs(x.edge).toFixed(1), total: x.t != null ? r1(x.t) + ' ' + (x.tSide ? '(' + x.tSide.toLowerCase() + ')' : '') : '—', url: url, hasUrl: !!url, noUrl: !url,
-        sideStyle: 'font-weight: 600; color: ' + (x.side === 'a' ? A : x.side === 'h' ? H : MUTED) + ';' };
+      return { name: x.name, line: favLine(x.m), side: x.side ? lineFor(x.side) : 'Even', edge: Math.abs(x.edge).toFixed(1), total: x.t != null ? r1(x.t) + (x.tSide ? ' ' + x.tSide.toLowerCase() : '') : '—', url: url, hasUrl: !!url, noUrl: !url,
+        sideStyle: 'font-weight: 600; color: ' + (x.side === 'a' ? A : x.side === 'h' ? H : MUTED) + ';', rowStyle: 'border-top: 1px solid #1E2A45;' };
     });
     if (mx && srcs.length > 1) rows.unshift({ name: 'Horseshoe blend', line: favLine(m), side: mSide ? lineFor(mSide) : 'Even', edge: edgeH == null ? '0.0' : Math.abs(edgeH).toFixed(1),
-      total: t != null ? r1(t) + (s.tot != null && t !== s.tot ? ' (' + (t > s.tot ? 'over' : 'under') + ')' : '') : '—', url: '', hasUrl: false, noUrl: true,
-      sideStyle: 'font-weight: 800; color: ' + (mSide === 'a' ? A : mSide === 'h' ? H : MUTED) + ';' });
+      total: t != null ? r1(t) + (s.tot != null && t !== s.tot ? ' ' + (t > s.tot ? 'over' : 'under') : '') : '—', url: '', hasUrl: false, noUrl: true,
+      sideStyle: 'font-weight: 800; color: ' + pickColor + ';', rowStyle: 'background: #17213A;' });
     var withM = srcs.filter(function (x) { return x.side === mSide; }).length;
-    var consensus = !srcs.length ? 'No model projection for this game yet.' : srcs.length === 1 ? 'One model so far.' : withM === srcs.length ? 'All ' + srcs.length + ' models land on ' + (mSide === 'a' ? s.a : s.h) + ' against the spread.' : withM + ' of ' + srcs.length + ' models land on ' + (mSide === 'a' ? s.a : s.h) + ' against the spread.';
+    var consensus = !srcs.length ? 'No model projection for this game yet.' : srcs.length === 1 ? 'One model so far.' : (withM === srcs.length ? 'All ' + srcs.length : withM + ' of ' + srcs.length) + ' models land on ' + (mSide === 'a' ? s.a : s.h) + ' against the spread.';
 
-    // team identity chart (0-100 percentiles; larger = stronger)
-    var cats = model.cats || [];
+    // ---- 03 team identity (0-100 percentiles; larger = stronger, on pace larger = faster)
+    var cats = (model.cats || []).concat(model.cats && model.cats.length ? [['pace', 'Pace']] : []);
     var view = st.mxView || 'all';
     var val = function (tm, k) {
       if (!tm || !tm.pct) return null;
+      if (k === 'pace') return tm.pct.pace;
       var o = tm.pct.o[k], d = tm.pct.d[k];
       if (view === 'o') return o; if (view === 'd') return d;
       return o == null || d == null ? (o == null ? d : o) : (o + d) / 2;
     };
     var hasChart = !!(tA && tA.pct && tH && tH.pct && cats.length);
-    var cx = 170, cy = 150, R = 104, n = cats.length || 1;
+    var cx = 170, cy = 155, R = 100, n = cats.length || 1;
     var pt = function (i, v) { var ang = -Math.PI / 2 + i * 2 * Math.PI / n, rr = R * Math.max(0, Math.min(100, v || 0)) / 100; return [Math.round((cx + rr * Math.cos(ang)) * 10) / 10, Math.round((cy + rr * Math.sin(ang)) * 10) / 10]; };
     var poly = function (tm) { return cats.map(function (c, i) { return pt(i, val(tm, c[0])).join(','); }).join(' '); };
-    var rings = [25, 50, 75, 100].map(function (v) { return { pts: cats.map(function (c, i) { return pt(i, v).join(','); }).join(' ') }; });
+    var rings = [25, 50, 75, 100].map(function (v) { var p = pt(0, v); return { pts: cats.map(function (c, i) { return pt(i, v).join(','); }).join(' '), lx: p[0] + 4, ly: p[1] + 3, label: String(v) }; });
+    var selCat = st.mxCat || 'pass';
     var axes = cats.map(function (c, i) {
-      var e = pt(i, 100), l = pt(i, 122), ang = -Math.PI / 2 + i * 2 * Math.PI / n, cs = Math.cos(ang);
-      var on = st.mxCat === c[0];
-      return { x2: e[0], y2: e[1], lx: l[0], ly: Math.round((l[1] + (Math.sin(ang) > 0.3 ? 8 : Math.sin(ang) < -0.3 ? -2 : 4)) * 10) / 10,
-        anchor: cs > 0.3 ? 'start' : cs < -0.3 ? 'end' : 'middle', label: c[1], weight: on ? '700' : '500', fill: on ? '#FFFFFF' : MUTED };
+      var e = pt(i, 100), l = pt(i, 116), ang = -Math.PI / 2 + i * 2 * Math.PI / n, cs = Math.cos(ang), sn = Math.sin(ang);
+      var on = selCat === c[0];
+      var words = c[1].split(' ');
+      return { x2: e[0], y2: e[1], lx: l[0], ly: Math.round((l[1] + (sn > 0.3 ? 10 : sn < -0.3 ? -4 : 4) - (words.length > 1 && sn <= 0.3 ? 6 : 0)) * 10) / 10,
+        anchor: cs > 0.3 ? 'start' : cs < -0.3 ? 'end' : 'middle', l1: words.length > 1 ? words[0] : c[1], l2: words.length > 1 ? words.slice(1).join(' ') : '', weight: on ? '700' : '500', fill: on ? '#FFFFFF' : MUTED,
+        pick: function () { self.setState({ mxCat: c[0] }); } };
     });
     var dots = function (tm, color) { return cats.map(function (c, i) { var p = pt(i, val(tm, c[0])); return { x: p[0], y: p[1], color: color }; }); };
     var views = [['all', 'Overall'], ['o', 'Offense'], ['d', 'Defense']].map(function (v) {
       var on = view === v[0];
       return { label: v[1], on: on ? 'true' : 'false', pick: function () { self.setState({ mxView: v[0] }); },
-        style: 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font: 600 13px Inter, sans-serif; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF;' : 'background: transparent; color: ' + MUTED + ';') };
+        style: 'flex: 1 1 0; min-height: 40px; padding: 0 14px; border-radius: 6px; cursor: pointer; font: 600 14px Inter, sans-serif; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF;' : 'background: transparent; color: ' + MUTED + ';') };
     });
-    // matchup advantages: percentile gap per category, 5 points or less counts as even
+    var viewNote = view === 'o' ? 'Offense only' : view === 'd' ? 'Defense only' : 'Offense + defense';
+    var catRows = cats.map(function (c) {
+      var on = selCat === c[0];
+      return { label: c[1], style2: c[0] === 'pace' ? '' : 'display: none;', a: r1(val(tA, c[0])), h: r1(val(tH, c[0])), on: on ? 'true' : 'false',
+        pick: function () { self.setState({ mxCat: c[0] }); },
+        rowStyle: 'all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 1fr 64px 64px; align-items: center; gap: 8px; width: 100%; padding: 12px 14px; border-top: 1px solid #1E2A45; ' + (on ? 'background: #17213A; box-shadow: inset 3px 0 0 #1D5FD6;' : '') };
+    });
+    var UNITS = { eff: ['PPA/play', 1], sr: ['%', 100], pass: ['PPA/play', 1], rush: ['PPA/play', 1], expl: ['PPA per successful play', 1], havoc: ['% of plays', 100], finish: ['pts per trip inside the 40', 1], pace: ['plays a game', 1] };
+    var BLURB = { eff: 'Predicted points added per play: how much each snap moves the expected score. Offense: produced. Defense: allowed.', sr: 'Share of plays that stay on schedule: 50% of the yards needed on 1st down, 70% on 2nd, all of it on 3rd and 4th.', pass: 'Predicted points added on passing plays. Production through the air on offense, and passing production allowed on defense.', rush: 'Predicted points added on running plays. Production on the ground on offense, and rushing production allowed on defense.', expl: 'How big the successful plays are. Big plays win games, but they swing more from week to week.', havoc: 'Share of plays with a tackle for loss, forced fumble, interception or pass breakup. Offense: allowed (lower is better). Defense: created (higher is better).', finish: 'Points per trip inside the opponent’s 40. Separates teams that cash in drives from teams that settle for field goals.', pace: 'Offensive plays a game. Not better or worse, just style: fast teams make for more possessions and bigger totals.' };
+    var fmtRaw = function (k, v) { if (v == null) return '—'; var u = UNITS[k] || ['', 1]; var x = v * u[1]; return (u[1] === 100 ? (Math.round(x * 10) / 10).toFixed(1) : k === 'pace' ? (Math.round(x * 10) / 10).toFixed(1) : (Math.round(x * 1000) / 1000).toFixed(3)) + (u[0] ? ' ' + u[0] : ''); };
+    var ord = function (v) { if (v == null) return '—'; var n0 = Math.round(v); var sfx = (n0 % 100 >= 11 && n0 % 100 <= 13) ? 'th' : ['th', 'st', 'nd', 'rd'][n0 % 10] || 'th'; return n0 + sfx + ' percentile'; };
+    var catDetail = null;
+    if (hasChart) {
+      var c0 = cats.filter(function (c) { return c[0] === selCat; })[0] || cats[0];
+      var k0 = c0[0];
+      catDetail = { label: c0[1], blurb: BLURB[k0] || '', isPace: k0 === 'pace',
+        teams: [[s.a, tA, A], [s.h, tH, H]].map(function (r) {
+          var raw = r[1].pct.raw || {};
+          if (k0 === 'pace') return { team: r[0], color: 'font-weight: 700; color: ' + r[2] + ';', rows: [{ k: 'Offense', v: fmtRaw('pace', raw.pace), p: ord(r[1].pct.pace) }] };
+          var rv = raw[k0] || [];
+          return { team: r[0], color: 'font-weight: 700; color: ' + r[2] + ';', rows: [{ k: 'Offense', v: fmtRaw(k0, rv[0]), p: ord(r[1].pct.o[k0]) }, { k: 'Defense', v: fmtRaw(k0, rv[1]), p: ord(r[1].pct.d[k0]) }] };
+        }) };
+    }
+
+    // ---- 04 matchup advantages: overall percentile gap per category, within 5 counts as even; tap a row for the why
     var adv = { a: 0, e: 0, h: 0 };
-    var advRows = cats.map(function (c) {
-      var va = val(tA, c[0]), vh = val(tH, c[0]);
-      if (va == null || vh == null) return null;
+    var advRows = (model.cats || []).map(function (c) {
+      if (!hasChart) return null;
+      var k = c[0], oa = tA.pct.o[k], da = tA.pct.d[k], oh = tH.pct.o[k], dh = tH.pct.d[k];
+      var va = (oa + da) / 2, vh = (oh + dh) / 2;
+      if (isNaN(va) || isNaN(vh)) return null;
       var d = Math.round((vh - va) * 10) / 10, even = Math.abs(d) <= 5;
       if (even) adv.e++; else if (d > 0) adv.h++; else adv.a++;
-      var w = Math.min(50, Math.abs(d) / 2);
-      var on = st.mxCat === c[0];
+      var on = st.mxAdv === k;
+      var o2 = function (v) { return Math.round(v) + (function (n0) { return (n0 % 100 >= 11 && n0 % 100 <= 13) ? 'th' : ['th', 'st', 'nd', 'rd'][n0 % 10] || 'th'; })(Math.round(v)); };
+      var why = even ? s.a + ' and ' + s.h + ' grade within 5 points of each other here (' + r1(va) + ' vs ' + r1(vh) + ').' :
+        (d > 0 ? s.h : s.a) + ' grades ' + r1(Math.max(va, vh)) + ' to ' + r1(Math.min(va, vh)) + ' in ' + c[1].toLowerCase() + '.';
+      var face = [
+        { who: s.a + ' offense vs ' + s.h + ' defense', l: o2(oa), r: o2(dh), edge: oa - dh > 5 ? s.a : dh - oa > 5 ? s.h : 'Even', lc: A, rc: H, w: Math.round(oa), w2: Math.round(dh) },
+        { who: s.h + ' offense vs ' + s.a + ' defense', l: o2(oh), r: o2(da), edge: oh - da > 5 ? s.h : da - oh > 5 ? s.a : 'Even', lc: H, rc: A, w: Math.round(oh), w2: Math.round(da) }
+      ].map(function (f) { return { who: f.who, l: f.l, r: f.r, edge: f.edge === 'Even' ? 'Even' : 'Edge ' + f.edge, lStyle: 'font-weight: 700; color: ' + f.lc + ';', rStyle: 'font-weight: 700; color: ' + f.rc + ';' }; });
       return {
-        label: c[1], who: even ? 'Even' : d > 0 ? s.h : s.a, gap: Math.abs(d).toFixed(1) + ' pts', on: on ? 'true' : 'false',
-        whoStyle: 'font-size: 12px; font-weight: 600; color: ' + (even ? MUTED : d > 0 ? H : A) + ';',
-        barStyle: 'position: absolute; top: 0; bottom: 0; border-radius: 3px; background: ' + (even ? '#3A4A6B' : d > 0 ? H : A) + '; ' + (d >= 0 ? 'left: 50%;' : 'right: 50%;') + ' width: ' + Math.max(1, w) + '%;',
-        pick: function () { self.setState({ mxCat: on ? null : c[0] }); },
-        rowStyle: 'all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: minmax(96px, 1.1fr) 2fr minmax(70px, auto); align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; ' + (on ? 'background: #17213A;' : '')
+        label: c[1], who: even ? 'Even' : d > 0 ? s.h : s.a, gap: Math.abs(d).toFixed(1) + ' pts', on: on ? 'true' : 'false', isOpen: on, sign: on ? '−' : '+', why: why, face: face,
+        whoStyle: 'font-size: 13px; font-weight: 700; color: ' + (even ? MUTED : d > 0 ? H : A) + ';',
+        barStyle: 'position: absolute; top: 0; bottom: 0; border-radius: 3px; background: ' + (even ? '#4A5878' : d > 0 ? H : A) + '; ' + (d >= 0 ? 'left: 50%;' : 'right: 50%;') + ' width: ' + Math.max(0.6, Math.min(50, Math.abs(d) / 2)) + '%;',
+        pick: function () { self.setState({ mxAdv: on ? null : k }); }
       };
     }).filter(Boolean);
-    // detail for the selected category
-    var catDetail = null;
-    if (st.mxCat && hasChart) {
-      var c0 = cats.filter(function (c) { return c[0] === st.mxCat; })[0];
-      var raw = function (tm, ix) { var r = tm.pct && tm.pct.raw && tm.pct.raw[st.mxCat]; return r && r[ix] != null ? String(r[ix]) : '—'; };
-      var pc = function (v) { return v == null ? '—' : Math.round(v) + 'th pct'; };
-      catDetail = { label: c0 ? c0[1] : '', blurb: ({ eff: 'Predicted points added per play: how much each snap moves the scoreboard.', sr: 'Share of plays that stay on schedule (50% of yards needed on 1st down, 70% on 2nd, all of it on 3rd and 4th).', pass: 'Predicted points added on passing plays.', rush: 'Predicted points added on running plays.', expl: 'How big the successful plays are.', havoc: 'Share of plays with a tackle for loss, forced fumble, interception or pass breakup. Offense: allowed (lower is better). Defense: created.', finish: 'Points per trip inside the opponent’s 40.' })[st.mxCat] || '',
-        rows: [[s.a, tA, A], [s.h, tH, H]].map(function (r) { return { team: r[0], color: 'font-weight: 700; color: ' + r[2] + ';', off: raw(r[1], 0) + ' · ' + pc(r[1].pct.o[st.mxCat]), def: raw(r[1], 1) + ' · ' + pc(r[1].pct.d[st.mxCat]) }; }) };
-    }
-    // SP+ and power ratings table
+
+    // ---- 05 ratings
     var spRow = function (lab, f) { return { lab: lab, a: tA ? f(tA) : '—', h: tH ? f(tH) : '—' }; };
     var rk = function (v, r) { return v == null ? '—' : r1(v) + (r != null ? ' (#' + r + ')' : ''); };
     var ratings = [
       spRow('SP+ overall', function (x) { return x.sp ? rk(x.sp.r, x.sp.rk) : '—'; }),
-      spRow('Offense', function (x) { return x.sp ? rk(x.sp.off, x.sp.offRk) : '—'; }),
-      spRow('Defense (lower is better)', function (x) { return x.sp ? rk(x.sp.def, x.sp.defRk) : '—'; }),
-      spRow('Special teams', function (x) { return x.sp ? rk(x.sp.st, x.sp.stRk) : '—'; }),
-      spRow('Record', function (x) { return x.sp && x.sp.rec ? x.sp.rec : '—'; }),
-      spRow('FPI', function (x) { return x.fpi == null ? '—' : r1(x.fpi); }),
-      spRow('Pace (plays a game)', function (x) { return x.pct && x.pct.raw && x.pct.raw.pace != null ? r1(x.pct.raw.pace) : '—'; })
+      spRow('SP+ offense', function (x) { return x.sp ? rk(x.sp.off, x.sp.offRk) : '—'; }),
+      spRow('SP+ defense (lower is better)', function (x) { return x.sp ? rk(x.sp.def, x.sp.defRk) : '—'; }),
+      spRow('SP+ special teams', function (x) { return x.sp ? rk(x.sp.st, x.sp.stRk) : '—'; }),
+      spRow('FPI', function (x) { return x.fpi == null ? '—' : r1(x.fpi); })
     ];
     var asOf = model.updated ? new Date(model.updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET' : '';
+    var rankStr = function (r) { return r && r <= 25 ? '#' + r + ' ' : ''; };
+    var recA = info.aRec || (tA && tA.sp && tA.sp.rec) || '', recH = info.hRec || (tH && tH.sp && tH.sp.rec) || '';
     return {
-      open: true, close: close, game: game, away: s.a, home: s.h, when: when, conf: s.cf, A: A, H: H,
-      leg: legBox, hasLeg: !!legBox, gameLegs: gameLegs, hasGameLegs: gameLegs.length > 0,
-      tiles: tiles, rows: rows, hasRows: rows.length > 0, consensus: consensus, hasModel: !!mx,
-      hasChart: hasChart, views: views, rings: rings, axes: axes, polyA: hasChart ? poly(tA) : '', polyH: hasChart ? poly(tH) : '',
-      dotsA: hasChart ? dots(tA, A) : [], dotsH: hasChart ? dots(tH, H) : [],
-      advRows: advRows, advA: String(adv.a), advE: String(adv.e), advH: String(adv.h), catDetail: catDetail, hasCat: !!catDetail,
+      open: true, close: close, A: A, H: H,
+      kicker: year + ' college football / ' + (wk ? 'week ' + wk + ' ' : '') + 'matchup',
+      away: s.a, home: s.h, aRank: rankStr(info.aRank), hRank: rankStr(info.hRank),
+      aLogo: info.aLogo || '', hLogo: info.hLogo || '', hasALogo: !!info.aLogo, hasHLogo: !!info.hLogo,
+      aStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; color: " + A + ';',
+      hStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; color: " + H + ';',
+      aRecLine: s.a + (recA ? ' · ' + recA : ''), hRecLine: s.h + (recH ? ' · ' + recH : ''),
+      aRecStyle: 'font-size: 13px; font-weight: 600; color: ' + A + ';', hRecStyle: 'font-size: 13px; font-weight: 600; color: ' + H + ';',
+      when: when + (info.tv ? ' · ' + info.tv : ''), venue: info.venue || (s.n ? 'Neutral site' : ''), conf: s.cf,
+      leg: legBox, hasLeg: !!legBox, noLeg: !legBox, gameLegs: gameLegs, hasGameLegs: gameLegs.length > 0,
+      projScore: hsP != null ? r1(asP) + ' / ' + r1(hsP) : '—', projA: r1(asP), projH: r1(hsP), hasProj: hsP != null,
+      projAStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 20px; color: " + A + ';',
+      projHStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 20px; color: " + H + ';',
+      modelLine: favLine(m), modelWin: m != null ? (m >= 0 ? s.h : s.a) + ' wins ' + pctS(Math.abs(m) < 0.05 ? 0.5 : (m > 0 ? mx.pH : 1 - mx.pH)) : '',
+      marketLine: favLine(-s.hs), marketSub: (info.open != null && info.open !== -s.hs ? 'Opened ' + favLine(info.open) + ' · ' : '') + 'O/U ' + (s.tot == null ? '—' : s.tot),
+      modelPick: mSide && Math.abs(edgeH) >= 1 ? lineFor(mSide) : 'No edge', modelPickSub: edgeH != null ? Math.abs(edgeH).toFixed(1) + ' pts off the line' + (t != null ? ' · total ' + r1(t) : '') : '',
+      modelPickStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; color: " + pickColor + ';',
+      rows: rows, hasRows: rows.length > 0, consensus: consensus, hasModel: !!mx, noModel: !mx,
+      hasChart: hasChart, noChart: !hasChart, views: views, viewNote: viewNote, rings: rings, axes: axes,
+      polyA: hasChart ? poly(tA) : '', polyH: hasChart ? poly(tH) : '', dotsA: hasChart ? dots(tA, A) : [], dotsH: hasChart ? dots(tH, H) : [],
+      catRows: catRows, catDetail: catDetail, hasCat: !!catDetail,
+      advRows: advRows, advA: String(adv.a), advE: String(adv.e), advH: String(adv.h),
+      advAStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 40px; line-height: 1; color: " + A + ';',
+      advHStyle: "font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 40px; line-height: 1; color: " + H + ';',
       ratings: ratings, hasRatings: !!(tA || tH), asOf: asOf,
+      help: !!st.mxHelp, helpSign: st.mxHelp ? '−' : '+', toggleHelp: function () { self.setState({ mxHelp: !st.mxHelp }); },
       dsUrl: mx && mx.ds && mx.ds.url ? mx.ds.url : '', hasDs: !!(mx && mx.ds && mx.ds.url)
     };
+  }
+
+  // Go to a leg's matchup page. push=false replaces the history entry (switching legs on the same page).
+  openMatchup(g, label, replace) {
+    var h = '#m/' + g + (label ? '/' + encodeURIComponent(label) : '');
+    try { if (replace) history.replaceState(null, '', h); else { history.pushState(null, '', h); this._mxPushed = true; } } catch (e) { location.hash = h; }
+    this.setState({ page: 'college', mxG: g, mxLeg: label || null, mxCat: null, mxAdv: null });
+    if (!replace) try { window.scrollTo(0, 0); } catch (e) {}
   }
 
   dec(o) { return o > 0 ? 1 + o / 100 : 1 + 100 / (-o); }
@@ -1866,7 +2017,7 @@ class Component extends DCLogic {
 
     // ---- college: Blue Horseshoe
     var CF = this.cfData();
-    var openMx = function (g, label) { return function () { try { document.body.style.overflow = 'hidden'; } catch (e) {} self.setState({ mxG: g, mxLeg: label || null, mxCat: null }); }; };
+    var openMx = function (g, label) { return function () { self.openMatchup(g, label); }; };
     var cfSlotNames = { week: 'Before Friday', fri: 'Friday', satnoon: 'Saturday noon', satafternoon: 'Saturday afternoon', satnight: 'Saturday night' };
     var cfSlotSel = st.cfSlot || 'all';
     var cfSlotOpts = slotOptsFor(cfSlotNames, ['week', 'fri', 'satnoon', 'satafternoon', 'satnight'], CF.slate, cfSlot);
@@ -2384,7 +2535,9 @@ class Component extends DCLogic {
     var tabStyle = function (on) {
       return 'min-height: 44px; padding: 0 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; background: ' + (on ? '#17213A' : 'transparent') + '; color: ' + (on ? TXT : MUTED) + ';';
     };
-    var go = function (id) { return function () { self.setState({ page: id }); try { window.scrollTo(0, 0); } catch (e) {} }; };
+    var go = function (id) { return function () {
+      if (st.mxG) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} self._mxPushed = false; }
+      self.setState({ page: id, mxG: null, mxLeg: null }); try { window.scrollTo(0, 0); } catch (e) {} }; };
     var subTabStyle = function (on) { return 'min-height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF; font-weight: 600;' : 'background: transparent; color: ' + MUTED + ';'); };
     var nflTabs = [{ id: 'builder', label: 'Horseshoe Ticket' }, { id: 'spin', label: 'Spin it' }, { id: 'odds', label: 'Line check' }, { id: 'overs', label: 'Horseshoe Overs' }].map(function (t) {
       var on = st.page === t.id;
@@ -2468,7 +2621,7 @@ class Component extends DCLogic {
       cfOvHit: cfOvSlip.length ? (slipHit(cfOvSlip) * 100).toFixed(1) + '%' : '—',
       cfOvDown: function () { self.setState({ cfOvN: Math.max(2, cfOvN - 1) }); }, cfOvUp: function () { self.setState({ cfOvN: Math.min(20, cfOvN + 1) }); },
       ovStakes: [5, 10, 25, 50].map(function (v) { var on = st.stake === v; return { label: '$' + v, on: on, style: chipW(on), pick: function () { self.setState({ stake: v }); } }; }),
-      isBuilder: st.page === 'builder', isSpin: st.page === 'spin', isOdds: st.page === 'odds', isFade: st.page === 'fade', isCollege: isCollege,
+      isBuilder: st.page === 'builder', isSpin: st.page === 'spin', isOdds: st.page === 'odds', isFade: st.page === 'fade', isCollege: isCollege && !mxV.open,
       chipText: isCollege ? CF.chip : D.chip,
       liveStamp: window.BHLines ? window.BHLines.stamp() : '', liveDot: 'width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ' + (window.BH.status === 'ok' ? (window.BH.source === 'live' ? GREEN : AMBER) : window.BH.status === 'error' ? RED : '#4A5878') + ';',
       lineEmpty: !D.lineCheck.length, booksStamp: window.BH.booksAsOf ? 'Book prices from The Odds API, updated ' + window.BHLines.etTime(window.BH.booksAsOf) + ' ET ' + window.BH.booksAsOf.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '. They refresh every 4 hours.' : '',
@@ -2586,9 +2739,16 @@ class Component extends DCLogic {
 (function () {
   var app = BHRuntime.mount(Component, document.getElementById('tpl').textContent, document.getElementById('app'));
   window.BHApp = app;
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && app.state.mxG) { try { document.body.style.overflow = ''; } catch (x) {} app.setState({ mxG: null, mxLeg: null, mxCat: null }); }
-  });
+  // Matchup pages live at #m/<gameId>/<leg>, so back works and a page can be shared.
+  function route() {
+    var m = /^#m\/(\d+)(?:\/(.*))?$/.exec(location.hash || '');
+    if (m) { var leg = null; try { leg = m[2] ? decodeURIComponent(m[2]) : null; } catch (e) {}
+      if (app.state.mxG !== m[1] || app.state.mxLeg !== leg) { app.setState({ page: 'college', mxG: m[1], mxLeg: leg, mxCat: null, mxAdv: null }); try { window.scrollTo(0, 0); } catch (e) {} } }
+    else if (app.state.mxG) { app._mxPushed = false; app.setState({ mxG: null, mxLeg: null }); }
+  }
+  window.addEventListener('popstate', route);
+  window.addEventListener('hashchange', route);
+  route();
   function refresh() { return BHLines.load().then(function () { app.forceUpdate(); }); }
   refresh();
   setInterval(function () { if (!document.hidden) refresh(); }, BHLines.REFRESH_MS);

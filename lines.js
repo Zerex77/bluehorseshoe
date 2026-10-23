@@ -71,6 +71,9 @@
       neutral: !!c.neutralSite,
       a: away.team, h: home.team,
       aRank: g(away, 'curatedRank.current'), hRank: g(home, 'curatedRank.current'),
+      aRec: g(away, 'records.0.summary') || null, hRec: g(home, 'records.0.summary') || null,
+      venue: g(c, 'venue.fullName') ? g(c, 'venue.fullName') + (g(c, 'venue.address.city') ? ' · ' + g(c, 'venue.address.city') + (g(c, 'venue.address.state') ? ', ' + g(c, 'venue.address.state') : '') : '') : null,
+      tv: g(c, 'broadcasts.0.names.0') || null,
       odds: null
     };
     if (!o) return rec;
@@ -681,6 +684,10 @@
         est = true;
       }
       var s = { id: e.id, a: away, h: home, n: e.neutral, cf: confOf(e), hs: -o.aNow, tot: o.tot, aml: aml, hml: hml, date: e.date };
+      // for the matchup page: logos, colors, records, venue
+      s.info = { aLogo: e.a.logo || null, hLogo: e.h.logo || null, aColor: e.a.color || null, hColor: e.h.color || null,
+        aAlt: e.a.alternateColor || null, hAlt: e.h.alternateColor || null, aRec: e.aRec, hRec: e.hRec, aRank: e.aRank, hRank: e.hRank,
+        venue: e.venue, tv: e.tv, aFull: e.a.displayName, hFull: e.h.displayName, open: o.aOpen != null ? -o.aOpen : null, tOpen: o.tOpen };
       s.est = est;
       byId[s.id] = e;
       slate.push(s);

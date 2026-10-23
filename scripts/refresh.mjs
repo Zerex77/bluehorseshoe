@@ -18,7 +18,7 @@ async function readJSON(path, fallback) {
 }
 // Keep backup files small: drop logos, links and other fields the site never reads.
 function slim(scoreboard) {
-  const team = (t) => t && ({ id: t.id, abbreviation: t.abbreviation, displayName: t.displayName, shortDisplayName: t.shortDisplayName, location: t.location, conferenceId: t.conferenceId });
+  const team = (t) => t && ({ id: t.id, abbreviation: t.abbreviation, displayName: t.displayName, shortDisplayName: t.shortDisplayName, location: t.location, conferenceId: t.conferenceId, logo: t.logo, color: t.color, alternateColor: t.alternateColor });
   const side = (s) => s && ({ close: s.close && { line: s.close.line, odds: s.close.odds }, open: s.open && { line: s.open.line, odds: s.open.odds } });
   return {
     week: scoreboard.week && { number: scoreboard.week.number },
@@ -27,7 +27,9 @@ function slim(scoreboard) {
       status: { type: { state: ev.status?.type?.state } },
       competitions: (ev.competitions || []).slice(0, 1).map((c) => ({
         neutralSite: c.neutralSite,
-        competitors: (c.competitors || []).map((x) => ({ homeAway: x.homeAway, curatedRank: x.curatedRank, team: team(x.team) })),
+        venue: c.venue && { fullName: c.venue.fullName, address: c.venue.address && { city: c.venue.address.city, state: c.venue.address.state } },
+        broadcasts: (c.broadcasts || []).slice(0, 1).map((b) => ({ names: (b.names || []).slice(0, 1) })),
+        competitors: (c.competitors || []).map((x) => ({ homeAway: x.homeAway, curatedRank: x.curatedRank, team: team(x.team), records: (x.records || []).slice(0, 1).map((r) => ({ summary: r.summary })) })),
         odds: (c.odds || []).slice(0, 1).map((o) => ({
           provider: { name: o.provider?.name }, spread: o.spread, overUnder: o.overUnder,
           homeTeamOdds: { favorite: o.homeTeamOdds?.favorite },
