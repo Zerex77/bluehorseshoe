@@ -1329,9 +1329,9 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261023190000';</script>
-<script src="runtime.js?v=20261023190000"></script>
-<script src="lines.js?v=20261023190000"></script>
+<script>window.BH_VERSION='20261023191500';</script>
+<script src="runtime.js?v=20261023191500"></script>
+<script src="lines.js?v=20261023191500"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1557,7 +1557,7 @@ class Component extends DCLogic {
       projAStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 20px; color: " + A + ';',
       projHStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 20px; color: " + H + ';',
       modelLine: favLine(m), modelWin: m != null ? (m >= 0 ? s.h : s.a) + ' wins ' + pctS(Math.abs(m) < 0.05 ? 0.5 : (m > 0 ? mx.pH : 1 - mx.pH)) : '',
-      marketLine: favLine(-s.hs), marketSub: (info.open != null && info.open !== -s.hs ? 'Opened ' + favLine(info.open) + ' · ' : '') + 'O/U ' + (s.tot == null ? '—' : s.tot),
+      marketLine: favLine(-s.hs), marketSub: (info.open != null && info.open !== s.hs ? 'Opened ' + favLine(-info.open) + ' · ' : '') + 'O/U ' + (s.tot == null ? '—' : s.tot),
       modelPick: mSide && Math.abs(edgeH) >= 1 ? lineFor(mSide) : 'No edge', modelPickSub: edgeH != null ? Math.abs(edgeH).toFixed(1) + ' pts off the line' + (t != null ? ' · total ' + r1(t) : '') : '',
       modelPickStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; color: " + pickColor + ';',
       rows: rows, hasRows: rows.length > 0, consensus: consensus, hasModel: !!mx, noModel: !mx,
