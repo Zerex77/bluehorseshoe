@@ -12,8 +12,9 @@ NFL and college football picks built from live lines. No server and no monthly c
 | Line check (Hard Rock vs. other books) | The Odds API free plan, via the GitHub Action → `data/books.json` | Every 4 hours (about 360 of the 500 free monthly credits) |
 | Player props | `data/props.json` (edit by hand) | When you update it |
 | Public betting splits | `data/splits.json` (edit by hand) | When you update it |
-| NFL team stats for the matchup page (EPA, success rate, explosiveness, havoc, finishing drives, pace, and an EPA power rating) | nflverse play-by-play on GitHub, via `.github/workflows/model.yml` → `data/nfl-model.json` | Once a day (no key needed) |
-| Horseshoe Model (college): our CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly's SP+ game projections (his public "2026 SP+" sheet, newest "FBS Week N" tab), David Sasser's model (davidsasser.com/cfb), and CFBD advanced stats for the matchup chart | `.github/workflows/model.yml` → `data/model.json` | Once a day, plus Friday and Saturday mornings (about 300 of the 1,000 free CFBD calls a month) |
+| Sam's Models (samthemodelman.smmodel.workers.dev): college and NFL projections and each game's margin breakdown | the refresh loop → `data/model.json` (college), `data/nfl-sources.json` (NFL) | Every 2 hours; game pages only re-read when Sam's board says it updated |
+| NFL team stats for the matchup page (EPA, success rate, explosiveness, havoc, finishing drives, pace, and an EPA power rating) | nflverse play-by-play on GitHub, via the refresh loop → `data/nfl-model.json` | Every 12 hours (no key needed) |
+| Horseshoe Model (college): our CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly's SP+ game projections (his public "2026 SP+" sheet, newest "FBS Week N" tab), David Sasser's model (davidsasser.com/cfb), and CFBD advanced stats for the matchup chart | the refresh loop (`scripts/refresh.mjs`) and `.github/workflows/model.yml` → `data/model.json` | Outside models every 2 hours; CFBD every 12 hours, saved in `data/cfbd-cache.json` (about 500 of the 1,000 free CFBD calls a month) |
 
 Picks recalculate in the browser every time the lines change. Games drop off once they kick off.
 
@@ -59,7 +60,8 @@ Repo → **Actions** tab → enable workflows if asked → **Refresh lines → R
 - `runtime.js`: small page renderer
 - `scripts/refresh.mjs` + `.github/workflows/refresh.yml`: the timer
 - `scripts/model.mjs` + `.github/workflows/model.yml`: the Horseshoe Model (college)
-- `scripts/nfl-model.mjs`: NFL team stats for the matchup page, same workflow
+- `scripts/nfl-model.mjs`: NFL team stats for the matchup page
+- `scripts/sam.mjs`: reads Sam's Models boards and game pages
 - `data/`: snapshot files the timer and you keep updated
 
 Lines move. Confirm every price at your sportsbook. 21+ where legal. Gambling problem? Call 1-800-GAMBLER.

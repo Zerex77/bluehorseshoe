@@ -35,6 +35,7 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
           FORCE_FIRST: ${{ inputs.force_props && '1' || '' }}
         run: |
           git config user.name "blue-horseshoe-bot"

@@ -498,6 +498,19 @@
     rateLegs(legs, true);
     // Public splits (if posted) for live games only.
     var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
+    // Sam's Models NFL board (data/nfl-sources.json): keys look like 2026_07_NE_CHI (season_week_away_home, nflverse abbreviations)
+    var samG = (((extra.nflSources || {}).sam) || {}).games || {};
+    var nv = function (x) { return ({ LAR: 'LA', WSH: 'WAS' })[x] || x; };
+    var samBy = {};
+    Object.keys(samG).forEach(function (k) { var m = /_([A-Z]+)_([A-Z]+)$/.exec(k); if (m) samBy[m[1] + '|' + m[2]] = samG[k]; });
+    slate.forEach(function (sl) {
+      var x = samBy[nv(sl.aAbbr) + '|' + nv(sl.hAbbr)], flip = false;
+      if (!x) { x = samBy[nv(sl.hAbbr) + '|' + nv(sl.aAbbr)]; flip = !!x; }
+      if (!x) return;
+      sl.sam = { m: x.m == null ? null : (flip ? -x.m : x.m), hs: flip ? x.as : x.hs, as: flip ? x.hs : x.as, total: x.as != null && x.hs != null ? Math.round((x.as + x.hs) * 10) / 10 : null,
+        line: x.modelLine, pick: x.pick, number: x.number, bars: (x.bars || []).map(function (b) { return { label: b.label, pts: b.pts, toward: flip ? (b.toward === 'a' ? 'h' : 'a') : b.toward }; }),
+        season: x.season, url: x.url, flip: flip };
+    });
     // Multi-book Line check from the Odds API snapshot.
     var lc = buildLineCheck(extra.books, events, propRows);
     var wk = g(json, 'week.number');
@@ -566,13 +579,15 @@
   //  - totals: same idea against the projected total, 3+ pts to nudge, 4+ pts with both models agreeing for a leg or a hold
   // Every touched leg logs l.model (edge in points, or model win chance on MLs) so the tracker can show whether it helps.
   var MODEL_EDGE = 3, MODEL_HOLD = 4, MODEL_ML_W = 0.3, MODEL_T_EDGE = 3, MODEL_T_HOLD = 4;
-  var MODEL_NAMES = { own: 'Horseshoe ratings', spx: 'SP+', ds: 'Sasser' };
+  var MODEL_NAMES = { own: 'Horseshoe ratings', spx: 'SP+', ds: 'Sasser', sam: 'Sam’s Models', epa: 'Horseshoe EPA ratings' };
   function modelView(s, mp) {
     // Each model's projected margin (home minus away) and its side against the current spread and total.
     var hs = s.hs, srcs = [];
     if (mp.own && mp.own.m != null) srcs.push({ k: 'own', m: mp.own.m, t: null });
     if (mp.spx && mp.spx.m != null) srcs.push({ k: 'spx', m: mp.spx.m, t: mp.spx.total });
     if (mp.ds && mp.ds.m != null) srcs.push({ k: 'ds', m: mp.ds.m, t: mp.ds.total });
+    if (mp.sam && mp.sam.m != null) srcs.push({ k: 'sam', m: mp.sam.m, t: mp.sam.total });
+    if (mp.epa && mp.epa.m != null) srcs.push({ k: 'epa', m: mp.epa.m, t: null });
     if (!srcs.length && mp.m != null) srcs.push({ k: 'own', m: mp.m, t: mp.t });
     srcs.forEach(function (x) {
       x.edge = Math.round((x.m + hs) * 10) / 10;
@@ -885,8 +900,9 @@
       soft(getJSON('data/meta.json' + bust)),
       soft(getJSON('data/weather.json' + bust)),
       soft(getJSON('data/model.json' + bust)),
-      soft(getJSON('data/nfl-model.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7], model: r[8], nflModel: r[9] }; });
+      soft(getJSON('data/nfl-model.json' + bust)),
+      soft(getJSON('data/nfl-sources.json' + bust))
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7], model: r[8], nflModel: r[9], nflSources: r[10] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {

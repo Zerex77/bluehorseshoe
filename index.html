@@ -636,6 +636,23 @@ button{font:inherit}
           </section>
         </sc-if>
 
+        <sc-if value="{{mx.hasSamBars}}" hint-placeholder-val="{{ false }}">
+          <section style="display: flex; flex-direction: column; gap: 10px;">
+            <h2 class="bh-mp-h"><span>{{mx.sec.margin}}</span> / Where the margin comes from</h2>
+            <sc-if value="{{mx.hasSamNumber}}" hint-placeholder-val="{{ false }}"><div style="font-size: 14px; color: #C9D3E8; line-height: 1.5;">{{mx.samNumber}}</div></sc-if>
+            <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 14px; overflow: hidden;">
+              <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #0E1628; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;"><span style="color: {{mx.A}};">← {{mx.away}}</span><span style="color: #7D89A3;">Points</span><span style="color: {{mx.H}};">{{mx.home}} →</span></div>
+              <sc-for list="{{mx.samBars}}" as="sb" hint-placeholder-count="5">
+                <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-top: 1px solid #1E2A45;">
+                  <span style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;"><span style="font-size: 14px; font-weight: 600;">{{sb.label}}</span><span><span style="{{sb.whoStyle}}">{{sb.who}}</span> <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B5CF;">{{sb.pts}}</span></span></span>
+                  <span style="position: relative; display: block; height: 12px; background: #0E1628; border-radius: 3px;"><span style="position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #3A4A6B;"></span><span style="{{sb.barStyle}}"></span></span>
+                </div>
+              </sc-for>
+              <div style="padding: 10px 14px; border-top: 1px solid #1E2A45; font-size: 12px; color: #7D89A3; line-height: 1.5;">{{mx.samNet}} From Sam’s Models, which by its own testing tracks the market rather than beating it. <sc-if value="{{mx.hasSamUrl}}" hint-placeholder-val="{{ false }}"><a href="{{mx.samUrl}}" target="_blank" rel="noopener noreferrer">Sam’s full breakdown ↗</a></sc-if></div>
+            </div>
+          </section>
+        </sc-if>
+
         <sc-if value="{{mx.hasChart}}" hint-placeholder-val="{{ true }}">
           <section style="display: flex; flex-direction: column; gap: 12px;">
             <h2 class="bh-mp-h"><span>{{mx.sec.id}}</span> / Team identity</h2>
@@ -785,6 +802,22 @@ button{font:inherit}
               <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; padding: 10px 14px; background: #0E1628; font-size: 12px; font-weight: 700;"><span></span><span style="color: {{mx.A}};">{{mx.away}}</span><span style="color: {{mx.H}};">{{mx.home}}</span></div>
               <sc-for list="{{mx.ratings}}" as="rt" hint-placeholder-count="5">
                 <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; padding: 10px 14px; border-top: 1px solid #1E2A45; font-size: 13px;"><span style="color: #A9B5CF;">{{rt.lab}}</span><span style="font-family: 'IBM Plex Mono', monospace;">{{rt.a}}</span><span style="font-family: 'IBM Plex Mono', monospace;">{{rt.h}}</span></div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{mx.hasSeason}}" hint-placeholder-val="{{ false }}">
+          <section style="display: flex; flex-direction: column; gap: 10px;">
+            <h2 class="bh-mp-h"><span>{{mx.sec.season}}</span> / Season so far</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+              <sc-for list="{{mx.seasonCols}}" as="sc" hint-placeholder-count="2">
+                <div style="background: #111A2E; border: 1px solid #1E2A45; border-radius: 12px; overflow: hidden; min-width: 0;">
+                  <div style="padding: 10px 12px; background: #0E1628; {{sc.color}}">{{sc.team}}</div>
+                  <sc-for list="{{sc.games}}" as="sg" hint-placeholder-count="6">
+                    <div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; border-top: 1px solid #1E2A45; font-size: 13px;"><span style="min-width: 0; overflow-wrap: anywhere;">{{sg.opp}}</span><span style="{{sg.style}}; white-space: nowrap;">{{sg.wl}} {{sg.score}}</span></div>
+                  </sc-for>
+                </div>
               </sc-for>
             </div>
           </section>
@@ -1411,9 +1444,9 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261023211500';</script>
-<script src="runtime.js?v=20261023211500"></script>
-<script src="lines.js?v=20261023211500"></script>
+<script>window.BH_VERSION='20261023230000';</script>
+<script src="runtime.js?v=20261023230000"></script>
+<script src="lines.js?v=20261023230000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1447,11 +1480,13 @@ class Component extends DCLogic {
       // NFL: team identity and a simple EPA power rating from nflverse play-by-play (data/nfl-model.json)
       var ab = function (x) { return ({ LAR: 'LA', WSH: 'WAS' })[x] || x; };
       tA = T[ab(s.aAbbr)] || null; tH = T[ab(s.hAbbr)] || null;
-      if (tA && tH && tA.rating != null && tH.rating != null) {
-        var mN = Math.round((tH.rating - tA.rating + (s.n ? 0 : (model.hfa || 1.5))) * 10) / 10;
-        mx = { m: mN, pH: BHLines.phi(mN / 13.5), t: null };
-        srcs = BHLines.modelView(s, { own: { m: mN } });
-        srcs.forEach(function (x) { x.name = 'Horseshoe EPA ratings'; });
+      var mE = tA && tH && tA.rating != null && tH.rating != null ? Math.round((tH.rating - tA.rating + (s.n ? 0 : (model.hfa || 1.5))) * 10) / 10 : null;
+      var sm = s.sam && s.sam.m != null ? s.sam : null;
+      if (mE != null || sm) {
+        // display blend: Sam's model (a fuller model with a long track record behind it) 60%, our EPA ratings 40%
+        var mN = mE != null && sm ? Math.round((0.4 * mE + 0.6 * sm.m) * 10) / 10 : mE != null ? mE : sm.m;
+        mx = { m: mN, pH: BHLines.phi(mN / 13.5), t: sm ? sm.total : null, sam: s.sam };
+        srcs = BHLines.modelView(s, { epa: mE != null ? { m: mE } : null, sam: sm });
       }
     }
     var r1 = function (v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); };
@@ -1551,8 +1586,9 @@ class Component extends DCLogic {
     var pickColor = mSide === 'a' ? A : mSide === 'h' ? H : '#EEF2FA';
 
     // ---- 02 the models
+    var samD0 = nfl ? s.sam : (mx && mx.sam);
     var rows = srcs.map(function (x) {
-      var url = x.k === 'ds' && mx.ds && mx.ds.url ? mx.ds.url : x.k === 'spx' ? 'https://docs.google.com/spreadsheets/d/1vwoVl-Dxy0es87Z9I1RTvFzr72Lb1fAkREfbLxbK-eg/htmlview' : '';
+      var url = x.k === 'ds' && mx.ds && mx.ds.url ? mx.ds.url : x.k === 'spx' ? 'https://docs.google.com/spreadsheets/d/1vwoVl-Dxy0es87Z9I1RTvFzr72Lb1fAkREfbLxbK-eg/htmlview' : x.k === 'sam' && samD0 && samD0.url ? samD0.url : '';
       return { name: x.name, line: favLine(x.m), side: x.side ? lineFor(x.side) : 'Even', edge: Math.abs(x.edge).toFixed(1), total: x.t != null ? r1(x.t) + (x.tSide ? ' ' + x.tSide.toLowerCase() : '') : '—', url: url, hasUrl: !!url, noUrl: !url,
         sideStyle: 'font-weight: 600; color: ' + (x.side === 'a' ? A : x.side === 'h' ? H : MUTED) + ';', rowStyle: 'border-top: 1px solid #1E2A45;' };
     });
@@ -1683,26 +1719,45 @@ class Component extends DCLogic {
       var vals = r[3].map(function (c) { return c ? c[0] + ' ' + self.fmtOdds(c[1]) : '—'; });
       return { label: r[0], cells: vals.map(function (v, i) { return { v: v, style: 'padding: 8px 10px; font-family: \'IBM Plex Mono\', monospace; font-size: 12px; white-space: nowrap;' + (i === 0 ? ' color: #FFFFFF; font-weight: 700;' : '') }; }) };
     }) : [];
+    // Sam's Models: where the margin comes from, and the season so far
+    var samD = nfl ? s.sam : (mx && mx.sam);
+    var barMax = samD && samD.bars && samD.bars.length ? Math.max.apply(null, samD.bars.map(function (b) { return b.pts; })) || 1 : 1;
+    var samBars = samD && samD.bars ? samD.bars.map(function (b) {
+      var w = Math.max(1, Math.round(b.pts / barMax * 50 * 10) / 10), toH = b.toward === 'h';
+      return { label: b.label, pts: b.pts.toFixed(1), who: toH ? s.h : s.a, whoStyle: 'font-size: 12px; font-weight: 700; color: ' + (toH ? H : A) + ';',
+        barStyle: 'position: absolute; top: 0; bottom: 0; border-radius: 3px; background: ' + (toH ? H : A) + '; ' + (toH ? 'left: 50%;' : 'right: 50%;') + ' width: ' + w + '%;' };
+    }) : [];
+    var netA = 0, netH = 0; (samD && samD.bars || []).forEach(function (b) { if (b.toward === 'h') netH += b.pts; else netA += b.pts; });
+    var net = Math.round((netH - netA) * 10) / 10;
+    var samNet = samBars.length ? 'Adds up to ' + Math.abs(net).toFixed(1) + ' toward ' + (net >= 0 ? s.h : s.a) + ' before Sam’s calibration.' : '';
+    var seasonCols = samD && samD.season && samD.season.length === 2 ? samD.season.map(function (t, i) {
+      var col = (samD.flip ? 1 - i : i) === 0 ? A : H;
+      return { team: t.team, color: 'font-weight: 700; color: ' + col + ';', games: (t.games || []).map(function (g) { return { opp: g.opp, score: g.score, style: 'font-family: \'IBM Plex Mono\', monospace; font-weight: 600; color: ' + (g.w ? '#3FD18A' : '#FF8A80') + ';', wl: g.w ? 'W' : 'L' }; }) };
+    }) : [];
+    if (seasonCols.length === 2 && samD.flip) seasonCols.reverse();
     // section numbers follow what's on the page
     var secN = 0, nx = function (on) { return on ? String(++secN).padStart(2, '0') : ''; };
     var hasPick = gameLegs.length > 0;
-    var sec = { pick: nx(hasPick), models: nx(srcs.length > 0), id: nx(hasChart), adv: nx(hasChart), inj: nx(injA.length + injH.length > 0), market: nx(market.length > 0), books: nx(bookRows.length > 0), ratings: nx(!!(tA || tH)) };
+    var sec = { pick: nx(hasPick), models: nx(srcs.length > 0), margin: nx(samBars.length > 0), id: nx(hasChart), adv: nx(hasChart), inj: nx(injA.length + injH.length > 0), market: nx(market.length > 0), books: nx(bookRows.length > 0), ratings: nx(!!(tA || tH)), season: nx(seasonCols.length === 2) };
     var helpRows = nfl ? [
-      { b: 'Model line', t: 'comes from a simple EPA power rating built from every NFL snap this season (nflverse play-by-play, garbage time removed), shrunk toward average early in the year. It’s context for the leg, it doesn’t change the Horseshoe’s picks.' },
+      { b: 'Model line', t: 'blends Sam’s Models (60%) with a simple EPA power rating built from every NFL snap this season (nflverse play-by-play, garbage time removed, shrunk toward average early in the year). It’s context for the leg; it doesn’t change the Horseshoe’s picks.' },
       { b: 'Horseshoe checks', t: 'are the three NFL signals: price strength (S), home spot (H) and market move (M). A game line needs 2 of 3 to be a Horseshoe pick.' },
       { b: 'Team identity', t: 'ranks each team against the rest of the league from 0 to 100. Overall averages offense and defense. Matchup advantages compare those overall grades; 5 points or less is even.' },
       { b: 'Line check', t: 'shows the same line at each book. Hard Rock is listed first.' }
     ] : [
-      { b: 'Model line', t: 'averages three projections: the Horseshoe’s own CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly’s SP+ game projection and David Sasser’s model. Model pick is the side of the current line the average lands on.' },
+      { b: 'Model line', t: 'blends four projections: the Horseshoe’s own CFBD ratings blend (SP+, FPI, SRS, Elo), Bill Connelly’s SP+ game projection and David Sasser’s model (29% each), and Sam’s Models (13%, since Sam’s own testing says it tracks the market rather than beating it). Model pick is the side of the current line the blend lands on.' },
+      { b: 'Where the margin comes from', t: 'is Sam’s breakdown of his projection: each bar is one input’s points toward the team it favors.' },
       { b: 'Horseshoe chance', t: 'is what the Horseshoe thinks the leg hits after every check; the white line is what the price implies. Value is the expected return per dollar at that price.' },
       { b: 'Team identity', t: 'ranks each team against every FBS team from 0 to 100 on CFBD advanced stats with garbage time removed. Overall averages offense and defense. Matchup advantages compare those overall grades; 5 points or less is even.' },
       { b: 'Remember', t: 'even the best public models hit about 52–56% against the spread. Use this to choose between legs, not as a lock.' }
     ];
     return {
       sec: sec, helpRows: helpRows, nfl: nfl, modelsS: srcs.length > 1 ? 's' : '',
+      samBars: samBars, hasSamBars: samBars.length > 0, samNet: samNet, samNumber: samD && samD.number ? samD.number : '', hasSamNumber: !!(samD && samD.number), samUrl: samD && samD.url ? samD.url : '', hasSamUrl: !!(samD && samD.url),
+      seasonCols: seasonCols, hasSeason: seasonCols.length === 2,
       injA: injA, injH: injH, hasInjA: injA.length > 0, hasInjH: injH.length > 0, noInjA: !injA.length, noInjH: !injH.length, hasInj: !!sec.inj,
       market: market, hasMarket: market.length > 0, bookNames: bookNames, bookRows: bookRows, hasBooks: bookRows.length > 0,
-      sources: nfl ? 'Team stats: nflverse play-by-play · lines: ESPN (DraftKings) and The Odds API · injuries: ESPN · weather: Open-Meteo.' : 'Sources: SP+ by Bill Connelly · David Sasser’s model · CollegeFootballData.com · ESPN.',
+      sources: nfl ? 'Sources: Sam’s Models · team stats from nflverse play-by-play · lines: ESPN (DraftKings) and The Odds API · injuries: ESPN · weather: Open-Meteo.' : 'Sources: SP+ by Bill Connelly · David Sasser’s model · Sam’s Models · CollegeFootballData.com · ESPN.',
       backLabel: '← Back to picks',
       open: true, close: close, A: A, H: H,
       kicker: (nfl ? 'NFL / ' : year + ' college football / ') + (wk ? 'week ' + wk + ' ' : '') + 'matchup',

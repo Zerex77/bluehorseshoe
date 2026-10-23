@@ -1,5 +1,6 @@
 // Runs in GitHub Actions. Writes data/espn-*.json (backup copies of ESPN's feeds),
-// data/meta.json, and every 4 hours data/books.json from The Odds API.
+// data/meta.json, every 4 hours data/books.json from The Odds API, every 2 hours the outside models
+// (data/model.json, data/nfl-sources.json) and every 12 hours NFL team stats (data/nfl-model.json).
 import { readFile, writeFile } from 'node:fs/promises';
 
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/football/';
@@ -283,6 +284,17 @@ async function sgo(meta) {
 }
 const results = await Promise.allSettled([espnBackup(meta), oddsApi(meta), sgo(meta)]);
 try { await weather(meta); } catch (e) { console.error('Weather failed:', e.message); }
+// Outside models: Connelly's SP+, Sasser, Sam's Models (college and NFL) every 2 hours; CFBD is saved for 12 hours
+// inside model.mjs. NFL team stats from nflverse play-by-play every 12 hours.
+const since = (k) => (meta[k] ? Date.now() - new Date(meta[k]).getTime() : Infinity);
+if (since('modelAt') > 115 * 60e3) {
+  try { const M = await import('./model.mjs'); await M.main(); meta.modelAt = new Date().toISOString(); }
+  catch (e) { console.error('Model failed:', e.message); }
+}
+if (since('nflModelAt') > 11.5 * 36e5) {
+  try { const N = await import('./nfl-model.mjs'); await N.main(); meta.nflModelAt = new Date().toISOString(); }
+  catch (e) { console.error('NFL model failed:', e.message); }
+}
 delete meta._venues;
 results.forEach((r) => { if (r.status === 'rejected') { console.error(r.reason); meta.lastError = String(r.reason?.stack || r.reason).slice(0, 500); } });
 await writeFile('data/meta.json', JSON.stringify(meta));
