@@ -1,6 +1,7 @@
 name: Horseshoe Model
 
-# Pulls college power ratings from CollegeFootballData.com and writes data/model.json.
+# Pulls college power ratings from CollegeFootballData.com (data/model.json) and NFL team stats
+# from nflverse play-by-play (data/nfl-model.json).
 # Once a day, plus a second pass Friday and Saturday mornings. About 6 CFBD calls a run.
 on:
   schedule:
@@ -27,12 +28,14 @@ jobs:
       - name: Build projections
         env:
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
-        run: node scripts/model.mjs
+        run: node scripts/model.mjs || echo "College model failed, keeping the last copy"
+      - name: NFL team stats (nflverse play-by-play)
+        run: node scripts/nfl-model.mjs || echo "NFL stats failed, keeping the last copy"
       - name: Save
         run: |
           git config user.name "blue-horseshoe-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/model.json 2>/dev/null || exit 0
+          git add data/model.json data/nfl-model.json 2>/dev/null || true
           git diff --cached --quiet && exit 0
           git commit -q -m "Update Horseshoe Model"
           for i in 1 2 3 4 5; do git pull -q --rebase origin main && git push -q && exit 0; sleep 7; done

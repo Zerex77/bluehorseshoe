@@ -109,7 +109,7 @@
   // "Deebo Samuel Sr." and "Deebo Samuel" are the same player.
   var injKey = function (n) { return String(n || '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, ''); };
   function readInjuries(json) {
-    var byTeam = {}, byName = {};
+    var byTeam = {}, byName = {}, all = {};
     (g(json, 'injuries') || []).forEach(function (t) {
       var list = [];
       (t.injuries || []).forEach(function (i) {
@@ -124,11 +124,13 @@
         byName[injKey(name)] = row;
         // Team-level flags: any QB status, other skill players only when out or doubtful (questionable backups are noise).
         if (KEYPOS[pos] && (pos === 'QB' || st !== 'Questionable')) list.push(row);
+        (all[t.displayName] = all[t.displayName] || []).push(row);
       });
       list.sort(function (x, y) { return (KEYPOS[y.pos] * 10 + STATUS_RANK[y.status]) - (KEYPOS[x.pos] * 10 + STATUS_RANK[x.status]); });
       byTeam[t.displayName] = list;
     });
-    return { byTeam: byTeam, byName: byName };
+    Object.keys(all).forEach(function (k) { all[k].sort(function (x, y) { return (STATUS_RANK[y.status] * 10 + (KEYPOS[y.pos] || 0)) - (STATUS_RANK[x.status] * 10 + (KEYPOS[x.pos] || 0)); }); });
+    return { byTeam: byTeam, byName: byName, all: all };
   }
   function injEntry(row, team) {
     if (!row) return [team, 'No designation', 'No key injuries listed'];
@@ -267,13 +269,18 @@
   function buildNfl(json, injJson, extra) {
     var inj = readInjuries(injJson || {});
     var events = (g(json, 'events') || []).map(readEvent).filter(Boolean);
-    var games = [], legs = [], injMap = {}, liveIds = {}, shortToId = {};
+    var games = [], legs = [], injMap = {}, liveIds = {}, shortToId = {}, slate = [];
     var firstDate = null;
     events.forEach(function (e) {
       if (e.state !== 'pre' || !e.odds || e.odds.aNow == null) return;
       var day = etDay(e.date);
       var label = e.short + (day && day !== 'Sun' ? ' (' + day + ')' : '');
       games.push({ id: e.id, label: label, date: e.date });
+      // for the matchup page: both teams, the line now and at open, logos, colors, records, venue
+      slate.push({ id: e.id, a: e.a.shortDisplayName, h: e.h.shortDisplayName, aFull: e.a.displayName, hFull: e.h.displayName, aAbbr: e.a.abbreviation, hAbbr: e.h.abbreviation,
+        n: e.neutral, short: e.short, date: e.date, hs: -e.odds.aNow, tot: e.odds.tot, odds: e.odds, cf: 'NFL',
+        info: { aLogo: e.a.logo || null, hLogo: e.h.logo || null, aColor: e.a.color || null, hColor: e.h.color || null, aAlt: e.a.alternateColor || null, hAlt: e.h.alternateColor || null,
+          aRec: e.aRec, hRec: e.hRec, venue: e.venue, tv: e.tv, open: e.odds.aOpen != null ? -e.odds.aOpen : null, tOpen: e.odds.tOpen } });
       liveIds[e.id] = 1; shortToId[e.short] = e.id;
       if (!firstDate || e.date < firstDate) firstDate = e.date;
       var o = e.odds;
@@ -496,6 +503,7 @@
     var wk = g(json, 'week.number');
     return {
       games: games, legs: legs, mu: {}, inj: injMap, screen: [], publicBoard: publicBoard,
+      slate: slate, injTeams: inj.byTeam, injAll: inj.all || null, weather: extra.weather || null, model: extra.nflModel || null,
       lineCheck: lc.rows, books: lc.books, bookShort: lc.bookShort, bookDefault: lc.def, booksAsOf: lc.asOf,
       chip: 'NFL' + (wk ? ' · Week ' + wk : '') + (firstDate ? ' · from ' + etDate(firstDate) : ''),
       count: games.length
@@ -876,8 +884,9 @@
       soft(getJSON('data/splits.json' + bust)),
       soft(getJSON('data/meta.json' + bust)),
       soft(getJSON('data/weather.json' + bust)),
-      soft(getJSON('data/model.json' + bust))
-    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7], model: r[8] }; });
+      soft(getJSON('data/model.json' + bust)),
+      soft(getJSON('data/nfl-model.json' + bust))
+    ]).then(function (r) { return { books: r[0], props: r[1], sgo: r[2], sgoCfb: r[3], picks: r[4], splits: r[5], meta: r[6], weather: r[7], model: r[8], nflModel: r[9] }; });
     return Promise.all([live.catch(fallback), extras]).then(function (res) {
       var feed = res[0], ex = res[1];
       var next = {
