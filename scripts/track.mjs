@@ -18,10 +18,10 @@ const normName = (x) => String(x || '').toLowerCase().replace(/\b(jr|sr|ii|iii|i
 const T = globalThis.BHLines._test;
 
 export async function track(log = console.log) {
-  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather, splits, model] = await Promise.all([
+  const [nflSb, cfbSb, inj, props, sgo, sgoCfb, store, weather, splits, model, nflModel, nflSources] = await Promise.all([
     readJSON('data/espn-nfl.json', null), readJSON('data/espn-cfb.json', null), readJSON('data/espn-injuries.json', null),
     readJSON('data/props.json', null), readJSON('data/sgo-nfl.json', null), readJSON('data/sgo-cfb.json', null),
-    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null), readJSON('data/splits.json', null), readJSON('data/model.json', null)
+    readJSON('data/picks.json', { picks: [] }), readJSON('data/weather.json', null), readJSON('data/splits.json', null), readJSON('data/model.json', null), readJSON('data/nfl-model.json', null), readJSON('data/nfl-sources.json', null)
   ]);
   const now = Date.now();
   const picks = store.picks || [];
@@ -75,7 +75,7 @@ export async function track(log = console.log) {
     });
   };
   if (nflSb) {
-    const nfl = T.buildNfl(nflSb, inj, { props, sgo, weather, splits });
+    const nfl = T.buildNfl(nflSb, inj, { props, sgo, weather, splits, nflModel, nflSources });
     for (const l of nfl.legs) {
       if (l.alt) continue;
       const s0 = l.sOrig || l.s; // held legs keep their original checks so we can see how the rules do

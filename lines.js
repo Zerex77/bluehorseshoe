@@ -266,6 +266,72 @@
     });
   }
 
+  // ---------- NFL models: Sam's Models (leads) and the Horseshoe EPA ratings (data/nfl-model.json)
+  // Blend for the projected margin: Sam 60%, EPA 40%. The NFL market is sharp and EPA ratings are noisy early, so:
+  //  - moneylines: the Horseshoe chance becomes 80% market, 20% model
+  //  - spreads: held when Sam disagrees by 2.5+ pts AND the blend by 3+ (EPA alone can't hold a pick); a 2+ pt
+  //    disagreement is a small markdown; agreement (Sam 1.5+, blend 2+) a small bump. When Sam and the blend both
+  //    put a side 3+ pts past the line, that side becomes a "Model edge" leg.
+  //  - totals: Sam's projected total 3+ pts the same way is a small bump, 3.5+ the other way a small markdown
+  // Every touched leg logs l.model (edge in points, or model win chance on moneylines) so the record shows if it helps.
+  var NFL_HFA = 1.5, NFL_SD = 13.5;
+  function nflModelLegs(legs, slate, nm) {
+    var T = (nm && nm.teams) || {};
+    var nv = function (x) { return ({ LAR: 'LA', WSH: 'WAS' })[x] || x; };
+    var add = function (l, why) { l.note = (l.note ? l.note + '; ' : '') + why; };
+    var bump = function (l, d) { if (l.p == null) l.p = imp(l.odds) * 0.955; l.p = clamp(l.p + d, 0.01, 0.97); l.conf = clamp(Math.round((l.conf || 50) + d * 100), 5, 95); };
+    var hold = function (l, why) { if (l.held) return; l.held = why; l.sOrig = l.s; l.s = [0, 0, 0]; add(l, 'held: ' + why); };
+    slate.forEach(function (sl) {
+      var tA = T[nv(sl.aAbbr)], tH = T[nv(sl.hAbbr)];
+      var mE = tA && tH && tA.rating != null && tH.rating != null ? Math.round((tH.rating - tA.rating + (sl.n ? 0 : (nm.hfa || NFL_HFA))) * 10) / 10 : null;
+      var sm = sl.sam && sl.sam.m != null ? sl.sam : null;
+      if (mE == null && !sm) return;
+      var m = mE != null && sm ? Math.round((0.4 * mE + 0.6 * sm.m) * 10) / 10 : mE != null ? mE : sm.m;
+      var pH = phi(m / NFL_SD);
+      sl.mx = { m: m, pH: pH, t: sm ? sm.total : null, sam: sl.sam, epa: mE };
+      sl.mxSrcs = modelView(sl, { sam: sm, epa: mE != null ? { m: mE } : null });
+      var o = sl.odds, edgeH = Math.round((m + sl.hs) * 10) / 10, mSide = edgeH > 0 ? 'h' : edgeH < 0 ? 'a' : null, edge = Math.abs(edgeH);
+      var sEdgeH = sm ? Math.round((sm.m + sl.hs) * 10) / 10 : null;
+      var fav = m >= 0 ? sl.h : sl.a, proj = 'Models: ' + fav + ' by ' + Math.abs(m).toFixed(1) + (sm ? ' (Sam ' + (sm.m >= 0 ? sl.h : sl.a) + ' by ' + Math.abs(sm.m).toFixed(1) + ')' : '');
+      var sideOf = function (label) { if (label.indexOf(sl.a + ' ') === 0) return 'a'; if (label.indexOf(sl.h + ' ') === 0) return 'h'; return null; };
+      var mine = legs.filter(function (l) { return l.g === sl.id && !l.alt && l.k === 'line'; });
+      mine.forEach(function (l) {
+        var side = sideOf(l.label);
+        if (l.mk === 'ml' && side) {
+          var pm = side === 'h' ? pH : 1 - pH;
+          if (l.p == null) l.p = imp(l.odds) * 0.955;
+          var before = l.p;
+          l.p = clamp(l.p * 0.8 + pm * 0.2, 0.01, 0.97);
+          l.conf = clamp(Math.round((l.conf || 50) + (l.p - before) * 100), 5, 95);
+          l.model = Math.round(pm * 1000) / 1000;
+          add(l, proj + ', wins ' + pct(pm));
+        } else if (l.mk === 'spread' && side && mSide) {
+          var agree = side === mSide, samWith = sEdgeH == null ? null : (side === 'h' ? sEdgeH : -sEdgeH);
+          l.model = agree ? edge : -edge;
+          if (!agree && edge >= 3 && samWith != null && samWith <= -2.5) hold(l, proj + ', models disagree by ' + edge + ' pts');
+          else if (!agree && edge >= 2) { bump(l, -0.01); add(l, proj + ', models lean the other way'); }
+          else if (agree && edge >= 2 && samWith != null && samWith >= 1.5) { bump(l, Math.min(0.02, edge * 0.005)); add(l, proj + ', models agree (' + edge + ' pts)'); }
+        } else if (l.mk === 'total' && sm && sm.total != null && o.tot != null) {
+          var dir = /^over/i.test(l.label) ? 1 : -1, te = Math.round((sm.total - o.tot) * 10) / 10;
+          l.model = te * dir;
+          if (te * dir >= 3) { bump(l, 0.01); add(l, 'Sam’s total ' + sm.total.toFixed(1) + ', ' + Math.abs(te) + ' pts ' + (dir > 0 ? 'over' : 'under')); }
+          else if (te * dir <= -3.5) { bump(l, -0.015); add(l, 'Sam’s total ' + sm.total.toFixed(1) + ', leans the other way'); }
+        }
+      });
+      // both models 3+ pts past the line on the same side: a Model edge spread
+      var sAgree = sEdgeH != null && Math.sign(sEdgeH) === Math.sign(edgeH) && Math.abs(sEdgeH) >= 3;
+      if (mSide && edge >= 3 && sAgree && o) {
+        var line = mSide === 'a' ? o.aNow : -o.aNow, label = (mSide === 'a' ? sl.a : sl.h) + ' ' + signed(line);
+        var ex = mine.filter(function (l) { return l.mk === 'spread' && l.label === label; })[0];
+        var mp = 0.5 + Math.min(0.03, (edge - 2) * 0.006);
+        var why = 'Model edge: ' + proj.replace('Models: ', '') + ' vs the ' + signed(line) + ' line';
+        if (ex && !ex.held) { if (!(ex.s && ex.s[0] + ex.s[1] + ex.s[2] >= 2)) { ex.s = [1, mSide === 'h' ? 1 : 0, 1]; ex.p = Math.max(ex.p || 0, mp); ex.note = why; } ex.modelPick = true; ex.model = edge; }
+        else if (!ex) legs.push({ g: sl.id, k: 'line', mk: 'spread', label: label, odds: (mSide === 'a' ? o.aSpOdds : o.hSpOdds) || -110, p: mp, conf: Math.round(mp * 100) + 8,
+          s: [1, mSide === 'h' ? 1 : 0, 1], modelPick: true, model: edge, note: why });
+      }
+    });
+  }
+
   function buildNfl(json, injJson, extra) {
     var inj = readInjuries(injJson || {});
     var events = (g(json, 'events') || []).map(readEvent).filter(Boolean);
@@ -494,10 +560,6 @@
     });
     var nflById = {};
     events.forEach(function (e) { nflById[e.id] = e; });
-    tiltLegs(legs, nflById, extra.weather, true);
-    rateLegs(legs, true);
-    // Public splits (if posted) for live games only.
-    var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
     // Sam's Models NFL board (data/nfl-sources.json): keys look like 2026_07_NE_CHI (season_week_away_home, nflverse abbreviations)
     var samG = (((extra.nflSources || {}).sam) || {}).games || {};
     var nv = function (x) { return ({ LAR: 'LA', WSH: 'WAS' })[x] || x; };
@@ -511,6 +573,11 @@
         line: x.modelLine, pick: x.pick, number: x.number, bars: (x.bars || []).map(function (b) { return { label: b.label, pts: b.pts, toward: flip ? (b.toward === 'a' ? 'h' : 'a') : b.toward }; }),
         season: x.season, url: x.url, flip: flip };
     });
+    tiltLegs(legs, nflById, extra.weather, true);
+    nflModelLegs(legs, slate, extra.nflModel);
+    rateLegs(legs, true);
+    // Public splits (if posted) for live games only.
+    var publicBoard = ((extra.splits || {}).nfl || []).filter(function (r) { return shortToId[r[0]]; });
     // Multi-book Line check from the Odds API snapshot.
     var lc = buildLineCheck(extra.books, events, propRows);
     var wk = g(json, 'week.number');

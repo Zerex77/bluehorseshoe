@@ -1454,9 +1454,9 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261023233000';</script>
-<script src="runtime.js?v=20261023233000"></script>
-<script src="lines.js?v=20261023233000"></script>
+<script>window.BH_VERSION='20261023234500';</script>
+<script src="runtime.js?v=20261023234500"></script>
+<script src="lines.js?v=20261023234500"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1490,14 +1490,8 @@ class Component extends DCLogic {
       // NFL: team identity and a simple EPA power rating from nflverse play-by-play (data/nfl-model.json)
       var ab = function (x) { return ({ LAR: 'LA', WSH: 'WAS' })[x] || x; };
       tA = T[ab(s.aAbbr)] || null; tH = T[ab(s.hAbbr)] || null;
-      var mE = tA && tH && tA.rating != null && tH.rating != null ? Math.round((tH.rating - tA.rating + (s.n ? 0 : (model.hfa || 1.5))) * 10) / 10 : null;
-      var sm = s.sam && s.sam.m != null ? s.sam : null;
-      if (mE != null || sm) {
-        // display blend: Sam's model (a fuller model with a long track record behind it) 60%, our EPA ratings 40%
-        var mN = mE != null && sm ? Math.round((0.4 * mE + 0.6 * sm.m) * 10) / 10 : mE != null ? mE : sm.m;
-        mx = { m: mN, pH: BHLines.phi(mN / 13.5), t: sm ? sm.total : null, sam: s.sam };
-        srcs = BHLines.modelView(s, { epa: mE != null ? { m: mE } : null, sam: sm });
-      }
+      // the same blend the NFL picks use (lines.js: Sam 60%, EPA ratings 40%)
+      if (s.mx) { mx = s.mx; srcs = s.mxSrcs || []; }
     }
     var r1 = function (v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); };
     var pctS = function (p) { return p == null ? '—' : Math.round(p * 100) + '%'; };
@@ -1623,7 +1617,7 @@ class Component extends DCLogic {
           return x.name + ': ' + favLine(x.m) + ' (' + sideTxt + ')';
         });
       var state = 'none', head = '', body = '';
-      var why = nfl ? 'NFL picks come from the market (line movement, home spot, price), not the models, so the two can disagree.' : 'College picks blend the models in, but a pick can still pass when the models only lean the other way by a little.';
+      var why = nfl ? 'NFL picks start from the market (line movement, home spot, price). The models only hold a spread when Sam’s Models disagrees by 2.5+ points and the blend by 3+, so smaller disagreements like this one can still be picks.' : 'College picks blend the models in, but a pick can still pass when the models only lean the other way by a little.';
       if (!mx) { head = 'No model projection for this game yet.'; }
       else if (mkL === 'total') {
         if (t == null || s.tot == null) { head = 'The models don’t project a total for this game.'; }
@@ -1791,7 +1785,8 @@ class Component extends DCLogic {
     var hasPick = gameLegs.length > 0;
     var sec = { pick: nx(hasPick), models: nx(srcs.length > 0), margin: nx(samBars.length > 0), id: nx(hasChart), adv: nx(hasChart), inj: nx(injA.length + injH.length > 0), market: nx(market.length > 0), books: nx(bookRows.length > 0), ratings: nx(!!(tA || tH)), season: nx(seasonCols.length === 2) };
     var helpRows = nfl ? [
-      { b: 'Model line', t: 'blends Sam’s Models (60%) with a simple EPA power rating built from every NFL snap this season (nflverse play-by-play, garbage time removed, shrunk toward average early in the year). It’s context for the leg; it doesn’t change the Horseshoe’s picks.' },
+      { b: 'Model line', t: 'blends Sam’s Models (60%) with a simple EPA power rating built from every NFL snap this season (nflverse play-by-play, garbage time removed, shrunk toward average early in the year).' },
+      { b: 'How the models move NFL picks', t: 'moneylines blend 80% market, 20% model. A spread is held when Sam disagrees by 2.5+ points and the blend by 3+; smaller disagreements and agreements are small nudges. When both put a side 3+ points past the line it becomes a Model edge leg. Sam’s projected total nudges totals.' },
       { b: 'Horseshoe checks', t: 'are the three NFL signals: price strength (S), home spot (H) and market move (M). A game line needs 2 of 3 to be a Horseshoe pick.' },
       { b: 'Team identity', t: 'ranks each team against the rest of the league from 0 to 100. Overall averages offense and defense. Matchup advantages compare those overall grades; 5 points or less is even.' },
       { b: 'Line check', t: 'shows the same line at each book. Hard Rock is listed first.' }
