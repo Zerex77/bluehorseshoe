@@ -1,6 +1,5 @@
 // Cloudflare setup for the relay. See README.md for the full steps.
-//   npx wrangler login
-//   npx wrangler d1 create bluehorseshoe-relay      -> paste the database_id it prints below
+// Deployed by Cloudflare Workers Builds from GitHub (root directory: relay), or by hand with
 //   npx wrangler deploy
 {
   "name": "bluehorseshoe-relay",
@@ -8,6 +7,6 @@
   "compatibility_date": "2026-06-01",
   "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"] },
   "d1_databases": [
-    { "binding": "DB", "database_name": "bluehorseshoe-relay", "database_id": "PASTE-DATABASE-ID-HERE" }
+    { "binding": "DB", "database_name": "bluehorseshoe-relay", "database_id": "ff72fff7-55be-4f7b-8983-bec3a3efc29c" }
   ]
 }
