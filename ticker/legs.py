@@ -310,6 +310,9 @@ def short_label(p, games=None):
         return '%s %s' % (team_name(g[p['side']]), sgn(p['line']) if p['line'] else 'PK')
     if g and p.get('side') and p.get('market') == 'ml':
         return team_name(g[p['side']]) + ' ML'
+    if g and p.get('market') == 'total' and p.get('dir'):
+        # the teams' everyday names, whatever the slip called them ("North Carolina State" -> NC State)
+        return '%s/%s %s %s' % (team_name(g['a']), team_name(g['h']), p['dir'].capitalize(), fmt(p['line']))
     if p.get('market') == 'total':
         t = re.sub(r'^.*?\b(?=[A-Za-z][A-Za-z .&\']*\s+(over|under)\b)', '', p['text'], flags=re.I) if re.search(r'\d.*\b(over|under)\b', p['text'], re.I) else p['text']
         return t

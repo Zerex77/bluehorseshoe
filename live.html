@@ -753,6 +753,8 @@
     var g = p.g && games[p.g];
     if (g && p.side && p.market === 'spread') return teamName(g[p.side]) + ' ' + (p.line ? sgn(p.line) : 'PK');
     if (g && p.side && p.market === 'ml') return teamName(g[p.side]) + ' ML';
+    // the teams' everyday names, whatever the slip called them ("North Carolina State" -> NC State)
+    if (g && p.market === 'total' && p.dir) return teamName(g.a) + '/' + teamName(g.h) + ' ' + (p.dir === 'over' ? 'Over' : 'Under') + ' ' + fmt(p.line);
     if (p.market !== 'prop') return p.text;
     if (p.side === 'yes') return p.player + (p.what === 'pass TDs' ? ' to throw a TD' : ' anytime TD');
     return p.player + ' ' + fmt(p.line) + ' ' + (SHORT[p.what] || p.what);
