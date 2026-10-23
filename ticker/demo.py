@@ -9,6 +9,7 @@ Run on the Pi (stop the real ticker first so they don't fight over the panels):
     sudo systemctl stop bhticker
     sudo python3 /opt/bhticker/demo.py           (full demo, loops until Ctrl+C)
     sudo python3 /opt/bhticker/demo.py --reel    (just the animations, ~30 seconds)
+    sudo python3 /opt/bhticker/demo.py --stage 3 (start the full demo at stage 3)
     sudo systemctl start bhticker
 
 Anywhere without panels:  python3 demo.py --preview frames
@@ -107,11 +108,15 @@ def stages():
 
 
 class Demo(B.Ticker):
-    def __init__(self, preview=None):
+    def __init__(self, preview=None, start=1):
         super().__init__(preview)
         self.cfg['alerts'] = True
         self.script = stages()
-        self.stage = 0
+        self.stage = max(0, min(len(self.script), start) - 1)
+        if self.stage > 0:
+            # load the stage before quietly, so this stage's hits still flash
+            self.queue_alerts(self.script[self.stage - 1][1])
+            self.alerts = []
 
     def update(self):
         games, snap = self.script[self.stage]
@@ -165,8 +170,9 @@ def main():
     ap.add_argument('--preview', help='no LED hardware: write frames to this folder')
     ap.add_argument('--reel', action='store_true', help='just play every animation back to back (~30s) and quit')
     ap.add_argument('--loops', type=int, default=1, help='with --reel: how many times to play it')
+    ap.add_argument('--stage', type=int, default=1, help='start the full demo at this stage (1-5)')
     args = ap.parse_args()
-    app = Demo(args.preview)
+    app = Demo(args.preview, args.stage)
     if args.reel:
         try:
             reel(app, args.loops)

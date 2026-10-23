@@ -45,6 +45,7 @@ Plays a scripted game with two fake slips so you can see every feature in about 
 sudo systemctl stop bhticker
 sudo python3 /opt/bhticker/demo.py      # Ctrl+C to quit
 sudo python3 /opt/bhticker/demo.py --reel   # just the animations, back to back (~30s)
+sudo python3 /opt/bhticker/demo.py --stage 3   # start the full demo partway (stages 1-5)
 sudo systemctl start bhticker
 ```
 
