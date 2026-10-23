@@ -98,6 +98,19 @@ def read_game(ev, sport):
     }
 
 
+# Official names sportsbooks print for schools ESPN lists by a short name ("North Carolina State" = NC State)
+FULL_NAMES = {
+    'nc state': ['north carolina state'], 'lsu': ['louisiana state'], 'byu': ['brigham young'], 'smu': ['southern methodist'],
+    'tcu': ['texas christian'], 'ucf': ['central florida'], 'usf': ['south florida'], 'uconn': ['connecticut'],
+    'umass': ['massachusetts'], 'ole miss': ['mississippi'], 'pitt': ['pittsburgh'], 'utsa': ['ut san antonio', 'texas san antonio'],
+    'utep': ['texas el paso', 'ut el paso'], 'fiu': ['florida international', 'florida intl'], 'fau': ['florida atlantic'],
+    'unlv': ['nevada las vegas'], 'uab': ['alabama birmingham'], 'ul monroe': ['louisiana monroe'], 'usc': ['southern california'],
+    'southern miss': ['southern mississippi'], "hawai'i": ['hawaii'], 'san josé state': ['san jose state'], 'ucla': ['california los angeles'],
+    'unc': ['north carolina'], 'vt': ['virginia tech'], 'gt': ['georgia tech'], 'ga tech': ['georgia tech'],
+    'western ky': ['western kentucky'], 'middle tenn': ['middle tennessee'], 'la tech': ['louisiana tech'],
+}
+
+
 def aliases(t):
     out = [str(x).lower() for x in [t.get('displayName'), t.get('shortDisplayName'), t.get('location'), t.get('name'),
                                        t.get('nickname'), t.get('abbreviation')] if x]
@@ -110,6 +123,7 @@ def aliases(t):
             out += ['appalachian state', 'appalachian st']
         if re.search(r' st\.?$', x):
             out.append(re.sub(r' st\.?$', ' state', x))
+        out += FULL_NAMES.get(x, [])
     for x in list(out):
         c = re.sub(r'\s+', ' ', re.sub(r"[^a-z0-9&'. ]", ' ', x)).strip()
         if c != x:
@@ -132,6 +146,15 @@ def abbr(t):
 def team_name(t):
     loc = t.get('location')
     return loc if loc and len(loc) <= 16 else (t.get('shortDisplayName') or abbr(t))
+
+
+def best_game(teams):
+    """For a total ("North Carolina State Stanford Under 55.5"), the game where the most named
+    teams match wins, so two teams from one game beat a partial match on some other game."""
+    count = {}
+    for t in teams:
+        count[t['g']] = count.get(t['g'], 0) + 1
+    return max(teams, key=lambda t: (count[t['g']], t['len']))['g']
 
 
 def find_teams(text, games):
@@ -265,7 +288,7 @@ def parse_leg(raw, games, hint=None, player_game=None):
     if m:
         leg.update(market='total', dir='over' if m.group(1).lower().startswith('o') else 'under', line=float(m.group(2)))
         if teams:
-            leg['g'] = teams[0]['g']
+            leg['g'] = best_game(teams)
         return leg
     if not teams:
         return leg

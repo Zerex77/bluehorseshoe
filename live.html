@@ -254,6 +254,23 @@
       poss: sit.possession ? String(sit.possession) : null, rz: !!sit.isRedZone, dd: sit.shortDownDistanceText || sit.downDistanceText || ''
     };
   }
+  // official names sportsbooks print for schools ESPN lists by a short name ("North Carolina State" = NC State)
+  var FULL_NAMES = {
+    'nc state': ['north carolina state'], 'lsu': ['louisiana state'], 'byu': ['brigham young'], 'smu': ['southern methodist'],
+    'tcu': ['texas christian'], 'ucf': ['central florida'], 'usf': ['south florida'], 'uconn': ['connecticut'],
+    'umass': ['massachusetts'], 'ole miss': ['mississippi'], 'pitt': ['pittsburgh'], 'utsa': ['ut san antonio', 'texas san antonio'],
+    'utep': ['texas el paso', 'ut el paso'], 'fiu': ['florida international', 'florida intl'], 'fau': ['florida atlantic'],
+    'unlv': ['nevada las vegas'], 'uab': ['alabama birmingham'], 'ul monroe': ['louisiana monroe'], 'usc': ['southern california'],
+    'southern miss': ['southern mississippi'], "hawai'i": ['hawaii'], 'san josé state': ['san jose state'], 'ucla': ['california los angeles'],
+    'unc': ['north carolina'], 'vt': ['virginia tech'], 'gt': ['georgia tech'], 'ga tech': ['georgia tech'],
+    'western ky': ['western kentucky'], 'middle tenn': ['middle tennessee'], 'la tech': ['louisiana tech']
+  };
+  function bestGame(teams) {
+    // a total names both teams: the game where the most named teams match wins
+    var count = {};
+    teams.forEach(function (t) { count[t.g] = (count[t.g] || 0) + 1; });
+    return teams.slice().sort(function (x, y) { return (count[y.g] - count[x.g]) || (y.len - x.len); })[0].g;
+  }
   function aliases(t) {
     var out = [t.displayName, t.shortDisplayName, t.location, t.name, t.nickname, t.abbreviation].filter(Boolean).map(function (x) { return String(x).toLowerCase(); });
     // "Appalachian State" also answers to "App State"; "Coastal Carolina" to "Coastal"
@@ -262,6 +279,7 @@
       if (x === 'appalachian state') out.push('app state', 'app st');
       if (x === 'app state') out.push('appalachian state', 'appalachian st');
       if (/ st\.?$/.test(x)) out.push(x.replace(/ st\.?$/, ' state'));
+      (FULL_NAMES[x] || []).forEach(function (f) { out.push(f); });
     });
     // match the way leg text is cleaned: "Miami (OH)" -> "miami oh", plus "miami ohio"
     out.slice().forEach(function (x) {
@@ -487,7 +505,7 @@
     if (hint && hint.g && !teams.length && games[hint.g]) teams = [{ g: String(hint.g), side: null }];
     if ((m = /(?:^|\s)(over|under|o|u)\s*([\d.]+)(?=\s|$)/i.exec(low))) {
       leg.market = 'total'; leg.dir = /^o/i.test(m[1]) ? 'over' : 'under'; leg.line = Number(m[2]);
-      if (teams[0]) leg.g = teams[0].g;
+      if (teams[0]) leg.g = bestGame(teams);
       return leg;
     }
     if (!teams.length) { leg.market = null; return leg; }
