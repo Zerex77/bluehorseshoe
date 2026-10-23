@@ -1411,9 +1411,9 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261023200000';</script>
-<script src="runtime.js?v=20261023200000"></script>
-<script src="lines.js?v=20261023200000"></script>
+<script>window.BH_VERSION='20261023201000';</script>
+<script src="runtime.js?v=20261023201000"></script>
+<script src="lines.js?v=20261023201000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1523,7 +1523,7 @@ class Component extends DCLogic {
           style: 'display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; font-weight: 800; font-size: 13px; flex: none; ' + (on ? 'background: #1D5FD6; color: #FFFFFF;' : 'background: #1E2A45; color: #4A5878;') };
       });
       legBox = {
-        checks: chk, hasChecks: nfl && leg.k !== 'prop',
+        checks: chk, hasChecks: nfl && leg.k !== 'prop' && leg.mk !== 'total',
         label: leg.label, oddsStr: this.fmtOdds(leg.odds), status: status,
         statusStyle: 'display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 10px; border-radius: 6px; ' + (leg.held ? 'background: #33240E; color: #FFB86B;' : leg.pick ? 'background: #0F3A25; color: #3FD18A;' : 'background: #1A2644; color: #9CC2FF;'),
         hit: chance + '%', book: bk + '%', value: (ev >= 0 ? '+' : '') + (Math.round(ev * 1000) / 10).toFixed(1) + '%',
