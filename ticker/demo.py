@@ -2,7 +2,8 @@
 """Blue Horseshoe ticker demo: plays a scripted game so every feature shows on the panels.
 
 Two fake slips go from upcoming -> live -> legs hitting -> a leg losing -> one slip BUSTED
--> the other CASHED, then it starts over. No real scores are used.
+-> the other CASHED, then it starts over. Every leg type has its own celebration animation
+(see anim.py), so the demo shows all of them. No real scores are used.
 
 Run on the Pi (stop the real ticker first so they don't fight over the panels):
     sudo systemctl stop bhticker
@@ -21,7 +22,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bhticker as B  # noqa: E402
 
-STAGE_SECONDS = 25
+STAGE_SECONDS = 35
 
 T = {
     'NE': {'id': '17', 'abbreviation': 'NE', 'displayName': 'New England Patriots', 'shortDisplayName': 'Patriots', 'name': 'Patriots'},
@@ -55,71 +56,53 @@ def slip(sid, name, stake, price, pay, rows):
 
 def stages():
     """Each stage -> (games dict, snapshot list)."""
+    P1, P2 = ('pre', '1:00 PM', 'NE @ CHI'), ('pre', '4:25 PM', 'GB @ DET')
+
+    def parlay(bears, caleb, gibbs_td, gibbs, lions, lions_spread):
+        return slip('a', 'Demo Parlay', 10, '+1450', 155, [
+            leg('Bears ML', 'ml', 'g1', 'CHI', *bears),
+            leg('Caleb Williams 199.5 pass yds', 'prop', 'g1', 'CHI', *caleb),
+            leg('Jahmyr Gibbs anytime TD', 'prop', 'g2', 'DET', *gibbs_td),
+            leg('Jahmyr Gibbs 69.5 rush yds', 'prop', 'g2', 'DET', *gibbs),
+            leg('Lions ML', 'ml', 'g2', 'DET', *lions),
+            leg('Lions -3.5', 'spread', 'g2', 'DET', *lions_spread)])
+
+    def bust(odunze, total, pats):
+        return slip('b', 'Demo Bust', 5, '+500', 30, [
+            leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', *odunze),
+            leg('Over 33.5', 'total', 'g1', 'CHI', *total),
+            leg('Patriots ML', 'ml', 'g1', 'NE', *pats)])
+
     out = []
-    # 0: everything upcoming
-    g1 = game('g1', 'NE', 'CHI', 'pre')
-    g2 = game('g2', 'GB', 'DET', 'pre')
-    pre1, pre2 = ('pre', '1:00 PM', 'NE @ CHI'), ('pre', '4:25 PM', 'GB @ DET')
-    out.append(({'g1': g1, 'g2': g2}, [
-        slip('a', 'Demo Parlay', 10, '+850', 95, [
-            leg('Bears ML', 'ml', 'g1', 'CHI', *pre1),
-            leg('Caleb Williams 199.5 pass yds', 'prop', 'g1', 'CHI', *pre1),
-            leg('Jahmyr Gibbs 69.5 rush yds', 'prop', 'g2', 'DET', *pre2),
-            leg('Lions ML', 'ml', 'g2', 'DET', *pre2)]),
-        slip('b', 'Demo Bust', 5, '+400', 25, [
-            leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', *pre1),
-            leg('Patriots ML', 'ml', 'g1', 'NE', *pre1)]),
-    ]))
-    # 1: Bears game live in the 2nd quarter
+    # 1: everything upcoming
+    g1, g2 = game('g1', 'NE', 'CHI', 'pre'), game('g2', 'GB', 'DET', 'pre')
+    out.append(({'g1': g1, 'g2': g2}, [parlay(P1, P1, P2, P2, P2, P2), bust(P1, P1, P1)]))
+    # 2: Bears game live in the 2nd quarter, progress bars filling
     g1 = game('g1', 'NE', 'CHI', 'in', 7, 10, '6:12 - 2nd', 2, '6:12', poss='CHI', rz=True)
     out.append(({'g1': g1, 'g2': g2}, [
-        slip('a', 'Demo Parlay', 10, '+850', 95, [
-            leg('Bears ML', 'ml', 'g1', 'CHI', 'close', 'Up 3'),
-            leg('Caleb Williams 199.5 pass yds', 'prop', 'g1', 'CHI', 'close', '112/200', 'pace 214', 0.56),
-            leg('Jahmyr Gibbs 69.5 rush yds', 'prop', 'g2', 'DET', *pre2),
-            leg('Lions ML', 'ml', 'g2', 'DET', *pre2)]),
-        slip('b', 'Demo Bust', 5, '+400', 25, [
-            leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', 'good', '18/25', 'pace 33', 0.72),
-            leg('Patriots ML', 'ml', 'g1', 'NE', 'close', 'Down 3')]),
-    ]))
-    # 2: two props hit in the 3rd, Lions game kicks off
+        parlay(('close', 'Up 3'), ('close', '112/200', 'pace 214', 0.56), P2, P2, P2, P2),
+        bust(('good', '18/25', 'pace 33', 0.72), ('close', '17/33.5', 'pace 36', 0.5), ('close', 'Down 3'))]))
+    # 3: 3rd quarter -> pass yds (DIME) and rec yds (CAUGHT IT) hit, Lions game kicks off
     g1 = game('g1', 'NE', 'CHI', 'in', 10, 17, '9:40 - 3rd', 3, '9:40', poss='NE')
     g2 = game('g2', 'GB', 'DET', 'in', 3, 0, '11:05 - 1st', 1, '11:05', poss='DET')
     out.append(({'g1': g1, 'g2': g2}, [
-        slip('a', 'Demo Parlay', 10, '+850', 95, [
-            leg('Bears ML', 'ml', 'g1', 'CHI', 'good', 'Up 7'),
-            leg('Caleb Williams 199.5 pass yds', 'prop', 'g1', 'CHI', 'win', 'HIT 214', '', 1),
-            leg('Jahmyr Gibbs 69.5 rush yds', 'prop', 'g2', 'DET', 'close', '14/70', 'pace 68', 0.2),
-            leg('Lions ML', 'ml', 'g2', 'DET', 'close', 'Down 3')]),
-        slip('b', 'Demo Bust', 5, '+400', 25, [
-            leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', 'win', 'HIT 41', '', 1),
-            leg('Patriots ML', 'ml', 'g1', 'NE', 'bad', 'Down 7')]),
-    ]))
-    # 3: Bears game final -> Bears ML hits, Patriots ML loses, Demo Bust busts
+        parlay(('good', 'Up 7'), ('win', 'HIT 214', '', 1), ('close', '0/1', ''), ('close', '14/70', 'pace 68', 0.2),
+               ('close', 'Down 3'), ('bad', 'Short 6.5')),
+        bust(('win', 'HIT 41', '', 1), ('close', '27/33.5', 'pace 38', 0.8), ('bad', 'Down 7'))]))
+    # 4: Bears final -> ML hits (WINNER), total goes over (scoreboard), Gibbs scores (TOUCHDOWN),
+    #    Patriots ML loses (GUTTER BALL) and Demo Bust busts
     g1 = game('g1', 'NE', 'CHI', 'post', 13, 24, 'Final', 4, '0:00')
     g2 = game('g2', 'GB', 'DET', 'in', 20, 27, '4:51 - 4th', 4, '4:51', poss='DET')
     out.append(({'g1': g1, 'g2': g2}, [
-        slip('a', 'Demo Parlay', 10, '+850', 95, [
-            leg('Bears ML', 'ml', 'g1', 'CHI', 'win', 'WON', 'NE 13-24 CHI Final'),
-            leg('Caleb Williams 199.5 pass yds', 'prop', 'g1', 'CHI', 'win', 'HIT 248', '', 1),
-            leg('Jahmyr Gibbs 69.5 rush yds', 'prop', 'g2', 'DET', 'close', '64/70', 'pace 71', 0.91),
-            leg('Lions ML', 'ml', 'g2', 'DET', 'good', 'Up 7')]),
-        slip('b', 'Demo Bust', 5, '+400', 25, [
-            leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', 'win', 'HIT 57', '', 1),
-            leg('Patriots ML', 'ml', 'g1', 'NE', 'lost', 'LOST', 'NE 13-24 CHI Final')]),
-    ]))
-    # 4: Lions game final -> last two legs hit, Demo Parlay cashes
+        parlay(('win', 'WON', 'NE 13-24 CHI Final'), ('win', 'HIT 248', '', 1), ('win', 'HIT 1', '', 1),
+               ('close', '64/70', 'pace 71', 0.91), ('good', 'Up 7'), ('good', 'Covering +3.5')),
+        bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'))]))
+    # 5: Lions final -> rush yds (BREAKAWAY), ML (WINNER), spread (COVERED), then STRIKE + cash
     g2 = game('g2', 'GB', 'DET', 'post', 20, 30, 'Final', 4, '0:00')
     out.append(({'g1': g1, 'g2': g2}, [
-        slip('a', 'Demo Parlay', 10, '+850', 95, [
-            leg('Bears ML', 'ml', 'g1', 'CHI', 'win', 'WON', 'NE 13-24 CHI Final'),
-            leg('Caleb Williams 199.5 pass yds', 'prop', 'g1', 'CHI', 'win', 'HIT 248', '', 1),
-            leg('Jahmyr Gibbs 69.5 rush yds', 'prop', 'g2', 'DET', 'win', 'HIT 88', '', 1),
-            leg('Lions ML', 'ml', 'g2', 'DET', 'win', 'WON', 'GB 20-30 DET Final')]),
-        slip('b', 'Demo Bust', 5, '+400', 25, [
-            leg('Rome Odunze 24.5 rec. yds', 'prop', 'g1', 'CHI', 'win', 'HIT 57', '', 1),
-            leg('Patriots ML', 'ml', 'g1', 'NE', 'lost', 'LOST', 'NE 13-24 CHI Final')]),
-    ]))
+        parlay(('win', 'WON', 'NE 13-24 CHI Final'), ('win', 'HIT 248', '', 1), ('win', 'HIT 1', '', 1),
+               ('win', 'HIT 88', '', 1), ('win', 'WON', 'GB 20-30 DET Final'), ('win', 'WON', 'GB 20-30 DET Final')),
+        bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'))]))
     return out
 
 

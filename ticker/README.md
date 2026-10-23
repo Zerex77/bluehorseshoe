@@ -26,6 +26,18 @@ Brightness, scroll speed and alerts are on the control page. Hardware settings l
 `panels`, `gpio_slowdown` (4 for Pi 4), `hardware_mapping` (`adafruit-hat`, or `adafruit-hat-pwm` after the bonnet's PWM solder mod), `panel_type` (`FM6126A` if panels stay dark).
 Then `sudo systemctl restart bhticker`.
 
+## Celebrations
+When a leg hits, the ticker plays a short animation picked by what the leg is, then flashes the leg:
+- Rushing yds / carries: **BREAKAWAY!** (runner sprints across the field)
+- Receiving yds / receptions: **CAUGHT IT!** (ball arcs into waiting hands)
+- Passing yds / attempts / completions: **DIME!** (spiral into a bullseye)
+- Touchdowns: **TOUCHDOWN!** (through the uprights, then fireworks)
+- Moneyline: **WINNER!** / Spread: **COVERED!** (Blue Horseshoes drop in)
+- Totals: **OVER!** / **UNDER!** (scoreboard counts past the line)
+- A leg loses: **GUTTER BALL**. A slip cashes: **STRIKE!**, then money rain with the payout.
+
+Turn them off with `"animations": false` in `/var/lib/bhticker/config.json`. They live in `anim.py`.
+
 ## Demo
 Plays a scripted game with two fake slips so you can see every feature in about 3 minutes: upcoming, live progress bars, legs hitting, a leg losing, a slip busting and a slip cashing.
 ```

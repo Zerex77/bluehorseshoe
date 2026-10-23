@@ -21,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import legs as L  # noqa: E402
 import render as R  # noqa: E402
+import anim as A  # noqa: E402
 from PIL import Image  # noqa: E402
 
 DATA = os.environ.get('BHTICKER_DATA', '/var/lib/bhticker')
@@ -33,6 +34,7 @@ DEFAULTS = {
     'speed': 40,                                 # pixels per second
     'refresh': 15,                               # seconds between ESPN checks
     'alerts': True,                              # flash when a leg hits / busts / the slip cashes
+    'animations': True,                          # play a celebration animation before each flash
     'port': 8080,
 }
 
@@ -189,7 +191,7 @@ class Ticker:
 
     def set_config(self, patch):
         with self.lock:
-            for k in ('brightness', 'speed', 'alerts'):
+            for k in ('brightness', 'speed', 'alerts', 'animations'):
                 if k in patch:
                     self.cfg[k] = patch[k]
             save_json('config.json', {k: self.cfg[k] for k in self.cfg if self.cfg[k] != DEFAULTS.get(k)})
@@ -219,18 +221,18 @@ class Ticker:
             key = 'slip:%s' % s['id']
             if not first and self.prev.get(key) not in (None, s['status']):
                 if s['status'] == 'cashed':
-                    self.alerts.append(('CASHED ' + ('$' + format(s['pay'], ',.0f') if s.get('pay') else s['name']), 'cashed'))
+                    self.alerts.append(('CASHED ' + ('$' + format(s['pay'], ',.0f') if s.get('pay') else s['name']), 'cashed', 'strike'))
                 elif s['status'] == 'busted':
-                    self.alerts.append((s['name'] + ' busted', 'lost'))
+                    self.alerts.append((s['name'] + ' busted', 'lost', None))
             self.prev[key] = s['status']
             for i, r in enumerate(s['legs']):
                 k = '%s:%d:%s' % (s['id'], i, r['label'])
                 old = self.prev.get(k)
                 if not first and old is not None and old != r['cls']:
                     if r['cls'] == 'win':
-                        self.alerts.append((r['label'] + ' HIT', 'win'))
+                        self.alerts.append((r['label'] + ' HIT', 'win', A.pick(r)))
                     elif r['cls'] == 'lost':
-                        self.alerts.append((r['label'] + ' lost', 'lost'))
+                        self.alerts.append((r['label'] + ' lost', 'lost', 'gutter'))
                 self.prev[k] = r['cls']
 
     def build_items(self, snap):
@@ -285,8 +287,7 @@ class Ticker:
             dt = min(0.1, now - last)
             last = now
             if self.alerts:
-                text, kind = self.alerts.pop(0)
-                self.flash(text, kind)
+                self.flash(*self.alerts.pop(0))
                 last = time.time()
                 continue
             x_off += self.cfg['speed'] * dt
@@ -312,9 +313,21 @@ class Ticker:
                     frame.paste(img, (x, 0))
             self.panel.show(frame)
 
-    def flash(self, text, kind):
+    def flash(self, text, kind, anim=None):
         W = self.panel.width
-        end = time.time() + 5
+        played = False
+        if anim and self.cfg.get('animations', True):
+            try:
+                for img, hold in A.play(anim, W, text):
+                    t0 = time.time()
+                    self.panel.show(img)
+                    time.sleep(max(0.0, hold - (time.time() - t0)))
+                    played = True
+            except Exception as e:  # never let an animation stop the ticker
+                print('animation %s failed: %s' % (anim, e), flush=True)
+        if played and kind == 'cashed':
+            return  # the strike animation already shows the payout
+        end = time.time() + (2.5 if played else 5)
         on = True
         while time.time() < end:
             self.panel.show(R.flash_frame(W, text, kind, on))
