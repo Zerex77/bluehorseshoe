@@ -636,7 +636,7 @@
           if (tAgree && te >= MODEL_T_EDGE) {
             bump(l, Math.min(0.025, (te - 2) * 0.008) * (tAll ? 1 : 0.5));
             var sig0 = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
-            if (!sig0 && !l.held && tAll && te >= MODEL_T_HOLD) { l.s = [1, 0, te >= 6 ? 1 : 0]; l.modelPick = true; }
+            if (!sig0 && !l.held && tAll && te >= MODEL_T_HOLD) { l.s = [1, 0, te >= 6 ? 1 : 0]; l.modelPick = true; if (/no Horseshoe signal/.test(l.note || '')) l.note = ''; }
             add(l, tTxt + ', ' + te + ' pts ' + (dir === 'Over' ? 'over' : 'under') + ' the number');
           } else if (!tAgree && te >= MODEL_T_HOLD && tAll) hold(l, tTxt + ', ' + te + ' pts the other way');
           else if (!tAgree && te >= 2) { bump(l, -0.01); add(l, tTxt + ', leans the other way'); }
