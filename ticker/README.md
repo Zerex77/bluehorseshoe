@@ -26,6 +26,14 @@ Brightness, scroll speed and alerts are on the control page. Hardware settings l
 `panels`, `gpio_slowdown` (4 for Pi 4), `hardware_mapping` (`adafruit-hat`, or `adafruit-hat-pwm` after the bonnet's PWM solder mod), `panel_type` (`FM6126A` if panels stay dark).
 Then `sudo systemctl restart bhticker`.
 
+## Demo
+Plays a scripted game with two fake slips so you can see every feature in about 3 minutes: upcoming, live progress bars, legs hitting, a leg losing, a slip busting and a slip cashing.
+```
+sudo systemctl stop bhticker
+sudo python3 /opt/bhticker/demo.py      # Ctrl+C to quit
+sudo systemctl start bhticker
+```
+
 ## Troubleshooting
 - Logs: `journalctl -u bhticker -f`
 - Flicker: raise `gpio_slowdown` by 1.
