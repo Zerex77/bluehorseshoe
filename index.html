@@ -564,7 +564,7 @@ button{font:inherit}
           <div class="bh-mp-tile"><div class="bh-mx-k">Projected score <span style="font-weight: 500;">(away / home)</span></div><sc-if value="{{mx.hasProj}}" hint-placeholder-val="{{ true }}"><div style="margin-top: 6px;"><span style="{{mx.projAStyle}}">{{mx.projA}}</span> <span style="color: #4A5878; font-size: 20px;">/</span> <span style="{{mx.projHStyle}}">{{mx.projH}}</span></div></sc-if><sc-if value="{{mx.noProj}}" hint-placeholder-val="{{ false }}"><div class="bh-mp-tv">—</div></sc-if></div>
           <div class="bh-mp-tile"><div class="bh-mx-k">Model line</div><div class="bh-mp-tv">{{mx.modelLine}}</div><div class="bh-mp-ts">{{mx.modelWin}}</div></div>
           <div class="bh-mp-tile"><div class="bh-mx-k">Market line</div><div class="bh-mp-tv">{{mx.marketLine}}</div><div class="bh-mp-ts">{{mx.marketSub}}</div></div>
-          <div class="bh-mp-tile"><div class="bh-mx-k">Model pick</div><div style="{{mx.modelPickStyle}}; margin-top: 6px; overflow-wrap: anywhere;">{{mx.modelPick}}</div><div class="bh-mp-ts">{{mx.modelPickSub}}</div></div>
+          <div class="bh-mp-tile"><div class="bh-mx-k">{{mx.pickTileLabel}}</div><div style="{{mx.modelPickStyle}}; margin-top: 6px; overflow-wrap: anywhere;">{{mx.modelPick}}</div><div class="bh-mp-ts">{{mx.modelPickSub}}</div></div>
         </div>
 
         <sc-if value="{{mx.hasGameLegs}}" hint-placeholder-val="{{ true }}">
@@ -595,6 +595,16 @@ button{font:inherit}
                     </div>
                   </sc-if>
                 </div>
+                <sc-if value="{{mx.hasVs}}" hint-placeholder-val="{{ true }}">
+                  <div style="{{mx.vs.boxStyle}}">
+                    <span style="{{mx.vs.tagStyle}}; align-self: flex-start;">{{mx.vs.tag}}</span>
+                    <div style="font-size: 14px; font-weight: 600; line-height: 1.45;">{{mx.vs.head}}</div>
+                    <sc-if value="{{mx.vs.hasBody}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13px; color: #A9B5CF; line-height: 1.5;">{{mx.vs.body}}</div></sc-if>
+                    <sc-if value="{{mx.vs.hasPer}}" hint-placeholder-val="{{ true }}">
+                      <ul style="margin: 0; padding: 0 0 0 16px; font-size: 12px; color: #A9B5CF; line-height: 1.6;"><sc-for list="{{mx.vs.per}}" as="pv" hint-placeholder-count="2"><li>{{pv.t}}</li></sc-for></ul>
+                    </sc-if>
+                  </div>
+                </sc-if>
                 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #1E2A45;">
                   <div style="background: #0E1628; padding: 12px 14px;"><div class="bh-mx-k">Value</div><div style="{{mx.leg.valueStyle}}">{{mx.leg.value}}</div></div>
                   <div style="background: #0E1628; padding: 12px 14px;"><div class="bh-mx-k">Confidence</div><div class="bh-mx-v">{{mx.leg.conf}}</div></div>
@@ -1444,9 +1454,9 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261023230000';</script>
-<script src="runtime.js?v=20261023230000"></script>
-<script src="lines.js?v=20261023230000"></script>
+<script>window.BH_VERSION='20261023233000';</script>
+<script src="runtime.js?v=20261023233000"></script>
+<script src="lines.js?v=20261023233000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -1551,7 +1561,10 @@ class Component extends DCLogic {
       if (leg.p == null) leg = Object.assign({}, leg, { p: (1 / dec) * 0.955 });
       var chance = Math.round(leg.p * 100), bk = Math.round(100 / dec);
       var s0 = leg.sOrig || leg.s || [0, 0, 0];
-      var chk = (nfl ? [['S', 'Price strength', 'The market makes it a strong favorite'], ['H', 'Home spot', 'Home team, or the side the home setup favors'], ['M', 'Market move', 'The line moved toward it']]
+      var mk0 = leg.mk || leg.k;
+      var chk = (nfl ? (mk0 === 'spread'
+          ? [['S', 'Strong move', 'The line moved 1.5+ points'], ['H', 'Home side', 'It’s the home team'], ['M', 'Market move', 'The line moved toward it']]
+          : [['S', 'Strong favorite', 'The market gives it 66% or more'], ['H', 'Home favorite', 'It’s the home team'], ['M', 'Market move', 'The line moved toward it']])
         : [['1', 'Check 1', 'Size of the move or price'], ['2', 'Check 2', 'Home side or model agreement'], ['3', 'Check 3', 'Market move or model size']]).map(function (c, i) {
         var on = !!s0[i];
         return { letter: c[0], name: c[1], desc: c[2], on: on, mark: on ? '✓' : '·',
@@ -1596,6 +1609,44 @@ class Component extends DCLogic {
       total: t != null ? r1(t) + (s.tot != null && t !== s.tot ? ' ' + (t > s.tot ? 'over' : 'under') : '') : '—', url: '', hasUrl: false, noUrl: true,
       sideStyle: 'font-weight: 800; color: ' + pickColor + ';', rowStyle: 'background: #17213A;' });
     var withM = srcs.filter(function (x) { return x.side === mSide; }).length;
+    // ---- do the models agree with the leg that was tapped?
+    var vs = null;
+    if (legBox && leg) {
+      var mkL = leg.mk || leg.k, lab = leg.label, legSide = null, tDir = null;
+      if (lab.indexOf(s.a + ' ') === 0) legSide = 'a'; else if (lab.indexOf(s.h + ' ') === 0) legSide = 'h';
+      if (/^(over|under)/i.test(lab)) tDir = /^over/i.test(lab) ? 'Over' : 'Under';
+      var nameOf = function (sd) { return sd === 'a' ? s.a : s.h; };
+      var per = mkL === 'total'
+        ? srcs.filter(function (x) { return x.t != null; }).map(function (x) { var d = Math.round((x.t - s.tot) * 10) / 10; return x.name + ': total ' + r1(x.t) + ' (' + (Math.abs(d) < 1 ? 'right at the number' : Math.abs(d).toFixed(1) + (d > 0 ? ' over' : ' under')) + ')'; })
+        : srcs.map(function (x) {
+          var sideTxt = mkL === 'ml' ? (Math.abs(x.m) < 0.05 ? 'even' : (x.m > 0 ? s.h : s.a) + ' to win') : Math.abs(x.edge) < 1 ? 'even with the line' : nameOf(x.side) + ' by ' + Math.abs(x.edge).toFixed(1) + ' vs the line';
+          return x.name + ': ' + favLine(x.m) + ' (' + sideTxt + ')';
+        });
+      var state = 'none', head = '', body = '';
+      var why = nfl ? 'NFL picks come from the market (line movement, home spot, price), not the models, so the two can disagree.' : 'College picks blend the models in, but a pick can still pass when the models only lean the other way by a little.';
+      if (!mx) { head = 'No model projection for this game yet.'; }
+      else if (mkL === 'total') {
+        if (t == null || s.tot == null) { head = 'The models don’t project a total for this game.'; }
+        else { var tEdge = Math.round((t - s.tot) * 10) / 10, mDir = tEdge > 0 ? 'Over' : 'Under';
+          if (Math.abs(tEdge) < 1) { state = 'even'; head = 'The models have the total right at the number (' + r1(t) + ').'; }
+          else if (mDir === tDir) { state = 'agree'; head = 'The models agree: projected total ' + r1(t) + ', ' + Math.abs(tEdge).toFixed(1) + ' ' + (mDir === 'Over' ? 'over' : 'under') + ' the number.'; }
+          else { state = 'disagree'; head = 'The models lean the other way: projected total ' + r1(t) + ', ' + Math.abs(tEdge).toFixed(1) + ' ' + (mDir === 'Over' ? 'over' : 'under') + ' the number.'; body = why; } }
+      } else if (legSide) {
+        var agreeN = mkL === 'ml' ? srcs.filter(function (x) { return (legSide === 'h' ? x.m > 0 : x.m < 0); }).length : srcs.filter(function (x) { return x.side === legSide; }).length;
+        if (mkL === 'ml') {
+          var pW = legSide === 'h' ? mx.pH : 1 - mx.pH;
+          if (pW >= 0.5) { state = 'agree'; head = 'The models agree: ' + nameOf(legSide) + ' wins ' + pctS(pW) + ' of the time.'; }
+          else { state = 'disagree'; head = 'The models favor ' + nameOf(legSide === 'a' ? 'h' : 'a') + ' to win (' + nameOf(legSide) + ' wins ' + pctS(pW) + ').'; body = why + (leg.odds > 0 ? ' Underdog moneylines only need to win sometimes to pay off.' : ''); }
+        } else if (edgeH == null || Math.abs(edgeH) < 1) { state = 'even'; head = 'The models are right at the line (' + favLine(m) + ' vs ' + favLine(-s.hs) + '). No edge either way.'; body = why; }
+        else if (mSide === legSide) { state = 'agree'; head = 'The models agree: ' + favLine(m) + ' vs the ' + favLine(-s.hs) + ' line, ' + Math.abs(edgeH).toFixed(1) + ' pts toward ' + nameOf(legSide) + '.'; }
+        else { state = 'disagree'; head = 'The models lean ' + nameOf(mSide) + ': ' + favLine(m) + ' vs the ' + favLine(-s.hs) + ' line.'; body = why; }
+        if (srcs.length > 1) head += ' ' + agreeN + ' of ' + srcs.length + ' models side with this leg.';
+      }
+      var vsCol = state === 'agree' ? ['#0F3A25', '#3FD18A', 'Models agree'] : state === 'disagree' ? ['#33240E', '#FFB86B', 'Models disagree'] : ['#1A2644', '#9CC2FF', state === 'even' ? 'Models: no edge' : 'Models'];
+      vs = { head: head, body: body, hasBody: !!body, per: per.map(function (t0) { return { t: t0 }; }), hasPer: per.length > 0,
+        tag: vsCol[2], tagStyle: 'display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px; border-radius: 6px; background: ' + vsCol[0] + '; color: ' + vsCol[1] + ';',
+        boxStyle: 'border-top: 1px solid #1E2A45; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: ' + (state === 'disagree' ? '#1C1A14' : '#0E1628') + ';' };
+    }
     var consensus = !srcs.length ? 'No model projection for this game yet.' : srcs.length === 1 ? 'One model so far.' : (withM === srcs.length ? 'All ' + srcs.length : withM + ' of ' + srcs.length) + ' models land on ' + (mSide === 'a' ? s.a : s.h) + ' against the spread.';
 
     // ---- 03 team identity (0-100 percentiles; larger = stronger, on pace larger = faster)
@@ -1752,7 +1803,8 @@ class Component extends DCLogic {
       { b: 'Remember', t: 'even the best public models hit about 52–56% against the spread. Use this to choose between legs, not as a lock.' }
     ];
     return {
-      sec: sec, helpRows: helpRows, nfl: nfl, modelsS: srcs.length > 1 ? 's' : '',
+      sec: sec, helpRows: helpRows, nfl: nfl, modelsS: srcs.length > 1 ? 's' : '', vs: vs, hasVs: !!vs,
+      pickTileLabel: 'Models lean',
       samBars: samBars, hasSamBars: samBars.length > 0, samNet: samNet, samNumber: samD && samD.number ? samD.number : '', hasSamNumber: !!(samD && samD.number), samUrl: samD && samD.url ? samD.url : '', hasSamUrl: !!(samD && samD.url),
       seasonCols: seasonCols, hasSeason: seasonCols.length === 2,
       injA: injA, injH: injH, hasInjA: injA.length > 0, hasInjH: injH.length > 0, noInjA: !injA.length, noInjH: !injH.length, hasInj: !!sec.inj,
@@ -1775,7 +1827,7 @@ class Component extends DCLogic {
       projHStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 20px; color: " + H + ';',
       modelLine: favLine(m), modelWin: m != null ? (m >= 0 ? s.h : s.a) + ' wins ' + pctS(Math.abs(m) < 0.05 ? 0.5 : (m > 0 ? mx.pH : 1 - mx.pH)) : '',
       marketLine: favLine(-s.hs), marketSub: (info.open != null && info.open !== s.hs ? 'Opened ' + favLine(-info.open) + ' · ' : '') + 'O/U ' + (s.tot == null ? '—' : s.tot),
-      modelPick: mSide && Math.abs(edgeH) >= 1 ? lineFor(mSide) : 'No edge', modelPickSub: edgeH != null ? Math.abs(edgeH).toFixed(1) + ' pts off the line' + (t != null ? ' · total ' + r1(t) : '') : '',
+      modelPick: mSide && Math.abs(edgeH) >= 1 ? lineFor(mSide) : 'No edge', modelPickSub: (edgeH != null ? Math.abs(edgeH).toFixed(1) + ' pts off the line' + (t != null ? ' · total ' + r1(t) : '') : '') + (vs && vs.tag !== 'Models' ? ' · ' + (vs.tag === 'Models agree' ? 'agrees with this leg' : vs.tag === 'Models disagree' ? 'not this leg’s side' : 'no edge') : ''),
       modelPickStyle: "font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px; color: " + pickColor + ';',
       rows: rows, hasRows: rows.length > 0, consensus: consensus, hasModel: !!mx, noModel: !mx,
       hasChart: hasChart, noChart: !hasChart, views: views, viewNote: viewNote, rings: rings, axes: axes,
@@ -2018,7 +2070,7 @@ class Component extends DCLogic {
       return { label: o[1] + ' · ' + n, on: on ? 'true' : 'false', pick: function () { self.setState({ nBoardF: o[0] }); }, style: 'min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer; font: 600 14px Inter, sans-serif; ' + (on ? 'border: 1px solid #1D5FD6; background: #1D5FD6; color: #FFFFFF;' : 'border: 1px solid #2A3A5E; background: transparent; color: #EEF2FA;') };
     });
 
-    var sigNames = ['Price strength', 'Home spot', 'Market move'];
+    var sigNames = ['Strength (strong favorite, or a 1.5+ pt move on spreads)', 'Home spot', 'Market move'];
     var sigLetters = ['S', 'H', 'M'];
     var ord = function (n) { var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
     var softCount = 0, flagCount = 0;
