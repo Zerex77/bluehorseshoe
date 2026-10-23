@@ -284,19 +284,20 @@ class Ticker:
             self.update()
             time.sleep(max(5, int(self.cfg['refresh'])))
 
-    def fresh_slip_img(self, item):
-        """Re-draw a slip header from the latest data (so a pinned header's 2/4 IN stays current)."""
+    def fresh_slip_tab(self, item):
+        """Compact tab for a slip, from the latest data (so its count stays current)."""
         sid = item[1].get('id')
         with self.lock:
             cur = next((sl for sl in self.snap if sl.get('id') == sid), None)
-        return R.item_slip(cur or item[1])
+        return R.item_slip_tab(cur or item[1])
 
     def scroll_loop(self):
-        """Scroll items right to left. A slip's header pins to the left edge while its legs scroll
-        behind it, until the next slip's header slides in and pushes it off."""
+        """Scroll items right to left. Each slip's full header scrolls through, then folds into a
+        small tab pinned at the left edge while that slip's legs scroll behind it, until the next
+        slip's header slides in and pushes the tab off."""
         W, H = self.panel.width, self.panel.height
-        tiles = []          # [x, image, item]
-        pinned = None       # [image, item, last redraw time] for the header stuck at the left edge
+        tiles = []          # [x, image, item, tab width (slip headers only)]
+        pinned = None       # [tab image, item, last redraw time, header tile it came from]
         idx = 0
         x_off = 0.0
         last = time.time()
@@ -313,11 +314,11 @@ class Ticker:
             x_off -= step
             for t in tiles:
                 t[0] -= step
-            # a header that reached the left edge becomes the pinned one
+            # a header whose right edge has scrolled into the tab's spot folds into the pinned tab
             for t in tiles:
-                if t[2][0] == 'slip' and t[0] <= 0:
-                    pinned = [t[1], t[2], now]
-            tiles = [t for t in tiles if t[0] + t[1].width > 0 and not (t[2][0] == 'slip' and t[0] <= 0)]
+                if t[2][0] == 'slip' and t[0] + t[1].width <= t[3] and (pinned is None or pinned[3] is not t):
+                    pinned = [self.fresh_slip_tab(t[2]), t[2], now, t]
+            tiles = [t for t in tiles if t[0] + t[1].width > 0]
             right = tiles[-1][0] + tiles[-1][1].width if tiles else W
             while right < W + 2:
                 with self.lock:
@@ -327,23 +328,24 @@ class Ticker:
                 it = items[idx % len(items)]
                 idx = (idx + 1) % max(1, len(items))
                 img = self.draw_item(it)
-                tiles.append([right, img, it])
+                tiles.append([right, img, it, self.fresh_slip_tab(it).width if it[0] == 'slip' else 0])
                 right += img.width
             with self.lock:
                 has_slips = any(it[0] == 'slip' for it in self.items)
             if pinned and not has_slips:
                 pinned = None
             frame = Image.new('RGB', (W, H))
-            for x, img, it in tiles:
+            for x, img, it, _ in tiles:
                 if x < W:
                     frame.paste(img, (x, 0))
             if pinned:
                 if now - pinned[2] > 2:   # keep its count / status current
-                    pinned[0], pinned[2] = self.fresh_slip_img(pinned[1]), now
+                    pinned[0], pinned[2] = self.fresh_slip_tab(pinned[1]), now
                 px = 0
-                nxt = next((t for t in tiles if t[2][0] == 'slip'), None)
-                if nxt and nxt[0] < pinned[0].width:
-                    px = nxt[0] - pinned[0].width   # the next header shoves it out
+                tw = pinned[0].width
+                nxt = next((t for t in tiles if t[2][0] == 'slip' and t[0] + t[1].width > t[3]), None)
+                if nxt and nxt[0] < tw:
+                    px = nxt[0] - tw   # the next slip's header shoves the tab out
                 frame.paste(pinned[0], (px, 0))
             self.panel.show(frame)
 

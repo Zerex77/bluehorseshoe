@@ -152,6 +152,50 @@ def item_slip(slip):
     return img
 
 
+TAB_MAX = 54   # widest the compact pinned slip tab gets
+TAB_MIN = 30
+
+
+def _clip(font, s, maxw):
+    while s and text_w(font, s) > maxw:
+        s = s[:-1]
+    return s
+
+
+def item_slip_tab(slip):
+    """Compact slip tab that stays pinned at the left edge: name in small type on up to two lines,
+    with the live count under it, colored by status."""
+    st = slip['status']
+    col = {'live': COL['win'], 'busted': RED, 'cashed': GOLD, 'pre': DIM}[st]
+    inner = TAB_MAX - 8
+    words = ascii_safe(slip['name']).upper().split() or ['SLIP']
+    lines = []
+    for wd in words:
+        if lines and text_w(F_SMALL, lines[-1] + ' ' + wd) <= inner:
+            lines[-1] += ' ' + wd
+        else:
+            lines.append(wd)
+    if len(lines) > 2:
+        lines = [lines[0], ' '.join(lines[1:])]
+    lines = [_clip(F_SMALL, ln, inner) for ln in lines]
+    count = '%d/%d' % (slip['won'], slip['n'])
+    if st == 'cashed':
+        count = 'WON'
+    elif st == 'busted':
+        count = 'BUST'
+    count = _clip(F_SMALL, count, inner)
+    tab_w = max(TAB_MIN, min(TAB_MAX, max(text_w(F_SMALL, x) for x in lines + [count]) + 8))
+    img = Image.new('RGB', (tab_w, H))
+    d = _draw(img)
+    d.rectangle((0, 2, 1, H - 3), fill=col)                        # status stripe
+    y0 = 1 if len(lines) == 2 else 5
+    for k, ln in enumerate(lines):
+        d.text((4, y0 + k * 10), ln, font=F_SMALL, fill=GOLD)
+    d.text((4, 21), count, font=F_SMALL, fill=col)
+    d.line((tab_w - 3, 3, tab_w - 3, H - 4), fill=SEP)
+    return img
+
+
 def item_game(g, logos):
     """Score bug: two rows (away / home) with logos, then the clock."""
     clock = ascii_safe(_clock(g))
