@@ -18,7 +18,7 @@ apt-get install -y git python3-dev python3-pip python3-pil python3-numpy cython3
 
 echo "-- Getting the ticker"
 mkdir -p "$APP" "$DATA"
-for f in bhticker.py legs.py render.py anim.py web.html demo.py; do
+for f in bhticker.py legs.py render.py anim.py cloud.py web.html demo.py; do
   curl -fsSL "$SRC/$f?$(date +%s)" -o "$APP/$f"
 done
 chmod +x "$APP/bhticker.py"
@@ -71,6 +71,18 @@ c['hardware_mapping'] = m
 json.dump(c, open(p, 'w'))
 PY
   echo "-- Adapter board pinout: $MAP"
+fi
+
+# The phone app: the address of your relay (see relay/README.md).  curl ... | sudo CLOUD=https://... bash
+if [ -n "$CLOUD" ]; then
+  python3 - "$DATA/config.json" "$CLOUD" <<'PY'
+import json, sys, os
+p, u = sys.argv[1], sys.argv[2].rstrip('/')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['cloud_url'] = u
+json.dump(c, open(p, 'w'))
+PY
+  echo "-- Phone app relay: $CLOUD"
 fi
 
 echo "-- Naming this Pi bhticker (http://bhticker.local:8080)"

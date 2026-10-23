@@ -1,0 +1,9 @@
+{
+  "name": "bluehorseshoe-relay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --no-warnings dev/server.mjs 8787",
+    "deploy": "npx wrangler deploy"
+  }
+}

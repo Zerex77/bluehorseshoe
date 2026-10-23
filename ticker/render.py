@@ -316,6 +316,25 @@ def item_idle(text='BLUE HORSESHOE'):
     return img
 
 
+def item_pair(code):
+    """Shown when the ticker has no slips: the code to pair the Horseshoe Ticker app."""
+    code = ascii_safe(code).upper()
+    top, bot = 'PAIR THE APP', 'CODE'
+    code_w = text_w(F_FLASH, code)
+    w = 26 + max(text_w(F_SMALL, top), text_w(F_SMALL, bot)) + 8 + code_w + 40
+    img = Image.new('RGB', (w, H))
+    d = _draw(img)
+    d.arc((3, 4, 21, 28), 0, 180, fill=BLUE, width=4)
+    d.line((4, 4, 4, 16), fill=BLUE, width=4)
+    d.line((20, 4, 20, 16), fill=BLUE, width=4)
+    d.text((26, 4), top, font=F_SMALL, fill=DIM)
+    d.text((26, 17), bot, font=F_SMALL, fill=DIM)
+    x = 26 + max(text_w(F_SMALL, top), text_w(F_SMALL, bot)) + 8
+    asc, desc = F_FLASH.getmetrics()
+    d.text((x, (H - asc - desc) // 2 + 1), code, font=F_FLASH, fill=GOLD)
+    return img
+
+
 def flash_frame(width, text, kind, on):
     """Full-width alert. kind: win / lost / cashed. on toggles the blink."""
     text = ascii_safe(text).upper()

@@ -22,6 +22,7 @@ sys.path.insert(0, HERE)
 import legs as L  # noqa: E402
 import render as R  # noqa: E402
 import anim as A  # noqa: E402
+import cloud as C  # noqa: E402
 from PIL import Image  # noqa: E402
 
 DATA = os.environ.get('BHTICKER_DATA', '/var/lib/bhticker')
@@ -36,6 +37,7 @@ DEFAULTS = {
     'alerts': True,                              # flash when a leg hits / busts / the slip cashes
     'animations': True,                          # play a celebration animation before each flash
     'port': 8080,
+    'cloud_url': '',                             # address of the app relay; turns on the phone app
 }
 
 
@@ -171,9 +173,10 @@ class Ticker:
         self.lock = threading.RLock()
         self.panel = open_panel(self.cfg, preview)
         self.status = 'Starting'
+        self.cloud = None        # set in main() when cloud_url is configured
 
     # -- slips
-    def set_slips(self, slips, mode='replace'):
+    def set_slips(self, slips, mode='replace', from_cloud=False):
         with self.lock:
             if mode == 'merge':
                 ids = {s.get('id') for s in self.slips}
@@ -181,12 +184,18 @@ class Ticker:
             else:
                 self.slips = slips
             save_json('slips.json', self.slips)
+            mine = list(self.slips)
+        if self.cloud and not from_cloud:   # changed on this page: keep the app in step
+            threading.Thread(target=self.cloud.push_slips, args=(mine,), daemon=True).start()
         threading.Thread(target=self.update, daemon=True).start()
 
     def remove(self, sid):
         with self.lock:
             self.slips = [s for s in self.slips if s.get('id') != sid]
             save_json('slips.json', self.slips)
+            mine = list(self.slips)
+        if self.cloud:
+            threading.Thread(target=self.cloud.push_slips, args=(mine,), daemon=True).start()
         threading.Thread(target=self.update, daemon=True).start()
 
     def set_config(self, patch):
@@ -212,6 +221,8 @@ class Ticker:
         with self.lock:
             self.snap = snap
             self.items = self.build_items(snap)
+        if self.cloud:
+            self.cloud.push_status(self.status, snap)
 
     def queue_alerts(self, snap):
         if not self.cfg.get('alerts'):
@@ -264,7 +275,10 @@ class Ticker:
                 for r in groups[k]:
                     items.append(('leg', (r, games.get(r['g']) if r['g'] else None)))
         if not items:
-            items.append(('idle', 'BLUE HORSESHOE  -  waiting for slips'))
+            if self.cloud and self.cloud.code:
+                items.append(('pair', self.cloud.code))
+            else:
+                items.append(('idle', 'BLUE HORSESHOE  -  waiting for slips'))
         return items
 
     def draw_item(self, it):
@@ -276,6 +290,8 @@ class Ticker:
             return R.item_game(g, self.logos)
         if kind == 'leg':
             return R.item_leg(val[0], val[1], self.logos)
+        if kind == 'pair':
+            return R.item_pair(val)
         return R.item_idle(val)
 
     # -- loops
@@ -394,7 +410,8 @@ def make_handler(app):
             if path == '/api/state':
                 with app.lock:
                     return self._send(200, {'status': app.status, 'slips': app.slips, 'snap': app.snap,
-                                            'config': {k: app.cfg[k] for k in ('brightness', 'speed', 'alerts', 'panels')}})
+                                            'config': {k: app.cfg[k] for k in ('brightness', 'speed', 'alerts', 'panels')},
+                                            'cloud': app.cloud.info() if app.cloud else None})
             self._send(404, {'error': 'not found'})
 
         def do_POST(self):
@@ -414,6 +431,13 @@ def make_handler(app):
             if path == '/api/config':
                 app.set_config(body)
                 return self._send(200, {'ok': True})
+            if path == '/api/newcode' and app.cloud:
+                try:
+                    code = app.cloud.new_code()
+                except Exception:
+                    return self._send(502, {'error': "Couldn't reach the app relay"})
+                threading.Thread(target=app.update, daemon=True).start()
+                return self._send(200, {'code': code})
             self._send(404, {'error': 'not found'})
     return H
 
@@ -446,6 +470,9 @@ def main():
     app = Ticker(args.preview)
     srv = ThreadingHTTPServer(('0.0.0.0', int(app.cfg['port'])), make_handler(app))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
+    if app.cfg.get('cloud_url'):
+        app.cloud = C.Cloud(app, app.cfg['cloud_url'], DATA)
+        threading.Thread(target=app.cloud.loop, daemon=True).start()
     threading.Thread(target=app.data_loop, daemon=True).start()
     print('Blue Horseshoe ticker running. Control page on port %s' % app.cfg['port'], flush=True)
     try:

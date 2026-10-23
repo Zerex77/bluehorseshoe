@@ -37,6 +37,7 @@
   <h1><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8 v18 a16 16 0 0 0 32 0 v-18" stroke="#3B82F6" stroke-width="11" fill="none" stroke-linecap="round"/></svg>Horseshoe Ticker</h1>
   <div class="st" id="st">Connecting…</div>
   <div class="card ok" id="sent" hidden></div>
+  <div class="card" id="cloud" hidden></div>
 
   <div class="card">
     <div class="row">
@@ -60,7 +61,7 @@
       <label>Odds<input id="fo" placeholder="+600"></label>
     </div>
     <textarea id="fl" placeholder="Memphis ML&#10;Purdue Under 50.5&#10;Romeo Doubs over 49.5 rec yds&#10;Josh Jacobs anytime TD"></textarea>
-    <div class="row"><button class="primary" id="add" type="button">Add to ticker</button><span class="st">Tip: the Live page on bluehorseshoebet.com can read a Hard Rock screenshot, then use More → Send to LED ticker.</span></div>
+    <div class="row"><button class="primary" id="add" type="button">Add to ticker</button><span class="st">Easier: use the Horseshoe Ticker app on your phone (pairing code above).</span></div>
   </details>
 </main>
 <script>
@@ -92,6 +93,16 @@
         $('br').value = s.config.brightness;
         var sp = String(s.config.speed); if (![].some.call($('sp').options, function (o) { return o.value === sp; })) { var o = document.createElement('option'); o.value = sp; o.textContent = sp + ' px/s'; $('sp').appendChild(o); }
         $('sp').value = sp; $('al').value = s.config.alerts ? '1' : '0';
+      }
+      var c = s.cloud, cl = $('cloud');
+      cl.hidden = !c;
+      if (c) {
+        var appUrl = c.url + (c.code ? '/?code=' + c.code : '');
+        cl.innerHTML = '<b>Phone app</b><div class="st" style="margin:6px 0 10px">' +
+          (c.code ? 'Open <a href="' + esc(appUrl) + '" style="color:var(--gold)">' + esc(c.url.replace(/^https?:\/\//, '')) + '</a> on your phone and pair with code <b class="mono" style="color:var(--gold);font-size:1.3em;letter-spacing:.15em">' + esc(c.code) + '</b>' : 'Connecting to the app relay…') +
+          '<br>' + (c.connected ? '● Connected' : '○ Not connected' + (c.error ? ' (' + esc(c.error) + ')' : '')) + ' · ' + c.phones + ' phone' + (c.phones === 1 ? '' : 's') + ' paired</div>' +
+          '<button type="button" id="newcode">New pairing code</button> <span class="st">A new code stops new phones from pairing with the old one. Phones already paired keep working.</span>';
+        $('newcode').onclick = function () { post('/api/newcode', {}).then(load); };
       }
       $('slips').innerHTML = s.snap.map(function (sl) {
         return '<div class="card"><div class="slip-h"><span class="tag ' + sl.status + '">' + { live: 'LIVE', busted: 'BUSTED', cashed: 'CASHED', pre: 'UPCOMING' }[sl.status] + '</span><b>' + esc(sl.name) + '</b>' +

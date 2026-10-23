@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Horseshoe Ticker</title>
+<meta name="description" content="Put your bet slips on your Blue Horseshoe LED ticker.">
+<meta name="theme-color" content="#070D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ticker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070D1A; --panel: #0F182B; --panel2: #15213A; --line: #22304D;
+    --txt: #E8EEF9; --mut: #8A97B0; --blue: #3B82F6; --blue2: #1D5FD6; --gold: #FFD166;
+    --green: #2BD67B; --amber: #FFB020; --red: #FF5A5F; --grey: #5B6782;
+    --top: env(safe-area-inset-top, 0px); --bot: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--txt); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 16px; }
+  body { min-height: 100dvh; padding: calc(var(--top) + 0px) 0 calc(var(--bot) + 90px); overflow-x: hidden; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  [hidden] { display: none !important; }
+
+  /* top bar */
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: calc(var(--top) + 12px) 16px 12px; margin-top: calc(-1 * var(--top));
+    background: rgba(7, 13, 26, .92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  header .logo { width: 30px; height: 30px; flex: none; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header h1 small { display: block; font-size: 12px; font-weight: 500; color: var(--mut); }
+  header h1 small .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--grey); margin-right: 5px; vertical-align: 1px; }
+  header h1 small.on .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .iconbtn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .iconbtn svg { width: 20px; height: 20px; }
+
+  main { padding: 14px 16px; max-width: 640px; margin: 0 auto; }
+  h2 { font-size: 22px; margin: 6px 0 6px; }
+  p.lead { color: var(--mut); margin: 0 0 18px; line-height: 1.45; }
+
+  /* buttons + fields */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--panel2); font-weight: 600; cursor: pointer; text-decoration: none; }
+  .btn.primary { background: var(--blue2); border-color: var(--blue2); color: #fff; }
+  .btn.gold { background: var(--gold); border-color: var(--gold); color: #1a1405; }
+  .btn.danger { color: var(--red); }
+  .btn.wide { width: 100%; }
+  .btn:disabled { opacity: .5; }
+  .btn svg { width: 20px; height: 20px; }
+  label.f { display: block; font-size: 13px; color: var(--mut); font-weight: 500; margin-bottom: 12px; }
+  label.f input, label.f select, label.f textarea, .in { display: block; width: 100%; margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; font-size: 16px; color: var(--txt); }
+  label.f textarea { min-height: 120px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 0; border-color: transparent; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
+  .codein { font-family: 'IBM Plex Mono', monospace; font-size: 30px !important; letter-spacing: .3em; text-transform: uppercase; text-align: center; font-weight: 700; }
+  .msg { min-height: 20px; font-size: 14px; margin: 10px 0; color: var(--mut); }
+  .msg.err { color: var(--red); }
+  .msg.ok { color: var(--green); }
+
+  /* slips */
+  .slip { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+  .slip.busted { border-color: rgba(255, 90, 95, .45); }
+  .slip.cashed { border-color: rgba(255, 209, 102, .6); }
+  .sh { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 3px 7px; border-radius: 5px; background: var(--panel2); color: var(--mut); flex: none; }
+  .tag.live { background: rgba(43, 214, 123, .15); color: var(--green); }
+  .tag.busted { background: rgba(255, 90, 95, .15); color: var(--red); }
+  .tag.cashed { background: rgba(255, 209, 102, .18); color: var(--gold); }
+  .sh .nm { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sh .pay { text-align: right; font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+  .sh .pay small { display: block; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 11px; color: var(--mut); }
+  .seg { display: flex; gap: 3px; padding: 0 14px 10px; }
+  .seg i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+  .legs { border-top: 1px solid var(--line); }
+  .leg { display: grid; grid-template-columns: 4px 1fr auto; gap: 0 10px; padding: 10px 14px 10px 0; border-bottom: 1px solid rgba(34, 48, 77, .6); align-items: center; }
+  .leg:last-child { border-bottom: 0; }
+  .leg .pip { grid-row: span 2; align-self: stretch; border-radius: 0 3px 3px 0; background: var(--grey); }
+  .leg .lb { font-weight: 600; font-size: 15px; min-width: 0; }
+  .leg .rt { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px; text-align: right; white-space: nowrap; }
+  .leg .sub { grid-column: 2 / span 2; font-size: 12px; color: var(--mut); margin-top: 3px; display: flex; gap: 8px; align-items: center; }
+  .prog { width: 54px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; flex: none; }
+  .prog i { display: block; height: 100%; background: currentColor; }
+  .inj { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: var(--red); color: #000; margin-left: 6px; vertical-align: 2px; }
+  .inj.r1 { background: var(--amber); } .inj.r2 { background: #FF781E; }
+  .c-win, .c-good { color: var(--green); } .c-close { color: var(--amber); } .c-bad, .c-lost { color: var(--red); } .c-pre, .c-unk, .c-push { color: var(--mut); }
+  .pip.c-win, .pip.c-good { background: var(--green); } .pip.c-close { background: var(--amber); } .pip.c-bad, .pip.c-lost { background: var(--red); }
+  .seg i.c-win, .seg i.c-good { background: var(--green); } .seg i.c-close { background: var(--amber); } .seg i.c-bad, .seg i.c-lost { background: var(--red); }
+  .sf { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--mut); }
+  .sf span { flex: 1; }
+  .sf button { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .empty { text-align: center; color: var(--mut); padding: 40px 10px; line-height: 1.5; }
+  .empty svg { width: 64px; height: 64px; opacity: .8; margin-bottom: 10px; }
+
+  /* floating add button */
+  .fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--bot) + 18px); z-index: 6; min-height: 54px; padding: 0 26px; border-radius: 27px;
+    background: var(--gold); color: #1a1405; border: 0; font-weight: 700; font-size: 17px; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .45); cursor: pointer; }
+  .fab svg { width: 22px; height: 22px; }
+
+  /* editor */
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 10px; font-size: 15px; }
+  .ways { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .way { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel);
+    font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
+  .way svg { width: 26px; height: 26px; color: var(--gold); }
+  .way.on { border-color: var(--gold); background: rgba(255, 209, 102, .08); }
+  .eleg { display: grid; grid-template-columns: 22px 1fr 36px; gap: 8px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .eleg:last-child { border-bottom: 0; }
+  .eleg .ic { font-weight: 700; padding-top: 9px; text-align: center; }
+  .eleg .ic.ok { color: var(--green); } .eleg .ic.no { color: var(--amber); }
+  .eleg input { width: 100%; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px; font-size: 15px; font-weight: 600; }
+  .eleg input:focus { background: var(--panel2); }
+  .eleg .what { font-size: 12px; color: var(--mut); padding: 0 8px; }
+  .eleg .what.no { color: var(--amber); }
+  .eleg .x { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--mut); cursor: pointer; font-size: 16px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 12px; }
+  .chip { padding: 9px 13px; border-radius: 20px; border: 1px solid var(--line); background: var(--panel2); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .chip.on { background: var(--blue2); border-color: var(--blue2); color: #fff; }
+  .plist { max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; margin: 6px 0 12px; }
+  .plist button { display: flex; width: 100%; gap: 10px; align-items: center; padding: 11px 12px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; cursor: pointer; font-size: 15px; }
+  .plist button:last-child { border-bottom: 0; }
+  .plist button .pos { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--mut); width: 28px; flex: none; }
+  .plist button.on { background: rgba(59, 130, 246, .18); }
+  .preview { font-family: 'IBM Plex Mono', monospace; font-size: 14px; background: var(--bg); border: 1px dashed var(--line); border-radius: 10px; padding: 10px; margin-bottom: 12px; color: var(--gold); min-height: 42px; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; gap: 10px; padding: 12px 16px calc(var(--bot) + 12px); background: rgba(7, 13, 26, .95);
+    border-top: 1px solid var(--line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .bar .btn { flex: 1; }
+  .hint { font-size: 12px; color: var(--mut); line-height: 1.45; }
+  .install { display: flex; gap: 10px; align-items: center; background: rgba(59, 130, 246, .12); border: 1px solid rgba(59, 130, 246, .4); border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 14px; }
+  .install b { color: var(--txt); }
+  .install button { margin-left: auto; }
+  .list .item { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .list .item:last-child { border-bottom: 0; }
+  .list .item span { flex: 1; }
+  .list .item small { display: block; color: var(--mut); font-size: 12px; }
+  .spin { width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: sp .8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1D5FD6"/><path d="M18 12 v16 a14 14 0 0 0 28 0 v-16" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round"/></svg>
+  <h1 id="title">Horseshoe Ticker<small id="sub"></small></h1>
+  <button class="iconbtn" id="backBtn" type="button" aria-label="Back" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button class="iconbtn" id="setBtn" type="button" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+
+<!-- pair a ticker -->
+<main id="vPair" hidden>
+  <h2>Pair your ticker</h2>
+  <p class="lead">Your ticker shows a 6-character pairing code on its panels when it has no slips. Type it in below. You only do this once.</p>
+  <label class="f">Pairing code<input id="pCode" class="codein" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="······"></label>
+  <label class="f">Your name <span class="hint">(shows on slips you add)</span><input id="pName" maxlength="24" autocomplete="given-name" placeholder="Zach"></label>
+  <button class="btn primary wide" id="pGo" type="button">Pair</button>
+  <div class="msg" id="pMsg"></div>
+  <p class="hint" id="pCancelWrap" hidden><button class="btn wide" id="pCancel" type="button">Cancel</button></p>
+</main>
+
+<!-- slips on the ticker -->
+<main id="vHome" hidden>
+  <div class="install" id="installTip" hidden></div>
+  <div id="slips"></div>
+  <div class="msg" id="hMsg"></div>
+</main>
+<button class="fab" id="addBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add ticket</button>
+
+<!-- add / edit a slip -->
+<main id="vEdit" hidden>
+  <div class="row3">
+    <label class="f">Ticket name<input id="eName" maxlength="40" placeholder="Sunday SGP"></label>
+    <label class="f">Stake $<input id="eStake" inputmode="decimal" placeholder="10"></label>
+    <label class="f">Odds<input id="eOdds" inputmode="text" placeholder="+650"></label>
+  </div>
+
+  <div class="ways">
+    <button class="way" type="button" id="wShot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>Screenshot</button>
+    <button class="way" type="button" id="wPaste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>Paste / type</button>
+    <button class="way" type="button" id="wBuild"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/></svg>Pick a leg</button>
+  </div>
+  <input type="file" id="shotFile" accept="image/*" hidden>
+  <div class="msg" id="eMsg"></div>
+
+  <div class="card" id="pasteCard" hidden>
+    <label class="f">Paste or type legs, one per line
+      <textarea id="pasteText" spellcheck="false" placeholder="Bears ML&#10;Lions -3.5&#10;Packers Lions Over 47.5&#10;Jahmyr Gibbs over 69.5 rush yds&#10;Puka Nacua 6+ receptions&#10;Ja'Marr Chase anytime TD"></textarea></label>
+    <button class="btn primary wide" type="button" id="pasteAdd">Add these legs</button>
+  </div>
+
+  <div class="card" id="buildCard" hidden>
+    <label class="f">Game<select id="bGame"><option value="">Loading games…</option></select></label>
+    <div id="bTypes" class="chips"></div>
+    <div id="bTeamWrap"><div class="hint">Team</div><div id="bTeams" class="chips"></div></div>
+    <div id="bPropWrap" hidden>
+      <input class="in" id="bSearch" placeholder="Search players" autocomplete="off">
+      <div class="plist" id="bPlayers"></div>
+      <div class="hint">Stat</div>
+      <div id="bStats" class="chips"></div>
+    </div>
+    <div id="bTotWrap" hidden><div id="bOU" class="chips"></div></div>
+    <div class="row" id="bLineWrap">
+      <label class="f" id="bLineLbl">Line<input id="bLine" inputmode="decimal" placeholder="69.5"></label>
+      <label class="f">Leg odds <span class="hint">(optional)</span><input id="bOdds" inputmode="text" placeholder="-115"></label>
+    </div>
+    <div class="preview" id="bPreview"></div>
+    <button class="btn primary wide" type="button" id="bAdd">Add leg</button>
+  </div>
+
+  <div class="card">
+    <h3 id="legsTitle">Legs</h3>
+    <div id="eLegs"></div>
+  </div>
+  <button class="btn danger wide" type="button" id="eDel" hidden>Remove this ticket from the ticker</button>
+</main>
+<div class="bar" id="eBar" hidden>
+  <button class="btn" type="button" id="eCancel">Cancel</button>
+  <button class="btn gold" type="button" id="eSave">Send to ticker</button>
+</div>
+
+<!-- settings -->
+<main id="vSet" hidden>
+  <h2>Settings</h2>
+  <label class="f">Your name<input id="sName" maxlength="24"></label>
+  <label class="f">This ticker's name<input id="sLabel" maxlength="30" placeholder="Zach's ticker"></label>
+  <div class="card">
+    <h3>Tickers on this phone</h3>
+    <div class="list" id="sTickers"></div>
+    <button class="btn wide" type="button" id="sPair" style="margin-top:12px">Pair another ticker</button>
+  </div>
+  <div class="card">
+    <h3>Install the app</h3>
+    <p class="hint"><b>iPhone:</b> open this page in Safari, tap the Share button, then <b>Add to Home Screen</b>.<br><b>Android:</b> tap the ⋮ menu in Chrome, then <b>Install app</b> or <b>Add to Home screen</b>.</p>
+  </div>
+  <div class="card">
+    <h3>People paired with this ticker</h3>
+    <p class="hint" id="sPhones"></p>
+  </div>
+  <button class="btn danger wide" type="button" id="sLeave">Remove this ticker from my phone</button>
+</main>
+
+<script src="slipkit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
