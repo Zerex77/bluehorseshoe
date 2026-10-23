@@ -7,8 +7,8 @@ Two fake slips go from upcoming -> live -> legs hitting -> a leg losing -> one s
 
 Run on the Pi (stop the real ticker first so they don't fight over the panels):
     sudo systemctl stop bhticker
-    sudo python3 /opt/bhticker/demo.py
-    (Ctrl+C to quit)
+    sudo python3 /opt/bhticker/demo.py           (full demo, loops until Ctrl+C)
+    sudo python3 /opt/bhticker/demo.py --reel    (just the animations, ~30 seconds)
     sudo systemctl start bhticker
 
 Anywhere without panels:  python3 demo.py --preview frames
@@ -138,11 +138,41 @@ class Demo(B.Ticker):
             self.stage = (self.stage + 1) % len(self.script)
 
 
+REEL = [
+    ('dime', 'Caleb Williams 199.5 pass yds'), ('catch', 'Rome Odunze 24.5 rec. yds'),
+    ('breakaway', 'Jahmyr Gibbs 69.5 rush yds'), ('touchdown', 'Jahmyr Gibbs anytime TD'),
+    ('winner', 'Bears ML'), ('covered', 'Lions -3.5'), ('over', 'Over 44.5'), ('under', 'Under 44.5'),
+    ('gutter', 'Patriots ML'), ('fieldgoal', 'CASHED $155'),
+]
+
+
+def reel(app, loops=1):
+    """Every celebration back to back (about 30 seconds), no slips or text flashes in between."""
+    import anim as A
+    W = app.panel.width
+    for _ in range(loops):
+        for name, text in REEL:
+            print('Playing', name, flush=True)
+            for img, hold in A.play(name, W, text):
+                t0 = time.time()
+                app.panel.show(img)
+                time.sleep(max(0.0, hold - (time.time() - t0)))
+    app.panel.show(B.Image.new('RGB', (W, app.panel.height)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--preview', help='no LED hardware: write frames to this folder')
+    ap.add_argument('--reel', action='store_true', help='just play every animation back to back (~30s) and quit')
+    ap.add_argument('--loops', type=int, default=1, help='with --reel: how many times to play it')
     args = ap.parse_args()
     app = Demo(args.preview)
+    if args.reel:
+        try:
+            reel(app, args.loops)
+        except KeyboardInterrupt:
+            pass
+        return
     threading.Thread(target=app.data_loop, daemon=True).start()
     print('Blue Horseshoe demo running. Ctrl+C to stop.', flush=True)
     try:
