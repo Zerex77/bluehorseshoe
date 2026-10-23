@@ -232,7 +232,7 @@ class Ticker:
                     if r['cls'] == 'win':
                         self.alerts.append((r['label'] + ' HIT', 'win', A.pick(r)))
                     elif r['cls'] == 'lost':
-                        self.alerts.append((r['label'] + ' lost', 'lost', 'gutter'))
+                        self.alerts.append((r['label'] + ' lost', 'lost', 'fumble'))
                 self.prev[k] = r['cls']
 
     def build_items(self, snap):

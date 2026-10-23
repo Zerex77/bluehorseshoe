@@ -1,7 +1,7 @@
-"""Bowling-alley style celebration animations for the LED ticker.
+"""Football celebration animations for the LED ticker.
 
 Each animation is a generator of (PIL image, seconds to hold it). bhticker.py plays one before the
-regular text flash when a leg hits, a leg loses (gutter ball), or a slip cashes (game-winning field goal).
+regular text flash when a leg hits, a leg loses (fumble), or a slip cashes (game-winning field goal).
 
     pick(row)  -> animation name for a leg that hit, based on what the leg is
     play(name, width, text) -> frames
@@ -458,42 +458,7 @@ def anim_hit(w, text):
         yield img, DT
 
 
-# ---------------------------------------------------------------- bowling: gutter ball (a leg lost)
-PIN_SPOTS = [(0, 0), (6, -1), (6, 1), (12, -2), (12, 0), (12, 2), (18, -3), (18, -1), (18, 1), (18, 3)]
-
-
-def _lane(d, w):
-    d.rectangle((0, 6, w, 27), fill=LANE)
-    for k in range(0, w, 16):
-        d.line((k, 6, k + 8, 27), fill=LANE_LINE)
-    d.rectangle((0, 3, w, 5), fill=(20, 20, 24))     # top gutter
-    d.rectangle((0, 28, w, 31), fill=(20, 20, 24))   # bottom gutter
-    for k in range(20, 120, 14):                      # lane arrows
-        d.polygon([(k, 16), (k + 4, 14), (k + 4, 18)], fill=dim(GOLD, 0.45))
-
-
-def _pin(d, x, y, ang=0.0):
-    """Pin standing at base (x, y), tilted by ang radians."""
-    ca, sa = math.cos(ang), math.sin(ang)
-
-    def p(dx, dy):
-        return (x + dx * ca - dy * sa, y + dx * sa + dy * ca)
-    body = [p(-2, 0), p(2, 0), p(2, -5), p(1, -7), p(2, -9), p(1, -11), p(-1, -11), p(-2, -9), p(-1, -7), p(-2, -5)]
-    d.polygon(body, fill=WHITE)
-    d.line((p(-2, -7), p(2, -7)), fill=RED)
-
-
-def _ball(d, x, y, roll, col=(40, 70, 210)):
-    r = 5
-    d.ellipse((x - r, y - r, x + r, y + r), fill=col)
-    d.point((x - 2, y - 2), fill=(170, 190, 255))
-    for k in range(3):  # finger holes rolling around
-        a = roll + k * 0.5
-        hx, hy = x + math.cos(a) * 2.5, y + math.sin(a) * 2.5
-        if math.cos(a) > -0.3:
-            d.point((hx, hy), fill=(5, 5, 20))
-
-
+# ---------------------------------------------------------------- field goal (a slip cashed)
 def anim_fieldgoal(w, text):
     """Slip cashed: the game-winning field goal. Snap, kick, it splits the uprights,
     IT'S GOOD! and then money rains with the payout."""
@@ -567,29 +532,58 @@ def _money_rain(w, text):
         yield img, DT
 
 
-def anim_gutter(w, text):
-    """A leg lost: gutter ball, pins don't move."""
-    px = w - 40
-    n = int(1.4 * FPS)
-    for i in range(n + int(1.1 * FPS)):
-        img, d = canvas(w)
-        _lane(d, w)
-        for dx, dy in PIN_SPOTS:
-            _pin(d, px + dx, 24 + dy)
-        t = min(1.0, i / n)
-        bx = -6 + (px - 10) * t
-        by = 20 + 10 * max(0.0, (t - 0.35) / 0.65) ** 2
-        if by < 30 or i % 2:
-            _ball(d, bx, min(by, 29.5), i * 0.5, (120, 30, 30))
-        if i >= n - 4:
-            outline_text(d, w, 'GUTTER BALL', [RED, (255, 140, 140)][(i // 5) % 2])
+# ---------------------------------------------------------------- fumble (a leg lost)
+def anim_fumble(w, text):
+    """A leg lost: the ball carrier gets blown up, the ball pops loose and bounces away."""
+    run, after = int(0.9 * FPS), int(1.5 * FPS)
+    hit_x = w * 0.42
+    dust = Particles()
+    ball = None   # [x, y, vx, vy, spin]
+    for i in range(run + after):
+        img, d = canvas(w, TURF)
+        for k in range(0, w + 24, 24):
+            x = k - (i * 6 if i < run else run * 6) % 24
+            d.line((x, 0, x, H), fill=TURF_LINE)
+        if i < run:
+            t = i / run
+            cx = 10 + (hit_x - 10) * t
+            dx = w - 10 - (w - 10 - hit_x - 8) * t     # defender closing in
+            _player(d, cx, 30, 'run', i)
+            football(d, cx + 3, 14, 0, 0.6)
+            _player(d, dx, 30, 'run', i, jersey=RED)
+        else:
+            k = i - run
+            if ball is None:
+                ball = [hit_x + 4, 14, 2.6, -3.2, 0]
+                dust.burst(hit_x + 4, 18, 26, speed=(0.8, 2.6), cols=[WHITE, (150, 170, 120), RED], up=1)
+            # carrier knocked flat, defender standing over him
+            d.line((hit_x - 14, 28, hit_x + 2, 28), fill=BLUE, width=3)
+            d.ellipse((hit_x - 19, 25, hit_x - 13, 31), fill=GOLD)
+            d.line((hit_x + 2, 28, hit_x + 9, 30), fill=WHITE, width=2)
+            _player(d, hit_x + 8, 30, 'arms_up' if (k // 6) % 2 else 'stand', k, jersey=RED)
+            # loose ball bouncing away unpredictably
+            ball[0] += ball[2]
+            ball[1] += ball[3]
+            ball[3] += 0.35
+            ball[4] += 1
+            if ball[1] > 27:
+                ball[1] = 27
+                ball[3] = -abs(ball[3]) * random.uniform(0.45, 0.8)
+                ball[2] = ball[2] * random.uniform(0.5, 1.3) * random.choice([1, 1, -1])
+            ball[2] = max(-3.0, min(3.0, ball[2]))
+            if ball[0] < 4 or ball[0] > w - 4:
+                ball[2] = -ball[2]
+            dust.step(d)
+            if k > 5:
+                outline_text(d, w, 'FUMBLE!', [RED, (255, 150, 150)][(k // 5) % 2], x=w - 12 - R.text_w(R.F_FLASH, 'FUMBLE!'))
+            football(d, ball[0], ball[1], ball[4])  # on top, so it bounces across the word
         yield img, DT
 
 
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
-    'fieldgoal': anim_fieldgoal, 'gutter': anim_gutter,
+    'fieldgoal': anim_fieldgoal, 'fumble': anim_fumble,
 }
 
 

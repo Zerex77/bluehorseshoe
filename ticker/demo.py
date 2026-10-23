@@ -91,14 +91,14 @@ def stages():
                ('close', 'Down 3'), ('bad', 'Short 6.5')),
         bust(('win', 'HIT 41', '', 1), ('close', '27/33.5', 'pace 38', 0.8), ('bad', 'Down 7'))]))
     # 4: Bears final -> ML hits (WINNER), total goes over (scoreboard), Gibbs scores (TOUCHDOWN),
-    #    Patriots ML loses (GUTTER BALL) and Demo Bust busts
+    #    Patriots ML loses (FUMBLE) and Demo Bust busts
     g1 = game('g1', 'NE', 'CHI', 'post', 13, 24, 'Final', 4, '0:00')
     g2 = game('g2', 'GB', 'DET', 'in', 20, 27, '4:51 - 4th', 4, '4:51', poss='DET')
     out.append(({'g1': g1, 'g2': g2}, [
         parlay(('win', 'WON', 'NE 13-24 CHI Final'), ('win', 'HIT 248', '', 1), ('win', 'HIT 1', '', 1),
                ('close', '64/70', 'pace 71', 0.91), ('good', 'Up 7'), ('good', 'Covering +3.5')),
         bust(('win', 'HIT 57', '', 1), ('win', 'HIT 37', '', 1), ('lost', 'LOST', 'NE 13-24 CHI Final'))]))
-    # 5: Lions final -> rush yds (BREAKAWAY), ML (WINNER), spread (COVERED), then STRIKE + cash
+    # 5: Lions final -> rush yds (BREAKAWAY), ML (WINNER), spread (COVERED), then the field goal + cash
     g2 = game('g2', 'GB', 'DET', 'post', 20, 30, 'Final', 4, '0:00')
     out.append(({'g1': g1, 'g2': g2}, [
         parlay(('win', 'WON', 'NE 13-24 CHI Final'), ('win', 'HIT 248', '', 1), ('win', 'HIT 1', '', 1),
@@ -147,7 +147,7 @@ REEL = [
     ('dime', 'Caleb Williams 199.5 pass yds'), ('catch', 'Rome Odunze 24.5 rec. yds'),
     ('breakaway', 'Jahmyr Gibbs 69.5 rush yds'), ('touchdown', 'Jahmyr Gibbs anytime TD'),
     ('winner', 'Bears ML'), ('covered', 'Lions -3.5'), ('over', 'Over 44.5'), ('under', 'Under 44.5'),
-    ('gutter', 'Patriots ML'), ('fieldgoal', 'CASHED $155'),
+    ('fumble', 'Patriots ML'), ('fieldgoal', 'CASHED $155'),
 ]
 
 
