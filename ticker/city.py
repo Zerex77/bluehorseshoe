@@ -2,7 +2,8 @@
 
 A loop of neighborhoods slides by over a far skyline: the river with a blue lift bridge, a teal-and-gold
 stadium with a Jaguars billboard, a busy construction site (tower crane swinging a beam, excavator
-digging, a building going up), a neon arcade, and the beach boardwalk. Cars drive both ways on the
+digging, a building going up), a neon arcade, the beach boardwalk, a guitar-shaped hotel with a
+night light show, and a birthday party in the park. A train rolls through every so often. Cars drive both ways on the
 street, a plane tows a GO JAGS! banner now and then, birds fly over, and the sky follows the time of
 day. Everything is original pixel art; team logos come from ESPN like the rest of the ticker.
 """
@@ -21,7 +22,7 @@ DT = 1.0 / FPS
 SPEED = 15.0           # street speed, pixels per second
 MID = 0.6              # neighborhoods move at 60% of the street (depth)
 GROUND = 25            # where buildings stand; the street is below
-LOOP = 980             # length of one loop of neighborhoods
+LOOP = 1150            # length of one loop of neighborhoods
 
 TEAL, GOLD, BLACK = (0, 120, 140), (215, 162, 42), (0, 0, 0)
 LANES = [(27, 1), (30, -1)]   # (y, direction): top lane goes with the scroll, bottom lane against
@@ -187,7 +188,107 @@ def beach(d, x0, t, P):
     lofi._lamp(d, x0 + 102, GROUND, P['night'])
 
 
-HOODS = [(0, 170, 'bridge'), (200, 125, 'stadium'), (360, 180, 'construction'), (580, 100, 'arcade'), (720, 160, 'beach')]
+def guitar_hotel(d, x0, t, P):
+    """A guitar-shaped glass hotel tower standing on a podium, with a light show at night."""
+    cx = x0 + 26
+    night = P['night'] or P['win'] > 0
+    glass = (70, 110, 150) if not P['night'] else (14, 18, 40)
+    show = [(170, 60, 255), (60, 140, 255), (255, 60, 180), (60, 230, 255), (255, 210, 80)]
+    rim = show[int(t * 1.2) % len(show)] if night else (200, 215, 230)
+    d.rectangle((x0, GROUND - 4, x0 + 52, GROUND - 1), fill=_mix(glass, (60, 60, 70), 0.5))      # podium
+    if night:
+        for k in range(x0 + 2, x0 + 52, 4):
+            d.point((k, GROUND - 3), fill=(230, 190, 110))
+    shapes = [('e', (cx - 13, 15, cx + 13, 25)), ('e', (cx - 9, 7, cx + 9, 17)), ('r', (cx - 1, 1, cx + 1, 8))]
+    for kind, (a, b, c, e) in shapes:                     # outline first, then glass inside
+        (d.ellipse if kind == 'e' else d.rectangle)((a - 1, b - 1, c + 1, e + 1), fill=rim)
+    for kind, box in shapes:
+        (d.ellipse if kind == 'e' else d.rectangle)(box, fill=glass)
+    d.rectangle((cx - 3, 0, cx + 3, 2), fill=rim)         # headstock
+    
+    for y in range(9, 24, 2):                              # floors
+        for x in range(cx - 12, cx + 13, 2):
+            if img_inside(x, y, cx):
+                if night:
+                    if random.Random(x * 31 + y).random() < 0.35:
+                        d.point((x, y), fill=(230, 200, 140))
+                else:
+                    d.point((x, y), fill=_mix(glass, (200, 225, 245), 0.45))
+    if night:                                              # glowing strings running up the neck
+        col = show[int(t * 3) % len(show)]
+        d.line((cx, 2, cx, 21), fill=col)
+        for k in range(3):                                 # light beams sweeping the sky
+            a = -1.57 + math.sin(t * 0.7 + k * 2.1) * 0.6
+            d.line((cx, 0, cx + math.cos(a) * 30, math.sin(a) * 30), fill=_mix(show[k], (0, 0, 0), 0.6))
+
+
+def img_inside(x, y, cx):
+    """Is (x, y) inside the guitar body (two stacked ellipses)?"""
+    return (((x - cx) / 12.0) ** 2 + ((y - 20) / 4.5) ** 2 < 1) or (((x - cx) / 8.0) ** 2 + ((y - 12) / 4.0) ** 2 < 1)
+
+
+def _person(d, x, base, shirt, t, hat=None, jump=0.0):
+    y = base - int(max(0.0, jump))
+    d.ellipse((x - 1, y - 9, x + 1, y - 7), fill=(210, 165, 130))
+    if hat:
+        d.polygon([(x - 1, y - 9), (x, y - 12), (x + 1, y - 9)], fill=hat)
+    d.line((x, y - 6, x, y - 3), fill=shirt, width=2)
+    sw = math.sin(t * 6 + x)
+    d.line((x, y - 3, x + int(sw), y), fill=(50, 60, 90))
+    d.line((x, y - 3, x - int(sw), y), fill=(50, 60, 90))
+
+
+def park(d, x0, t, P):
+    """A birthday party in the park: bunting, balloons, a cake with candles, kids in party hats."""
+    night = P['night']
+    grass = (50, 150, 60) if not night else (18, 50, 25)
+    d.rectangle((x0, GROUND - 2, x0 + 130, GROUND - 1), fill=grass)
+    for tx in (x0 + 8, x0 + 122):                          # trees
+        d.line((tx, GROUND - 1, tx, GROUND - 10), fill=(90, 60, 35), width=2)
+        d.ellipse((tx - 7, GROUND - 22, tx + 7, GROUND - 9), fill=(40, 130, 55) if not night else (15, 45, 25))
+    party = [(255, 70, 90), (255, 210, 60), (70, 170, 255), (120, 230, 120), (220, 110, 255)]
+    for x in range(x0 + 12, x0 + 119, 3):                  # bunting / string lights between the trees
+        sag = int(4 * math.sin(math.pi * (x - x0 - 12) / 107.0))
+        y = GROUND - 15 + sag
+        col = party[(x // 3) % len(party)]
+        if night:
+            col = col if int(t * 2 + x // 3) % 3 else _mix(col, (0, 0, 0), 0.6)
+            d.point((x, y), fill=col)
+        else:
+            d.polygon([(x, y), (x + 2, y), (x + 1, y + 2)], fill=col)
+    # picnic table with the cake
+    tx = x0 + 58
+    d.rectangle((tx, GROUND - 7, tx + 22, GROUND - 6), fill=(150, 100, 60))
+    d.line((tx + 3, GROUND - 5, tx + 3, GROUND - 1), fill=(120, 80, 50))
+    d.line((tx + 19, GROUND - 5, tx + 19, GROUND - 1), fill=(120, 80, 50))
+    d.rectangle((tx + 8, GROUND - 10, tx + 14, GROUND - 8), fill=(255, 150, 190))
+    d.line((tx + 8, GROUND - 10, tx + 14, GROUND - 10), fill=(255, 255, 255))
+    for k, cx in enumerate((tx + 9, tx + 11, tx + 13)):
+        d.point((cx, GROUND - 11), fill=(200, 200, 255))
+        d.point((cx, GROUND - 12), fill=(255, 220, 80) if int(t * 8 + k) % 3 else (255, 140, 40))
+    # balloons tied to the table, bobbing
+    for k in range(3):
+        bx = tx + 21 + k * 3
+        by = GROUND - 19 - k * 2 + int(math.sin(t * 1.5 + k) * 1.5)
+        d.line((tx + 21, GROUND - 7, bx + 1, by + 4), fill=(200, 200, 200))
+        d.ellipse((bx - 1, by, bx + 3, by + 4), fill=party[k])
+    # kids in party hats hopping around, a grown-up by the cake
+    _person(d, tx - 4, GROUND - 1, (90, 140, 230), t)
+    for k, (kx, shirt) in enumerate(((x0 + 30, (255, 120, 80)), (x0 + 42, (120, 220, 140)), (x0 + 95, (230, 200, 60)))):
+        hop = abs(math.sin(t * 3 + k * 1.7)) * 3
+        _person(d, kx + int(math.sin(t * 0.8 + k) * 3), GROUND - 1, shirt, t + k, hat=party[k + 1], jump=hop)
+    # confetti burst every few seconds
+    ph = (t + x0 * 0.01) % 6
+    if ph < 1.8:
+        r = random.Random(int((t + x0 * 0.01) // 6))
+        for i in range(14):
+            vx, vy = r.uniform(-12, 12), r.uniform(-18, -8)
+            px, py = tx + 11 + vx * ph, GROUND - 12 + vy * ph + 10 * ph * ph
+            if py < GROUND - 1:
+                d.point((px, py), fill=party[i % len(party)])
+
+
+HOODS = [(0, 170, 'bridge'), (200, 125, 'stadium'), (360, 180, 'construction'), (580, 100, 'arcade'), (720, 160, 'beach'), (905, 55, 'guitar'), (990, 130, 'park')]
 
 
 # ---------------------------------------------------------------- moving things
@@ -285,6 +386,10 @@ def frames(w, logos=None):
                     construction(d, sx, t, P)
                 elif name == 'arcade':
                     arcade(d, sx, t, P)
+                elif name == 'guitar':
+                    guitar_hotel(d, sx, t, P)
+                elif name == 'park':
+                    park(d, sx, t, P)
                 else:
                     beach(d, sx, t, P)
         # plane towing a banner, every ~45 seconds
@@ -306,4 +411,31 @@ def frames(w, logos=None):
         for x in range(-int(near) % 10, w, 10):
             d.line((x, 28, x + 4, 28), fill=(200, 180, 80))
         traffic.step(d, dt, P['night'])
+        # a train rolls through every ~70 seconds
+        tp = t % 70
+        if 20 < tp < 29:
+            tx = int(w + 10 - (tp - 20) * 75)
+            d.line((0, GROUND - 1, w, GROUND - 1), fill=(90, 85, 80))
+            for x in range(-int(near) % 4, w, 4):
+                d.point((x, GROUND), fill=(110, 80, 50))
+            silver = (190, 195, 205) if not P['night'] else (90, 95, 110)
+            for car in range(7):
+                cx = tx + car * 30
+                if cx > w or cx + 28 < 0:
+                    continue
+                body = (TEAL if car == 0 else silver)
+                if car == 0:
+                    d.polygon([(cx, GROUND - 3), (cx + 4, GROUND - 10), (cx + 28, GROUND - 10), (cx + 28, GROUND - 3)], fill=body)
+                    d.rectangle((cx + 6, GROUND - 9, cx + 10, GROUND - 7), fill=(40, 60, 90))
+                    d.line((cx + 2, GROUND - 4, cx + 28, GROUND - 4), fill=GOLD)
+                    d.point((cx + 1, GROUND - 4), fill=(255, 250, 200) if P['night'] or int(t * 4) % 2 else (200, 200, 160))
+                else:
+                    d.rectangle((cx, GROUND - 10, cx + 28, GROUND - 3), fill=body)
+                    d.line((cx, GROUND - 5, cx + 28, GROUND - 5), fill=TEAL)
+                    for wx in range(cx + 3, cx + 26, 5):
+                        d.rectangle((wx, GROUND - 9, wx + 2, GROUND - 7),
+                                    fill=(255, 220, 140) if P['night'] else (60, 90, 130))
+                for wx in (cx + 4, cx + 24):
+                    d.ellipse((wx - 2, GROUND - 4, wx + 2, GROUND), fill=(30, 30, 35))
+                d.line((cx + 28, GROUND - 5, cx + 30, GROUND - 5), fill=(80, 80, 80))
         yield img
