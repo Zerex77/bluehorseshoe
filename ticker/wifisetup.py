@@ -54,8 +54,19 @@ def start_ap():
     nm('connection', 'delete', AP_CON)
     nm('connection', 'add', 'type', 'wifi', 'ifname', 'wlan0', 'con-name', AP_CON, 'autoconnect', 'no', 'ssid', AP_NAME,
        '802-11-wireless.mode', 'ap', '802-11-wireless.band', 'bg', 'ipv4.method', 'shared', 'ipv6.method', 'disabled')
-    nm('connection', 'up', AP_CON)
-    open(SETUP_FLAG, 'w').write(AP_NAME)
+    for attempt in range(3):
+        code, out = nm('connection', 'up', AP_CON, timeout=45)
+        if code == 0:
+            open(SETUP_FLAG, 'w').write(AP_NAME)
+            return True
+        print('Setup network failed to start (%s), retrying' % out, flush=True)
+        time.sleep(5)
+    return False
+
+
+def ap_up():
+    code, out = nm('-t', '-f', 'NAME', 'connection', 'show', '--active')
+    return AP_CON in out.splitlines()
 
 
 def stop_ap():
@@ -76,15 +87,36 @@ def try_join(ssid, password):
     """Drop the setup network, try the chosen one; if it fails, reopen setup with the reason."""
     State.busy = True
     stop_ap()
-    time.sleep(2)
-    args = ['device', 'wifi', 'connect', ssid] + (['password', password] if password else [])
-    code, out = nm(*args, timeout=60)
-    if code == 0 and online():
+    time.sleep(3)
+    out = ''
+    for attempt in range(3):
+        # the radio was busy being the setup network, so look for networks again before joining
+        nm('device', 'wifi', 'rescan', 'ssid', ssid, timeout=15)
+        time.sleep(4)
+        nm('connection', 'delete', ssid)
+        args = ['device', 'wifi', 'connect', ssid] + (['password', password] if password else []) + ['ifname', 'wlan0']
+        code, out = nm(*args, timeout=60)
+        if code != 0 and ('key-mgmt' in out or 'No network with SSID' in out or 'not found' in out):
+            # build the connection by hand (works even when the scan missed it, or for hidden networks)
+            nm('connection', 'delete', ssid)
+            add = ['connection', 'add', 'type', 'wifi', 'ifname', 'wlan0', 'con-name', ssid, 'ssid', ssid]
+            if password:
+                add += ['wifi-sec.key-mgmt', 'wpa-psk', 'wifi-sec.psk', password]
+            nm(*add)
+            code, out = nm('connection', 'up', ssid, timeout=60)
+        time.sleep(3)
+        if code == 0 and online():
+            break
+        if 'Secrets were required' in out:
+            break   # wrong password: no point retrying
+    if online():
         State.message = ''
         print('Joined %s' % ssid, flush=True)
     else:
         nm('connection', 'delete', ssid)   # don't keep a network saved with a wrong password
-        State.message = "Couldn't join %s. Check the password and try again." % ssid
+        wrong_pw = 'Secrets were required' in out
+        State.message = ("Wrong password for %s. Try again." if wrong_pw else
+                         "Couldn't join %s. Check the name and password, and use the 2.4 GHz network.") % ssid
         print('Failed to join %s: %s' % (ssid, out), flush=True)
         State.networks = scan() or State.networks
         start_ap()
@@ -145,12 +177,17 @@ def main():
         if not online() and not State.busy and not os.path.exists(SETUP_FLAG):
             print('Not online: opening "%s"' % AP_NAME, flush=True)
             State.networks = scan()
-            start_ap()
+            if not start_ap():
+                time.sleep(CHECK)
+                continue
             if not server:
                 server = ThreadingHTTPServer(('0.0.0.0', 80), Handler)
                 threading.Thread(target=server.serve_forever, daemon=True).start()
         elif online() and os.path.exists(SETUP_FLAG):
             stop_ap()
+        elif os.path.exists(SETUP_FLAG) and not State.busy and not ap_up():
+            print('Setup network dropped: reopening', flush=True)   # e.g. it failed to start the first time
+            start_ap()
         time.sleep(CHECK)
 
 
