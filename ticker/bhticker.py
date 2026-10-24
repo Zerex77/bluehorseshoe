@@ -217,12 +217,35 @@ class Ticker:
         except Exception as e:  # keep scrolling the last good data
             self.status = 'Error: %s' % e
             return
+        self.lock_games(slips, snap)
         self.queue_alerts(snap)
         with self.lock:
             self.snap = snap
             self.items = self.build_items(snap)
         if self.cloud:
             self.cloud.push_status(self.status, snap)
+
+    def lock_games(self, slips, snap):
+        """Once a leg's game has kicked off, save that game on the leg, so the leg can't drift to a
+        different game later (say after its game drops off the day's schedule)."""
+        changed = False
+        by_id = {s.get('id'): s for s in snap}
+        for sl in slips:
+            sn = by_id.get(sl.get('id'))
+            if not sn or len(sn['legs']) != len(sl.get('legs') or []):
+                continue
+            for leg, row in zip(sl['legs'], sn['legs']):
+                g = self.board.games.get(row.get('g')) if row.get('g') else None
+                if leg.get('g') or not g or g.get('state') == 'pre':
+                    continue
+                leg['g'], leg['sport'] = g['id'], g['sport']
+                changed = True
+        if changed:
+            with self.lock:
+                save_json('slips.json', self.slips)
+                mine = list(self.slips)
+            if self.cloud:   # the app keeps the same game too
+                threading.Thread(target=self.cloud.push_slips, args=(mine,), daemon=True).start()
 
     def queue_alerts(self, snap):
         if not self.cfg.get('alerts'):

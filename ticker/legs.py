@@ -164,7 +164,8 @@ def find_teams(text, games):
         for side in ('a', 'h'):
             for al in aliases(g[side]):
                 short = len(al) <= 4 and al == str(g[side].get('abbreviation') or '').lower()
-                m = re.search(r'(^|[^a-z])' + re.escape(al) + r'(?=$|[^a-z])', low)
+                # "north carolina" must not match inside "north carolina state" (or "texas" inside "texas tech")
+                m = re.search(r'(^|[^a-z])' + re.escape(al) + r'(?=$|[^a-z])(?!\s+(?:state|st\.?|tech|a&m)(?:$|[^a-z]))', low)
                 if not m:
                     continue
                 if short and not re.search(r'\b' + re.escape(al) + r'\b', text, re.I):
@@ -180,10 +181,17 @@ def find_teams(text, games):
                     n = len(al.split(' '))
                     tol = 2 if len(al) >= 10 else 1
                     for i in range(0, len(words) - n + 1):
+                        nxt = words[i + n] if i + n < len(words) else ''
+                        # same first letter ("north" is not a typo of "south"), and not part of a longer school name
+                        if words[i][:1] != al[:1] or re.match(r'^(state|st\.?|tech|a&m)$', nxt):
+                            continue
                         if lev(' '.join(words[i:i + n]), al) <= tol:
                             hits.append({'g': gid, 'side': side, 'len': len(al), 'at': low.find(words[i]), 'al': al})
                             break
-    hits.sort(key=lambda h: -h['len'])
+    # longest name first; when the same name fits two games ("Cincinnati" = Bearcats or Bengals),
+    # the game that's live, then the one starting soonest, wins
+    rank = {'in': 0, 'pre': 1, 'post': 2}
+    hits.sort(key=lambda h: (-h['len'], rank.get(games[h['g']].get('state'), 3), games[h['g']].get('date') or ''))
     keep = []
     for h in hits:
         if any(h['at'] >= k['at'] and h['at'] + h['len'] <= k['at'] + k['len'] + 1 and k['al'] != h['al'] for k in keep):

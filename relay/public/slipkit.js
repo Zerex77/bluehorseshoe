@@ -203,7 +203,8 @@
       ['a', 'h'].forEach(function (side) {
         aliases(g[side]).forEach(function (al) {
           var short = al.length <= 4 && al === String(g[side].abbreviation || '').toLowerCase();
-          var re = new RegExp('(^|[^a-z])' + al.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=$|[^a-z])');
+          // "north carolina" must not match inside "north carolina state" (or "texas" inside "texas tech")
+          var re = new RegExp('(^|[^a-z])' + al.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=$|[^a-z])(?!\\s+(?:state|st\\.?|tech|a&m)(?:$|[^a-z]))');
           var m = re.exec(low);
           if (!m) return;
           if (short && !new RegExp('\\b' + al + '\\b', 'i').test(text)) return;
@@ -221,13 +222,21 @@
             if (al.length < 6) return;
             var n = al.split(' ').length, tol = al.length >= 10 ? 2 : 1;
             for (var i = 0; i + n <= words.length; i++) {
+              // same first letter ("north" is not a typo of "south"), and not part of a longer school name
+              if (words[i].charAt(0) !== al.charAt(0) || /^(state|st\.?|tech|a&m)$/.test(words[i + n] || '')) continue;
               if (lev(words.slice(i, i + n).join(' '), al) <= tol) { hits.push({ g: id, side: side, len: al.length, at: low.indexOf(words[i]), al: al }); break; }
             }
           });
         });
       });
     }
-    hits.sort(function (x, y) { return y.len - x.len; });
+    // longest name first; when the same name fits two games ("Cincinnati" = Bearcats or Bengals),
+    // the game that's live, then the one starting soonest, wins
+    var rank = { in: 0, pre: 1, post: 2 };
+    hits.sort(function (x, y) {
+      var gx = games[x.g], gy = games[y.g];
+      return (y.len - x.len) || ((rank[gx.state] ?? 3) - (rank[gy.state] ?? 3)) || (new Date(gx.date) - new Date(gy.date));
+    });
     // drop hits contained inside a longer hit ("Penn" inside "Penn State")
     var keep = [];
     hits.forEach(function (h) {
