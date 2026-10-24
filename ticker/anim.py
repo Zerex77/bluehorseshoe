@@ -692,7 +692,7 @@ def _wheel(d, cx, cy, r, turn, col=(150, 150, 160)):
         d.line((cx - dx, cy - dy, cx + dx, cy + dy), fill=col)
 
 
-def _engine(img, d, x, col, alt, turn, pump, moving):
+def _engine(img, d, x, col, alt, turn, pump, moving, logo=None):
     """Locomotive facing left, 46px long, with an engineer pumping his arms out of the cab."""
     body = col
     trim = alt if sum(alt) > 150 else WHITE
@@ -706,6 +706,9 @@ def _engine(img, d, x, col, alt, turn, pump, moving):
     d.rectangle((x + 10, 8, x + 14, 14), fill=(60, 60, 70))         # smokestack
     d.rectangle((x + 9, 7, x + 15, 8), fill=(90, 90, 100))
     d.ellipse((x + 3, 17, x + 7, 21), fill=(255, 230, 120))         # headlight
+    if logo is not None:                                             # team logo on a plate on the boiler
+        d.ellipse((x + 15, 13, x + 28, 26), fill=(12, 16, 30), outline=trim)
+        R._paste_logo(img, logo, x + 16, 14, 12)
     # engineer: head in the window, arms pumping up out of it
     skin = (225, 185, 145)
     d.ellipse((x + 35, 10, x + 40, 15), fill=skin)
@@ -794,7 +797,7 @@ def anim_score(w, text):
                    fill=(GOLD if flash else WHITE) if mine else R.DIM)
             cx += cw
         d.line((x + 46, 22, x + 46 + gap, 22), fill=(120, 120, 130))
-        _engine(img, d, x, col, alt, turn, pump, moving)
+        _engine(img, d, x, col, alt, turn, pump, moving, logos.get(me, sport, 12) if logos else None)
         if i % (3 if moving else 6) == 0 and -10 < x + 12 < w:   # smoke from the stack
             smoke.p.append([x + 12, 5, random.uniform(0.3, 1.2), -random.uniform(0.4, 0.9), (170, 170, 180), 20])
             smoke.p.append([x + 13, 5, random.uniform(0.3, 1.2), -random.uniform(0.2, 0.7), (130, 130, 140), 16])
