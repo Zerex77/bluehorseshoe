@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw
 H = 32
 FPS = 20
 DT = 1.0 / FPS
-SPEED = 9.0          # boardwalk pixels per second (slow and calm)
+SPEED = 15.0         # boardwalk pixels per second (calm, but moving)
 
 HORIZON = 19         # skyline base / top of the water
 SAND = 25
@@ -161,7 +161,7 @@ def _lamp(d, x, base, night):
 
 
 def _walker(d, x, base, t):
-    step = math.sin(t * 4.0)
+    step = math.sin(t * 5.5)   # stride keeps pace with the scroll
     skin, shirt, pants = (210, 165, 130), (230, 120, 90), (50, 60, 90)
     d.ellipse((x - 2, base - 14, x + 1, base - 11), fill=skin)                 # head
     d.line((x, base - 10, x, base - 5), fill=shirt, width=2)                     # body
