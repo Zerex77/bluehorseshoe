@@ -673,43 +673,132 @@ def _hex(c, default):
         return default
 
 
+# logos and team info for the score train; bhticker.py fills these in
+CONTEXT = {'logos': None, 'teams': {}}
+
+
+def _team_col(t):
+    col = _hex(t.get('color'), BLUE)
+    if sum(col) < 120:                      # near-black team colors vanish on LEDs: use the alternate
+        col = _hex(t.get('alternateColor'), WHITE)
+    return col
+
+
+def _wheel(d, cx, cy, r, turn, col=(150, 150, 160)):
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(30, 30, 34), outline=col)
+    for k in range(2):                       # two spokes that spin as the train rolls
+        a = turn + k * math.pi / 2
+        dx, dy = math.cos(a) * (r - 1), math.sin(a) * (r - 1)
+        d.line((cx - dx, cy - dy, cx + dx, cy + dy), fill=col)
+
+
+def _engine(img, d, x, col, alt, turn, pump, moving):
+    """Locomotive facing left, 46px long, with an engineer pumping his arms out of the cab."""
+    body = col
+    trim = alt if sum(alt) > 150 else WHITE
+    # cowcatcher, boiler, cab
+    d.polygon([(x, 27), (x + 6, 20), (x + 6, 27)], fill=(120, 120, 130))
+    d.rectangle((x + 6, 14, x + 30, 26), fill=body)
+    d.line((x + 6, 14, x + 30, 14), fill=trim)
+    d.rectangle((x + 29, 6, x + 45, 26), fill=body)
+    d.rectangle((x + 28, 4, x + 46, 6), fill=trim)                 # cab roof
+    d.rectangle((x + 32, 9, x + 42, 17), fill=(15, 20, 35))         # window
+    d.rectangle((x + 10, 8, x + 14, 14), fill=(60, 60, 70))         # smokestack
+    d.rectangle((x + 9, 7, x + 15, 8), fill=(90, 90, 100))
+    d.ellipse((x + 3, 17, x + 7, 21), fill=(255, 230, 120))         # headlight
+    # engineer: head in the window, arms pumping up out of it
+    skin = (225, 185, 145)
+    d.ellipse((x + 35, 10, x + 40, 15), fill=skin)
+    d.rectangle((x + 34, 9, x + 41, 10), fill=trim)                 # cap
+    up = pump if not moving else 0.35
+    for side, ax in ((-1, x + 33), (1, x + 42)):
+        hy = 9 - int(7 * up)                                         # hands go up and down
+        hx = ax + side * (2 + int(2 * up))
+        d.line((ax, 14, hx, hy), fill=skin, width=2)
+        d.rectangle((hx - 1, hy - 1, hx + 1, hy + 1), fill=skin)
+    for k, wx in enumerate((x + 12, x + 22, x + 37)):
+        _wheel(d, wx, 27, 4, turn + k)
+    d.line((x + 12, 27, x + 37, 27), fill=(170, 170, 180))          # side rod
+
+
+def _car(d, x, width, edge, turn):
+    d.rectangle((x, 5, x + width, 25), fill=(22, 26, 40), outline=edge)
+    for wx in (x + 7, x + width - 7):
+        _wheel(d, wx, 27, 3, turn)
+
+
 def anim_score(w, text):
-    """A game on a ticket scored: a banner in the scoring team's color slides in with the play and
-    the new score (the scoring side's number flashes), holds, and slides back out.
-    text: 'TEAM|PLAY|AWAY|as|HOME|hs|side|color|altColor'."""
+    """A game on a ticket scored: a train pulls the update in. The engine wears the scoring team's
+    colors and the engineer pumps his arms; the cars carry the play and both teams' logos and scores.
+    It eases in to a stop in the middle, celebrates, then pulls away.
+    text: 'GAMEID|side|PLAY|away score|home score'."""
     try:
-        team, play, aw, as_, hm, hs, side, col, alt = text.split('|')
+        gid, side, play, as_, hs = text.split('|')
     except ValueError:
         return
-    col = _hex(col, BLUE)
-    if sum(col) < 120:                      # near-black team colors vanish on LEDs: use the alternate
-        col = _hex(alt, WHITE)
-    fg = (0, 0, 0) if sum(col) > 450 else WHITE
-    font = R.F_FLASH
-    left = team + ' ' + play
-    lw = R.text_w(font, left) + 16
-    score_w = 10 + sum(R.text_w(R.F_SCORE, ab) + 4 + R.text_w(font, sc) + 6 for ab, sc in ((aw, as_), (hm, hs))) + R.text_w(font, '-') + 6
-    if lw + score_w > w:                    # not enough room for the score too: shorter word
-        left = team + ' ' + {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
-        lw = R.text_w(font, left) + 16
-    slide, hold = int(0.25 * FPS), int(1.9 * FPS)
-    for i in range(slide * 2 + hold):
-        if i < slide:
-            off = int(w * (1 - ease_out(i / slide)))
-        elif i >= slide + hold:
-            off = -int(w * ease_out((i - slide - hold) / slide))
+    teams = CONTEXT['teams'].get(gid)
+    if not teams:
+        return
+    away, home, sport = teams
+    logos = CONTEXT.get('logos')
+    me = away if side == 'a' else home
+    col = _team_col(me)
+    alt = _hex(me.get('alternateColor'), WHITE)
+    word = {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
+    # cars: the play, then each team's logo + score
+    f_big = R.F_FLASH if R.text_w(R.F_FLASH, '88') < 30 else R.F_BIG
+    play_txt = R.ascii_safe(R._ab(me)) + ' ' + word
+    c1 = R.text_w(R.F_BIG, play_txt) + 12
+    team_cars = []
+    for t, sc, mine in ((away, as_, side == 'a'), (home, hs, side == 'h')):
+        team_cars.append((t, sc, mine, 4 + 20 + 4 + R.text_w(f_big, sc) + 6))
+    gap = 4
+    total = 46 + gap + c1 + sum(gap + tc[3] for tc in team_cars)
+    stop = max(2, (w - total) // 2)
+    t_in, t_hold, t_out = int(1.0 * FPS), int(2.2 * FPS), int(0.9 * FPS)
+    smoke = Particles()
+    for i in range(t_in + t_hold + t_out):
+        if i < t_in:
+            p = ease_out(i / t_in)
+            x = int(w + (stop - w) * p)
+            moving = True
+        elif i < t_in + t_hold:
+            x, moving = stop, False
         else:
-            off = 0
+            p = ((i - t_in - t_hold) / t_out) ** 2          # ease in: gets going, then gone
+            x = int(stop + (-total - 10 - stop) * p)
+            moving = True
         img, d = canvas(w)
-        d.rectangle((off, 0, off + lw, H), fill=col)
-        d.text((off + 8, (H - sum(font.getmetrics())) // 2 + 1), left, font=font, fill=fg)
-        flash = slide <= i < slide + hold and ((i - slide) // 5) % 2 == 0
-        x = off + lw + 10
-        for k, (ab, sc, me) in enumerate(((aw, as_, side == 'a'), (hm, hs, side == 'h'))):
-            if k:
-                d.text((x, 5), '-', font=font, fill=R.DIM); x += R.text_w(font, '-') + 6
-            d.text((x, 9), ab, font=R.F_SCORE, fill=WHITE if me else R.DIM); x += R.text_w(R.F_SCORE, ab) + 4
-            d.text((x, 5), sc, font=font, fill=(GOLD if flash else WHITE) if me else R.DIM); x += R.text_w(font, sc) + 6
+        d.line((0, 31, w, 31), fill=(70, 70, 80))            # the track
+        for k in range(-(x % 8), w, 8):
+            d.point((k, 31), fill=(110, 90, 60))
+        turn = -x / 4.0
+        pump = abs(math.sin(i * 0.55))
+        # cars, drawn behind the engine's couplers
+        cx = x + 46 + gap
+        _car(d, cx, c1, col, turn)
+        d.text((cx + 6, 15 - (R.caps(R.F_BIG)[0] + R.caps(R.F_BIG)[1]) // 2), play_txt, font=R.F_BIG, fill=col)
+        cx += c1
+        flash = not moving and (i // 5) % 2 == 0
+        for t, sc, mine, cw in team_cars:
+            d.line((cx, 22, cx + gap, 22), fill=(120, 120, 130))     # coupler
+            cx += gap
+            _car(d, cx, cw, _team_col(t) if mine else (60, 70, 95), turn)
+            logo = logos.get(t, sport, 18) if logos else None
+            if logo is not None:
+                R._paste_logo(img, logo, cx + 4, 6, 18)
+            else:
+                d.text((cx + 4, 9), R.ascii_safe(R._ab(t))[:3], font=R.F_SMALL, fill=WHITE)
+            top, bot = R.caps(f_big)
+            d.text((cx + 28, 15 - (top + bot) // 2), sc, font=f_big,
+                   fill=(GOLD if flash else WHITE) if mine else R.DIM)
+            cx += cw
+        d.line((x + 46, 22, x + 46 + gap, 22), fill=(120, 120, 130))
+        _engine(img, d, x, col, alt, turn, pump, moving)
+        if i % (3 if moving else 6) == 0 and -10 < x + 12 < w:   # smoke from the stack
+            smoke.p.append([x + 12, 5, random.uniform(0.3, 1.2), -random.uniform(0.4, 0.9), (170, 170, 180), 20])
+            smoke.p.append([x + 13, 5, random.uniform(0.3, 1.2), -random.uniform(0.2, 0.7), (130, 130, 140), 16])
+        smoke.step(d, gravity=-0.01, drag=0.97)
         yield img, DT
 
 

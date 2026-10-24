@@ -166,6 +166,7 @@ class Ticker:
         self.slips = load_json('slips.json', [])
         self.board = L.Board(get_json)
         self.logos = R.Logos(lambda u: http_get(u, 8), os.path.join(DATA, 'logos'))
+        A.CONTEXT['logos'] = self.logos
         self.snap = []
         self.items = []          # list of callables -> PIL image (rendered fresh as they enter)
         self.alerts = []         # queue of (text, kind)
@@ -248,8 +249,8 @@ class Ticker:
                     continue
                 play = 'TOUCHDOWN' if pts >= 6 else 'FIELD GOAL' if pts == 3 else 'SAFETY' if pts == 2 else 'SCORE'
                 t = g[side]
-                info = '|'.join([R.ascii_safe(L.abbr(t)), play, R.ascii_safe(L.abbr(g['a'])), str(now[0]),
-                                 R.ascii_safe(L.abbr(g['h'])), str(now[1]), side, (t.get('color') or '3B82F6'), (t.get('alternateColor') or 'FFFFFF')])
+                A.CONTEXT['teams'][gid] = (dict(g['a']), dict(g['h']), g['sport'])
+                info = '|'.join([gid, side, play, str(now[0]), str(now[1])])
                 self.alerts.append(('%s %s' % (L.abbr(t), play), 'score', 'score:' + info))
 
     def lock_games(self, slips, snap):
