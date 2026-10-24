@@ -24,6 +24,7 @@ import render as R  # noqa: E402
 import anim as A  # noqa: E402
 import cloud as C  # noqa: E402
 import teamshow as TS  # noqa: E402
+import lofi as LO  # noqa: E402
 from PIL import Image  # noqa: E402
 
 DATA = os.environ.get('BHTICKER_DATA', '/var/lib/bhticker')
@@ -39,7 +40,7 @@ DEFAULTS = {
     'animations': True,                          # play a celebration animation before each flash
     'port': 8080,
     'on': True,                                  # False = asleep: panels dark (set from the app's power button)
-    'mode': 'tickets',                           # 'tickets' or 'team' (team display, set in the app)
+    'mode': 'tickets',                           # 'tickets', 'team' (team display) or 'lofi' (scenery), set in the app
     'team': 'JAX',                               # team for the team display
     'cloud_url': '',                             # address of the app relay; turns on the phone app
 }
@@ -405,14 +406,15 @@ class Ticker:
                 self.flash(*self.alerts.pop(0))
                 last = time.time()
                 continue
-            if self.cfg.get('mode') == 'team':   # team display instead of tickets
-                key = self.cfg.get('team') or 'JAX'
+            mode = self.cfg.get('mode')
+            if mode in ('team', 'lofi'):   # an idle display instead of tickets
+                key = 'lofi' if mode == 'lofi' else (self.cfg.get('team') or 'JAX')
                 if getattr(self, '_show_key', None) != key:
                     self._show_key = key
-                    self._show = TS.frames(W, key, self.team_game, self.logos)
+                    self._show = LO.frames(W) if mode == 'lofi' else TS.frames(W, key, self.team_game, self.logos)
                 t0 = time.time()
                 self.panel.show(next(self._show))
-                time.sleep(max(0.0, TS.DT - (time.time() - t0)))
+                time.sleep(max(0.0, (LO.DT if mode == 'lofi' else TS.DT) - (time.time() - t0)))
                 last = time.time()
                 continue
             self._show_key = None
