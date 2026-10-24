@@ -21,6 +21,11 @@ mkdir -p "$APP" "$DATA"
 for f in bhticker.py legs.py render.py anim.py cloud.py wifisetup.py web.html demo.py; do
   curl -fsSL "$SRC/$f?$(date +%s)" -o "$APP/$f"
 done
+mkdir -p "$APP/fonts"
+for f in ter-u12b ter-u14b ter-u16b ter-u18b ter-u20b; do
+  for ext in pil pbm; do curl -fsSL "$SRC/fonts/$f.$ext?$(date +%s)" -o "$APP/fonts/$f.$ext"; done
+done
+curl -fsSL "$SRC/fonts/README.md" -o "$APP/fonts/README.md" || true
 chmod +x "$APP/bhticker.py"
 
 CONFIG=/boot/firmware/config.txt; [ -f "$CONFIG" ] || CONFIG=/boot/config.txt

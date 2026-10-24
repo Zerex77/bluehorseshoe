@@ -562,8 +562,7 @@ def _money_rain(w, text):
     bills = [[random.uniform(0, w), random.uniform(-40, 0), random.uniform(0.5, 1.4)] for _ in range(26)]
     msg = R.ascii_safe(text or 'CASHED').upper()
     font = R.F_FLASH
-    while R.text_w(font, msg) > w - 50 and font.size > 11:
-        font = R._font('DejaVuSansCondensed-Bold.ttf', font.size - 1)
+    font = R.smaller(font, msg, w - 50)
     for i in range(int(2.4 * FPS)):
         img, d = canvas(w, (0, 18, 6))
         for b in bills:
@@ -689,7 +688,8 @@ def anim_score(w, text):
     font = R.F_FLASH
     left = team + ' ' + play
     lw = R.text_w(font, left) + 16
-    if lw > w * 0.6:                        # long play names on narrow strips: shorter word
+    score_w = 10 + sum(R.text_w(R.F_SCORE, ab) + 4 + R.text_w(font, sc) + 6 for ab, sc in ((aw, as_), (hm, hs))) + R.text_w(font, '-') + 6
+    if lw + score_w > w:                    # not enough room for the score too: shorter word
         left = team + ' ' + {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
         lw = R.text_w(font, left) + 16
     slide, hold = int(0.25 * FPS), int(1.9 * FPS)

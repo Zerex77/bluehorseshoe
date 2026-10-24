@@ -29,10 +29,53 @@ def _font(name, size):
     return ImageFont.load_default()
 
 
-F_BIG = _font('DejaVuSansCondensed-Bold.ttf', 14)
-F_SMALL = _font('DejaVuSansCondensed-Bold.ttf', 10)
-F_SCORE = _font('DejaVuSansCondensed-Bold.ttf', 12)
-F_FLASH = _font('DejaVuSansCondensed-Bold.ttf', 20)
+PIXEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
+_caps = {}
+
+
+def caps(f):
+    """(top, bottom) of a capital letter's ink when drawn at y=0, for centering any font."""
+    k = id(f)
+    if k not in _caps:
+        img = Image.new('L', (64, 64))
+        dd = ImageDraw.Draw(img)
+        dd.fontmode = '1'
+        dd.text((2, 2), 'H', font=f, fill=255)
+        bb = img.getbbox() or (0, 2, 0, 12)
+        _caps[k] = (bb[1] - 2, bb[3] - 2)
+    return _caps[k]
+
+
+def _pixel(name, size):
+    """Hand-drawn pixel font (Terminus, OFL, in fonts/): every letter lands exactly
+    on the LED grid, so text is crisp and even. Falls back to DejaVu if the file is missing."""
+    try:
+        f = ImageFont.load(os.path.join(PIXEL_DIR, name + '.pil'))
+    except Exception:
+        return _font('DejaVuSansCondensed-Bold.ttf', size)
+    if not hasattr(f, 'getlength'):            # older Pillow
+        f.getlength = lambda t, _f=f: _f.getsize(t)[0]
+    top, bot = caps(f)
+    f.size = size
+    f.getmetrics = lambda _t=top, _b=bot: (_t + _b + 2, 0)   # centers capitals with the usual (H - asc - desc) // 2 + 1
+    return f
+
+
+F_BIG = _pixel('ter-u14b', 14)    # leg labels
+F_SMALL = _pixel('ter-u12b', 12)  # detail lines, slip tabs
+F_SCORE = _pixel('ter-u14b', 14)  # score bugs
+F_FLASH = _pixel('ter-u20b', 20)  # alerts, big words
+# for fitting long alert text: one line (largest first), then two lines
+ONE_LINE = [F_FLASH, _pixel('ter-u18b', 18), _pixel('ter-u16b', 16), F_BIG]
+TWO_LINES = [F_BIG, F_SMALL]
+
+
+def smaller(f, text, maxw):
+    """Largest single-line font that fits text in maxw (starting from f's size)."""
+    for c in ONE_LINE:
+        if c.size <= f.size and text_w(c, text) <= maxw:
+            return c
+    return ONE_LINE[-1]
 
 
 def _draw(img):
@@ -182,7 +225,7 @@ def item_slip(slip):
     return img
 
 
-TAB_MAX = 64   # widest a slip header gets
+TAB_MAX = 72   # widest a slip header gets
 TAB_MIN = 30
 
 
@@ -382,21 +425,15 @@ def flash_frame(width, text, kind, on):
     return img
 
 
-def _font_size(size):
-    return _font('DejaVuSansCondensed-Bold.ttf', size)
-
-
 def fit_lines(maxw, text):
     """Lay out alert text in the 32px strip -> [(line, font, y)].
-    One big line if it fits (down to 14px); otherwise two lines, split at a newline in the text
-    or at the word break that balances them best, as large as both lines allow."""
+    One big line if it fits; otherwise two lines, split at a newline in the text or at the word
+    break that balances them best, as large as both lines allow."""
     text = text.strip()
     if '\n' not in text:
-        for size in range(F_FLASH.size, 13, -1):
-            f = _font_size(size)
+        for f in ONE_LINE:
             if text_w(f, text) <= maxw:
-                top = f.getbbox(text)[1]
-                bot = f.getbbox('A')[3]
+                top, bot = caps(f)
                 return [(text, f, (H - (bot - top)) // 2 - top)]
         words = text.split()
         best = None
@@ -408,18 +445,15 @@ def fit_lines(maxw, text):
         lines = [best[1], best[2]] if best else [text, '']
     else:
         lines = [x.strip() for x in text.split('\n', 1)]
-    for size in (14, 13, 12, 11, 10):
-        f = _font_size(size)
-        if all(text_w(f, ln) <= maxw for ln in lines):
+    f = TWO_LINES[-1]
+    for c in TWO_LINES:
+        if all(text_w(c, ln) <= maxw for ln in lines):
+            f = c
             break
-    cap = f.getbbox('A')
-    ch = cap[3] - cap[1]                       # capital height
+    top, bot = caps(f)
+    ch = bot - top                             # capital height
     gap = max(2, (H - 2 * ch) // 3)
-    out = []
-    for k, ln in enumerate(lines):
-        y = gap + k * (ch + gap) - cap[1]
-        out.append((ln, f, y))
-    return out
+    return [(ln, f, gap + k * (ch + gap) - top) for k, ln in enumerate(lines)]
 
 
 def _ab(t):
