@@ -12,9 +12,12 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 
 H = 32
-FPS = 20
+FPS = 30
 DT = 1.0 / FPS
-SPEED = 15.0         # boardwalk pixels per second (calm, but moving)
+# Smooth motion: each layer moves one whole pixel every N frames (fractions make LEDs stutter).
+NEAR_N, FAR_N = 2, 8   # boardwalk 15 px/s, skyline ~4 px/s
+SPEED = FPS / NEAR_N
+SKY_LOOP = 7 * 160
 
 HORIZON = 19         # skyline base / top of the water
 SAND = 25
@@ -49,84 +52,100 @@ def _mix(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
-def frames(w):
-    t0 = time.time()
-    stars = [(random.randrange(w), random.randrange(0, HORIZON - 4), random.random() * 6.28) for _ in range(40)]
-    while True:
-        now = time.time() - t0
-        hour = _now_et().hour
-        P = palette(hour)
-        img = Image.new('RGB', (w, H))
-        d = ImageDraw.Draw(img)
-        # sky
+_BG = {}
+
+
+def _background(w, P):
+    """Sky + far skyline (with lit windows) drawn once per time of day; antenna lights listed to blink."""
+    key = (w, P['top'], P['bot'])
+    if key not in _BG:
+        _BG.clear()
+        strip = Image.new('RGB', (SKY_LOOP + w + 14, H))
+        d = ImageDraw.Draw(strip)
         for y in range(HORIZON):
-            d.line((0, y, w, y), fill=_mix(P['top'], P['bot'], y / (HORIZON - 1)))
-        if P['night']:
-            for sx, sy, ph in stars:
-                b = 0.5 + 0.5 * math.sin(now * 1.3 + ph)
-                if b > 0.35:
-                    d.point(((sx - now * 0.4) % w, sy), fill=_mix((40, 40, 60), (230, 230, 255), b))
-        # sun / moon, far away so it barely moves
-        ox = int(w * 0.72 - (now * 0.15) % (w * 1.4)) % (w + 40) - 20
-        oy = 5 if P['night'] or 7 <= hour < 17 else 11
-        d.ellipse((ox - 4, oy - 4, ox + 4, oy + 4), fill=P['orb'])
-        if P['night']:
-            d.ellipse((ox - 2, oy - 5, ox + 5, oy + 2), fill=_mix(P['top'], P['bot'], oy / HORIZON))   # crescent
-        # far skyline (slow)
-        far = now * SPEED * 0.25
-        k0 = int(far // 7) - 1
-        for k in range(k0, k0 + w // 7 + 3):
-            r = _rng(k, 1)
+            d.line((0, y, strip.width, y), fill=_mix(P['top'], P['bot'], y / (HORIZON - 1)))
+        antennas = []
+        for k in range(strip.width // 7 + 1):
+            r = _rng(k % 160, 1)
             bw, bh = r.randint(5, 9), r.randint(4, 14) if r.random() > 0.15 else 0
             if not bh:
                 continue
-            x = int(k * 7 - far)
+            x = k * 7
             d.rectangle((x, HORIZON - bh, x + bw, HORIZON - 1), fill=P['bld'])
             if r.random() < 0.2:
-                d.line((x + bw // 2, HORIZON - bh - 3, x + bw // 2, HORIZON - bh - 1), fill=P['bld'])   # antenna
-                if P['night'] and int(now * 2 + k) % 3 == 0:
-                    d.point((x + bw // 2, HORIZON - bh - 3), fill=(255, 60, 60))
+                d.line((x + bw // 2, HORIZON - bh - 3, x + bw // 2, HORIZON - bh - 1), fill=P['bld'])
+                antennas.append((x + bw // 2, HORIZON - bh - 3, k))
             if P['win']:
                 for wy in range(HORIZON - bh + 2, HORIZON - 1, 2):
                     for wx in range(x + 1, x + bw, 2):
-                        wr = _rng(k * 131 + wy * 7 + wx, 2)
-                        if wr.random() < P['win'] and not (wr.random() < 0.03 and int(now / 3 + k) % 2):
+                        wr = _rng((k % 160) * 131 + wy * 7 + wx, 2)
+                        if wr.random() < P['win']:
                             d.point((wx, wy), fill=(255, 210, 120) if wr.random() < 0.8 else (160, 220, 255))
-        # water with moving shimmer and a reflection column under the sun / moon
+        _BG[key] = (strip, antennas)
+    return _BG[key]
+
+
+def frames(w):
+    stars = [(random.randrange(w), random.randrange(0, HORIZON - 8), random.random() * 6.28) for _ in range(40)]
+    sparkles = [(random.randrange(w * 3), random.randint(HORIZON, SAND - 1), random.randint(3, 6),
+                 random.randint(1, 3), i) for i in range(70)]
+    f = 0
+    while True:
+        f += 1
+        now = f * DT
+        hour = _now_et().hour
+        P = palette(hour)
+        far, near = f // FAR_N, f // NEAR_N
+        img = Image.new('RGB', (w, H))
+        strip, antennas = _background(w, P)
+        o = far % SKY_LOOP
+        img.paste(strip.crop((o, 0, o + w, H)), (0, 0))
+        d = ImageDraw.Draw(img)
+        if P['night']:
+            for ax, ay, k in antennas:
+                if o - 2 <= ax < o + w + 2 and (f // 15 + k) % 3 == 0:
+                    d.point((ax - o, ay), fill=(255, 60, 60))
+            for sx, sy, ph in stars:
+                b = 0.5 + 0.5 * math.sin(now * 1.3 + ph)
+                x = (sx - f // 75) % w
+                if b > 0.35 and img.getpixel((x, sy)) == strip.getpixel((0, sy)):
+                    d.point((x, sy), fill=_mix((40, 40, 60), (230, 230, 255), b))
+        # sun / moon, far away so it barely moves (behind the skyline is fine: it's low)
+        ox = int(w * 0.72 - (f // 200)) % (w + 40) - 20
+        oy = 5 if P['night'] or 7 <= hour < 17 else 11
+        sky_at = _mix(P['top'], P['bot'], oy / HORIZON)
+        d.ellipse((ox - 4, oy - 4, ox + 4, oy + 4), fill=P['orb'])
+        if P['night']:
+            d.ellipse((ox - 2, oy - 5, ox + 5, oy + 2), fill=sky_at)   # crescent
+        # water, sparkles drifting one pixel at a time
         for y in range(HORIZON, SAND):
             d.line((0, y, w, y), fill=_mix(P['water'], P['bot'], 0.15 * (SAND - y) / 6))
-        mid = now * SPEED * 0.5
-        for i in range(70):
-            r = _rng(i, 3)
-            x = int((r.randrange(w * 3) - mid * (0.6 + r.random() * 0.6)) % w)
-            y = r.randint(HORIZON, SAND - 1)
+        for x0, y, n, ln, i in sparkles:
             if math.sin(now * 2 + i) > 0.2:
-                d.line((x, y, x + r.randint(1, 3), y), fill=_mix(P['water'], (220, 230, 255), 0.45))
+                x = (x0 - f // n) % w
+                d.line((x, y, x + ln, y), fill=_mix(P['water'], (220, 230, 255), 0.45))
         for y in range(HORIZON, SAND):
             if math.sin(now * 5 + y * 1.7) > -0.2:
-                d.line((ox - 2 + int(math.sin(now * 3 + y) * 2), y, ox + 2 + int(math.sin(now * 3 + y) * 2), y),
-                       fill=_mix(P['water'], P['orb'], 0.55))
+                wob = int(math.sin(now * 3 + y) * 2)
+                d.line((ox - 2 + wob, y, ox + 2 + wob, y), fill=_mix(P['water'], P['orb'], 0.55))
         # sand with a gentle wave line
         d.rectangle((0, SAND, w, WALK - 1), fill=P['sand'])
         for x in range(w):
-            if math.sin((x + now * 6) * 0.25) + math.sin(now * 1.5) > 1.2:
+            if math.sin((x + f // 5) * 0.25) + math.sin(now * 1.5) > 1.2:
                 d.point((x, SAND), fill=(235, 240, 255))
-        # boardwalk (full speed): planks, railing posts
-        near = now * SPEED
+        # boardwalk: planks, palms and lamps, one pixel every other frame
         d.rectangle((0, WALK, w, H), fill=P['walk'])
-        for x in range(-int(near) % 6, w, 6):
+        for x in range(-near % 6, w, 6):
             d.line((x, WALK, x, H), fill=_mix(P['walk'], (0, 0, 0), 0.35))
         d.line((0, WALK, w, WALK), fill=_mix(P['walk'], (255, 255, 255), 0.25))
-        # palms and lamp posts in the foreground
-        k0 = int(near // 40) - 1
+        k0 = near // 40 - 1
         for k in range(k0, k0 + w // 40 + 3):
             r = _rng(k, 4)
-            x = int(k * 40 + r.randint(0, 20) - near)
+            x = k * 40 + r.randint(0, 20) - near
             if r.random() < 0.55:
                 _palm(d, x, WALK, now + k, P['night'])
             else:
                 _lamp(d, x, WALK, P['night'])
-        # someone out for a walk (stays put while the world drifts by)
         _walker(d, int(w * 0.38), WALK, now)
         yield img
 

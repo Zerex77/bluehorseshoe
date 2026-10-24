@@ -17,10 +17,13 @@ import lofi
 import render as R
 
 H = 32
-FPS = 20
+FPS = 30
 DT = 1.0 / FPS
-SPEED = 15.0           # street speed, pixels per second
-MID = 0.6              # neighborhoods move at 60% of the street (depth)
+# Smooth motion on LEDs: every layer moves exactly one whole pixel every N frames (never fractions,
+# which make things stutter), counted in frames rather than wall-clock time.
+NEAR_N, MID_N, FAR_N = 2, 3, 8   # street 15 px/s, neighborhoods 10 px/s, far skyline ~4 px/s
+SPEED = FPS / NEAR_N
+SKY_LOOP = 7 * 160     # the far skyline repeats every 160 buildings
 GROUND = 25            # where buildings stand; the street is below
 LOOP = 1150            # length of one loop of neighborhoods
 
@@ -206,14 +209,12 @@ def guitar_hotel(d, x0, t, P):
         (d.ellipse if kind == 'e' else d.rectangle)(box, fill=glass)
     d.rectangle((cx - 3, 0, cx + 3, 2), fill=rim)         # headstock
     
-    for y in range(9, 24, 2):                              # floors
-        for x in range(cx - 12, cx + 13, 2):
-            if img_inside(x, y, cx):
-                if night:
-                    if random.Random(x * 31 + y).random() < 0.35:
-                        d.point((x, y), fill=(230, 200, 140))
-                else:
-                    d.point((x, y), fill=_mix(glass, (200, 225, 245), 0.45))
+    for dx, y, lit in _GUITAR_WINDOWS:                     # floors
+        if night:
+            if lit:
+                d.point((cx + dx, y), fill=(230, 200, 140))
+        else:
+            d.point((cx + dx, y), fill=_mix(glass, (200, 225, 245), 0.45))
     if night:                                              # glowing strings running up the neck
         col = show[int(t * 3) % len(show)]
         d.line((cx, 2, cx, 21), fill=col)
@@ -225,6 +226,10 @@ def guitar_hotel(d, x0, t, P):
 def img_inside(x, y, cx):
     """Is (x, y) inside the guitar body (two stacked ellipses)?"""
     return (((x - cx) / 12.0) ** 2 + ((y - 20) / 4.5) ** 2 < 1) or (((x - cx) / 8.0) ** 2 + ((y - 12) / 4.0) ** 2 < 1)
+
+
+_GUITAR_WINDOWS = [(dx, y, random.Random(dx * 31 + y).random() < 0.35)
+                   for y in range(9, 24, 2) for dx in range(-12, 13, 2) if img_inside(dx, y, 0)]
 
 
 def _person(d, x, base, shirt, t, hat=None, jump=0.0):
@@ -297,26 +302,27 @@ class Traffic:
 
     def __init__(self, w):
         self.w = w
-        self.cars = []
-        for lane in LANES:
-            for k in range(3):
-                self.cars.append(self._new(lane, random.uniform(0, w)))
+        self.cars = [self._new(lane, random.uniform(0, w)) for lane in LANES for _ in range(3)]
 
     def _new(self, lane, x=None):
         y, dirn = lane
+        # whole-pixel moves on a fixed beat: top lane drifts slowly either way, bottom lane rushes past
+        if dirn > 0:
+            step, every = random.choice([(1, 4), (1, 6), (-1, 5), (-1, 3)])
+        else:
+            step, every = -1, 1
         if x is None:
-            x = -12 if dirn > 0 else self.w + 12
-        return {'x': x, 'y': y, 'dir': dirn, 'v': random.uniform(10, 22), 'col': random.choice(self.COLORS),
-                'truck': random.random() < 0.2}
+            x = (self.w + 12) if step < 0 else -14
+        return {'x': int(x), 'y': y, 'dir': dirn, 'step': step, 'every': every,
+                'col': random.choice(self.COLORS), 'truck': random.random() < 0.2}
 
-    def step(self, d, dt, night):
+    def step(self, d, f, night):
         for c in self.cars:
-            c['x'] += (c['dir'] * c['v'] - SPEED) * dt       # their own speed, minus our scroll
+            if f % c['every'] == 0:
+                c['x'] += c['step']
             if c['x'] < -30 or c['x'] > self.w + 30:
                 c.update(self._new((c['y'], c['dir'])))
-                if c['dir'] > 0:
-                    c['x'] = self.w + 12 if random.random() < 0.5 else -12
-            x, y = int(c['x']), c['y']
+            x, y = c['x'], c['y']
             ln = 12 if c['truck'] else 8
             d.rectangle((x, y - 2, x + ln, y), fill=c['col'])
             d.rectangle((x + (2 if c['dir'] > 0 else ln - 5), y - 3, x + (5 if c['dir'] > 0 else ln - 2), y - 2), fill=c['col'])
@@ -328,74 +334,110 @@ class Traffic:
                 d.point((back, y - 1), fill=(220, 30, 30))
 
 
-def frames(w, logos=None):
-    t0 = time.time()
-    traffic = Traffic(w)
-    stars = [(random.randrange(w), random.randrange(0, 18), random.random() * 6.28) for _ in range(35)]
-    birds = []
-    last = time.time()
-    while True:
-        now_s = time.time()
-        dt, last = min(0.2, now_s - last), now_s
-        t = now_s - t0
-        P = lofi.palette(lofi._now_et().hour)
-        img = Image.new('RGB', (w, H))
-        d = ImageDraw.Draw(img)
-        d.fontmode = '1'
+_BG = {}
+
+
+def _background(w, P):
+    """Sky gradient + far skyline drawn once per time of day, as a strip we just slide a window over."""
+    key = (w, P['top'], P['bot'])
+    if key not in _BG:
+        _BG.clear()
+        strip = Image.new('RGB', (SKY_LOOP + w + 14, H))
+        d = ImageDraw.Draw(strip)
         for y in range(GROUND):
-            d.line((0, y, w, y), fill=_mix(P['top'], P['bot'], y / (GROUND - 1)))
-        if P['night']:
-            for sx, sy, ph in stars:
-                if math.sin(t * 1.3 + ph) > -0.2:
-                    d.point(((sx - t * 0.6) % w, sy), fill=(200, 200, 230))
-        # far skyline
-        far = t * SPEED * 0.25
-        k0 = int(far // 7) - 1
-        for k in range(k0, k0 + w // 7 + 3):
-            r = random.Random(k * 7919 + 1)
+            d.line((0, y, strip.width, y), fill=_mix(P['top'], P['bot'], y / (GROUND - 1)))
+        for k in range(strip.width // 7 + 1):
+            r = random.Random((k % 160) * 7919 + 1)
             bw, bh = r.randint(5, 9), r.randint(3, 11)
-            x = int(k * 7 - far)
+            x = k * 7
             d.rectangle((x, GROUND - bh, x + bw, GROUND - 1), fill=_mix(P['bld'], P['bot'], 0.35))
             if P['win']:
                 for wy in range(GROUND - bh + 2, GROUND - 1, 2):
                     for wx in range(x + 1, x + bw, 2):
-                        if random.Random(k * 131 + wy * 7 + wx).random() < P['win'] * 0.7:
+                        if random.Random((k % 160) * 131 + wy * 7 + wx).random() < P['win'] * 0.7:
                             d.point((wx, wy), fill=(230, 190, 110))
-        # birds
-        if random.random() < 0.01 and not P['night']:
-            birds.append([w + 5, random.randint(3, 12), random.uniform(10, 18)])
+        _BG[key] = strip
+    return _BG[key]
+
+
+def _train(d, w, f, near, P):
+    """A train rolls through about once a minute, two pixels a frame."""
+    tf = f % (70 * FPS) - 20 * FPS
+    if not 0 <= tf < (w + 230) // 2:
+        return
+    tx = w + 10 - tf * 2
+    d.line((0, GROUND - 1, w, GROUND - 1), fill=(90, 85, 80))
+    for x in range(-near % 4, w, 4):
+        d.point((x, GROUND), fill=(110, 80, 50))
+    silver = (190, 195, 205) if not P['night'] else (90, 95, 110)
+    for car in range(7):
+        cx = tx + car * 30
+        if cx > w or cx + 30 < 0:
+            continue
+        if car == 0:
+            d.polygon([(cx, GROUND - 3), (cx + 4, GROUND - 10), (cx + 28, GROUND - 10), (cx + 28, GROUND - 3)], fill=TEAL)
+            d.rectangle((cx + 6, GROUND - 9, cx + 10, GROUND - 7), fill=(40, 60, 90))
+            d.line((cx + 2, GROUND - 4, cx + 28, GROUND - 4), fill=GOLD)
+            d.point((cx + 1, GROUND - 4), fill=(255, 250, 200) if P['night'] or (f // 8) % 2 else (200, 200, 160))
+        else:
+            d.rectangle((cx, GROUND - 10, cx + 28, GROUND - 3), fill=silver)
+            d.line((cx, GROUND - 5, cx + 28, GROUND - 5), fill=TEAL)
+            for wx in range(cx + 3, cx + 26, 5):
+                d.rectangle((wx, GROUND - 9, wx + 2, GROUND - 7), fill=(255, 220, 140) if P['night'] else (60, 90, 130))
+        for wx in (cx + 4, cx + 24):
+            d.ellipse((wx - 2, GROUND - 4, wx + 2, GROUND), fill=(30, 30, 35))
+        d.line((cx + 28, GROUND - 5, cx + 30, GROUND - 5), fill=(80, 80, 80))
+
+
+DRAW = {'bridge': bridge, 'construction': construction, 'arcade': arcade, 'beach': beach,
+        'guitar': guitar_hotel, 'park': park}
+
+
+def frames(w, logos=None):
+    traffic = Traffic(w)
+    stars = [(random.randrange(w), random.randrange(0, 12), random.random() * 6.28) for _ in range(35)]
+    birds = []
+    f = 0
+    while True:
+        f += 1
+        t = f * DT
+        P = lofi.palette(lofi._now_et().hour)
+        far, mid, near = f // FAR_N, f // MID_N, f // NEAR_N
+        img = Image.new('RGB', (w, H))
+        bg = _background(w, P)
+        o = far % SKY_LOOP
+        img.paste(bg.crop((o, 0, o + w, H)), (0, 0))
+        d = ImageDraw.Draw(img)
+        d.fontmode = '1'
+        if P['night']:
+            for sx, sy, ph in stars:
+                if math.sin(t * 1.3 + ph) > -0.2 and img.getpixel(((sx - f // 50) % w, sy)) == bg.getpixel((0, sy)):
+                    d.point(((sx - f // 50) % w, sy), fill=(200, 200, 230))
+        # birds, one pixel every other frame
+        if random.random() < 0.007 and not P['night']:
+            birds.append([w + 5, random.randint(3, 12)])
         for b in birds:
-            b[0] -= b[2] * dt
-            flap = int(t * 6 + b[1]) % 2
+            if f % 2 == 0:
+                b[0] -= 1
+            flap = (f // 5 + b[1]) % 2
             d.line((b[0] - 2, b[1] - flap, b[0], b[1]), fill=(40, 40, 50))
             d.line((b[0], b[1], b[0] + 2, b[1] - flap), fill=(40, 40, 50))
         birds[:] = [b for b in birds if b[0] > -5]
         # neighborhoods
-        mid = t * SPEED * MID
-        base = int(mid // LOOP) * LOOP
+        base = (mid // LOOP) * LOOP
         for loop in (base - LOOP, base, base + LOOP):
             for x, width, name in HOODS:
-                sx = int(loop + x - mid)
+                sx = loop + x - mid
                 if sx + width + 30 < 0 or sx - 30 > w:
                     continue
-                if name == 'bridge':
-                    bridge(d, sx, t, P)
-                elif name == 'stadium':
+                if name == 'stadium':
                     stadium(d, img, sx, t, P, logos)
-                elif name == 'construction':
-                    construction(d, sx, t, P)
-                elif name == 'arcade':
-                    arcade(d, sx, t, P)
-                elif name == 'guitar':
-                    guitar_hotel(d, sx, t, P)
-                elif name == 'park':
-                    park(d, sx, t, P)
                 else:
-                    beach(d, sx, t, P)
-        # plane towing a banner, every ~45 seconds
-        ph = (t % 45) / 45.0
-        if ph < 0.4:
-            px = int(w + 60 - (w + 200) * (ph / 0.4))
+                    DRAW[name](d, sx, t, P)
+        # plane towing a banner: one pixel a frame, every 45 seconds
+        pf = f % (45 * FPS)
+        if pf < w + 200:
+            px = w + 60 - pf
             d.polygon([(px, 5), (px + 9, 4), (px + 9, 6)], fill=(230, 230, 235))
             d.line((px + 5, 2, px + 5, 8), fill=(200, 200, 210))
             d.line((px + 9, 5, px + 13, 5), fill=(180, 180, 180))
@@ -407,35 +449,8 @@ def frames(w, logos=None):
         # street
         d.rectangle((0, GROUND, w, H), fill=(40, 40, 46) if not P['night'] else (22, 22, 28))
         d.line((0, GROUND, w, GROUND), fill=(110, 110, 115))
-        near = t * SPEED
-        for x in range(-int(near) % 10, w, 10):
+        for x in range(-near % 10, w, 10):
             d.line((x, 28, x + 4, 28), fill=(200, 180, 80))
-        traffic.step(d, dt, P['night'])
-        # a train rolls through every ~70 seconds
-        tp = t % 70
-        if 20 < tp < 29:
-            tx = int(w + 10 - (tp - 20) * 75)
-            d.line((0, GROUND - 1, w, GROUND - 1), fill=(90, 85, 80))
-            for x in range(-int(near) % 4, w, 4):
-                d.point((x, GROUND), fill=(110, 80, 50))
-            silver = (190, 195, 205) if not P['night'] else (90, 95, 110)
-            for car in range(7):
-                cx = tx + car * 30
-                if cx > w or cx + 28 < 0:
-                    continue
-                body = (TEAL if car == 0 else silver)
-                if car == 0:
-                    d.polygon([(cx, GROUND - 3), (cx + 4, GROUND - 10), (cx + 28, GROUND - 10), (cx + 28, GROUND - 3)], fill=body)
-                    d.rectangle((cx + 6, GROUND - 9, cx + 10, GROUND - 7), fill=(40, 60, 90))
-                    d.line((cx + 2, GROUND - 4, cx + 28, GROUND - 4), fill=GOLD)
-                    d.point((cx + 1, GROUND - 4), fill=(255, 250, 200) if P['night'] or int(t * 4) % 2 else (200, 200, 160))
-                else:
-                    d.rectangle((cx, GROUND - 10, cx + 28, GROUND - 3), fill=body)
-                    d.line((cx, GROUND - 5, cx + 28, GROUND - 5), fill=TEAL)
-                    for wx in range(cx + 3, cx + 26, 5):
-                        d.rectangle((wx, GROUND - 9, wx + 2, GROUND - 7),
-                                    fill=(255, 220, 140) if P['night'] else (60, 90, 130))
-                for wx in (cx + 4, cx + 24):
-                    d.ellipse((wx - 2, GROUND - 4, wx + 2, GROUND), fill=(30, 30, 35))
-                d.line((cx + 28, GROUND - 5, cx + 30, GROUND - 5), fill=(80, 80, 80))
+        traffic.step(d, f, P['night'])
+        _train(d, w, f, near, P)
         yield img
