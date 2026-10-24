@@ -87,12 +87,13 @@ class Logos:
         key = (u, size)
         if key in self.mem:
             return self.mem[key]
-        fn = os.path.join(self.dir, re.sub(r'[^a-zA-Z0-9]+', '_', u)[-80:])
+        fn = os.path.join(self.dir, 'v2_' + re.sub(r'[^a-zA-Z0-9]+', '_', u)[-80:])
         if os.path.exists(fn):
             try:
                 im = Image.open(fn).convert('RGBA')
+                im.thumbnail((size * 2, size * 2), Image.LANCZOS)   # shrink first: lifting is per pixel
+                im = lift_dark(im)
                 im.thumbnail((size, size), Image.LANCZOS)
-                # lift very dark logos so they show on black LEDs
                 self.mem[key] = im
                 return im
             except Exception:
@@ -104,7 +105,16 @@ class Logos:
 
         def work():
             try:
-                data = self.fetch(u)
+                data = None
+                dark = dark_url(u)
+                if dark:   # ESPN's version made for dark screens, when the team has one
+                    try:
+                        data = self.fetch(dark)
+                        Image.open(io.BytesIO(data)).verify()
+                    except Exception:
+                        data = None
+                if data is None:
+                    data = self.fetch(u)
                 Image.open(io.BytesIO(data)).verify()
                 with open(fn, 'wb') as f:
                     f.write(data)
@@ -115,6 +125,26 @@ class Logos:
                     self.pending.discard(u)
         threading.Thread(target=work, daemon=True).start()
         return None
+
+
+def dark_url(u):
+    """ESPN keeps a dark-background version of most logos at .../500-dark/... ."""
+    if 'espncdn.com/i/teamlogos/' not in u or '/500-dark/' in u:
+        return None
+    return u.replace('/500/scoreboard/', '/500-dark/').replace('/500/', '/500-dark/')
+
+
+def lift_dark(im):
+    """Black LEDs are off, so black parts of a logo disappear. Raise near-black (visible) pixels to
+    a gray that keeps a hint of their color, so outlines and details still show."""
+    px = im.load()
+    w, h = im.size
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a > 60 and max(r, g, b) < 70:
+                px[x, y] = (r + 110, g + 110, b + 115, a)
+    return im
 
 
 def _paste_logo(img, logo, x, y, size):
