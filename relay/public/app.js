@@ -505,6 +505,10 @@
     var t = cur();
     $('sName').value = S.name;
     $('sLabel').value = data.label || t.label || '';
+    var st = data.settings || {};
+    $('sMode').value = st.mode || 'tickets';
+    $('sTeam').value = st.team || 'JAX';
+    $('sTeamWrap').hidden = $('sMode').value !== 'team';
     $('sPhones').textContent = (data.phones || []).join(', ') || 'Just you so far. Give friends the pairing code on the ticker so they can add tickets too.';
     $('sTickers').innerHTML = S.tickers.map(function (x) {
       return '<div class="item"><span>' + esc(x.label || 'Ticker') + '<small>' + (x.id === t.id ? 'Showing now' : '') + '</small></span>' +
@@ -513,6 +517,15 @@
     show('vSet');
   }
   $('sName').onchange = function () { S.name = this.value.trim(); saveState(); };
+  function saveDisplay() {
+    var t = cur(), want = { mode: $('sMode').value, team: $('sTeam').value };
+    $('sTeamWrap').hidden = want.mode !== 'team';
+    data.settings = Object.assign({}, data.settings, want);
+    api('POST', '/t/' + t.id + '/settings', want, t).then(function (r) { data.settings = r.settings; })
+      .catch(function (e) { alert(e.message || "Couldn't save. Try again."); });
+  }
+  $('sMode').onchange = saveDisplay;
+  $('sTeam').onchange = saveDisplay;
   $('sLabel').onchange = function () {
     var t = cur(), label = this.value.trim();
     t.label = label; data.label = label; saveState();

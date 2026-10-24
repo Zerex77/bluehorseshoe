@@ -18,7 +18,7 @@ apt-get install -y git python3-dev python3-pip python3-pil python3-numpy cython3
 
 echo "-- Getting the ticker"
 mkdir -p "$APP" "$DATA"
-for f in bhticker.py legs.py render.py anim.py cloud.py wifisetup.py web.html demo.py; do
+for f in bhticker.py legs.py render.py anim.py cloud.py wifisetup.py teamshow.py web.html demo.py; do
   curl -fsSL "$SRC/$f?$(date +%s)" -o "$APP/$f"
 done
 mkdir -p "$APP/fonts"

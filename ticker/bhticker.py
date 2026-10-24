@@ -23,6 +23,7 @@ import legs as L  # noqa: E402
 import render as R  # noqa: E402
 import anim as A  # noqa: E402
 import cloud as C  # noqa: E402
+import teamshow as TS  # noqa: E402
 from PIL import Image  # noqa: E402
 
 DATA = os.environ.get('BHTICKER_DATA', '/var/lib/bhticker')
@@ -38,6 +39,8 @@ DEFAULTS = {
     'animations': True,                          # play a celebration animation before each flash
     'port': 8080,
     'on': True,                                  # False = asleep: panels dark (set from the app's power button)
+    'mode': 'tickets',                           # 'tickets' or 'team' (team display, set in the app)
+    'team': 'JAX',                               # team for the team display
     'cloud_url': '',                             # address of the app relay; turns on the phone app
 }
 
@@ -200,6 +203,14 @@ class Ticker:
             threading.Thread(target=self.cloud.push_slips, args=(mine,), daemon=True).start()
         threading.Thread(target=self.update, daemon=True).start()
 
+    def team_game(self, abbr):
+        """This week's NFL game for a team: live first, then the next one, then the last one."""
+        mine = [g for g in self.board.games.values() if g.get('sport') == 'nfl'
+                and abbr in (g['a'].get('abbreviation'), g['h'].get('abbreviation'))]
+        rank = {'in': 0, 'pre': 1, 'post': 2}
+        mine.sort(key=lambda g: (rank.get(g['state'], 3), g.get('date') or '' if g['state'] != 'post' else ''))
+        return mine[0] if mine else None
+
     def set_power(self, on):
         """Asleep = panels dark, no alerts; scores keep updating so waking up is instant."""
         on = bool(on)
@@ -210,7 +221,7 @@ class Ticker:
 
     def set_config(self, patch):
         with self.lock:
-            for k in ('brightness', 'speed', 'alerts', 'animations', 'on'):
+            for k in ('brightness', 'speed', 'alerts', 'animations', 'on', 'mode', 'team'):
                 if k in patch:
                     self.cfg[k] = patch[k]
             save_json('config.json', {k: self.cfg[k] for k in self.cfg if self.cfg[k] != DEFAULTS.get(k)})
@@ -394,6 +405,17 @@ class Ticker:
                 self.flash(*self.alerts.pop(0))
                 last = time.time()
                 continue
+            if self.cfg.get('mode') == 'team':   # team display instead of tickets
+                key = self.cfg.get('team') or 'JAX'
+                if getattr(self, '_show_key', None) != key:
+                    self._show_key = key
+                    self._show = TS.frames(W, key, self.team_game, self.logos)
+                t0 = time.time()
+                self.panel.show(next(self._show))
+                time.sleep(max(0.0, TS.DT - (time.time() - t0)))
+                last = time.time()
+                continue
+            self._show_key = None
             x_off += self.cfg['speed'] * dt
             step = int(x_off)
             x_off -= step

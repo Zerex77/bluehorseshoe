@@ -237,6 +237,8 @@ async function route(req, db, url) {
       const t = await db.prepare('SELECT settings FROM tickers WHERE id = ?').bind(id).first();
       const cur = JSON.parse((t && t.settings) || '{}');
       if (typeof body.on === 'boolean') cur.on = body.on;
+      if (body.mode === 'tickets' || body.mode === 'team') cur.mode = body.mode;
+      if (typeof body.team === 'string' && /^[A-Z]{2,4}$/.test(body.team)) cur.team = body.team;
       await db.prepare('UPDATE tickers SET settings = ? WHERE id = ?').bind(JSON.stringify(cur), id).run();
       return json({ ok: true, settings: cur });
     }

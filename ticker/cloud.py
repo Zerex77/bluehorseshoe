@@ -96,7 +96,12 @@ class Cloud:
                 if out.get('code') and out['code'] != self.code:
                     self.code = out['code']
                     self._save()
-                on = (out.get('settings') or {}).get('on')
+                st = out.get('settings') or {}
+                show = {k: st[k] for k in ('mode', 'team') if k in st}
+                if show and show != getattr(self, '_show', None):   # display mode from the app
+                    self._show = show
+                    self.app.set_config(show)
+                on = st.get('on')
                 if on is not None and on != getattr(self, '_on', None):   # power button in the app
                     self._on = on
                     self.app.set_power(on)
