@@ -279,6 +279,8 @@ class Ticker:
 
     def build_items(self, snap):
         """Order: slip header, then each game's score bug followed by that game's legs (live games first)."""
+        if os.path.exists('/run/bhticker-setup'):   # Wi-Fi setup is open (wifisetup.py)
+            return [('idle', "NO WI-FI  -  ON YOUR PHONE, JOIN 'HORSESHOE TICKER SETUP'  -  PICK A NETWORK")]
         items = []
         games = self.board.games
         rank = {'in': 0, 'pre': 1, 'post': 2}

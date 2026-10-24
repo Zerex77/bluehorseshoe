@@ -18,7 +18,7 @@ apt-get install -y git python3-dev python3-pip python3-pil python3-numpy cython3
 
 echo "-- Getting the ticker"
 mkdir -p "$APP" "$DATA"
-for f in bhticker.py legs.py render.py anim.py cloud.py web.html demo.py; do
+for f in bhticker.py legs.py render.py anim.py cloud.py wifisetup.py web.html demo.py; do
   curl -fsSL "$SRC/$f?$(date +%s)" -o "$APP/$f"
 done
 chmod +x "$APP/bhticker.py"
@@ -91,6 +91,29 @@ if [ "$(hostname)" != "bhticker" ]; then
   hostnamectl set-hostname bhticker
   sed -i "s/127.0.1.1.*/127.0.1.1\tbhticker/" /etc/hosts
   REBOOT=1
+fi
+
+echo "-- Wi-Fi setup (opens 'Horseshoe Ticker Setup' when the ticker can't get online)"
+if command -v nmcli >/dev/null; then
+  mkdir -p /etc/NetworkManager/dnsmasq-shared.d
+  # while setup is open, every web address goes to the setup page, so phones pop it up
+  echo 'address=/#/10.42.0.1' > /etc/NetworkManager/dnsmasq-shared.d/bhticker-setup.conf
+  cat > /etc/systemd/system/bhticker-wifi.service <<WIFI
+[Unit]
+Description=Blue Horseshoe ticker Wi-Fi setup
+After=NetworkManager.service
+
+[Service]
+ExecStart=/usr/bin/python3 $APP/wifisetup.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+WIFI
+  systemctl daemon-reload
+  systemctl enable bhticker-wifi.service
+  systemctl restart bhticker-wifi.service
 fi
 
 echo "-- Starting on boot"
