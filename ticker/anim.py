@@ -724,8 +724,8 @@ def _engine(img, d, x, col, alt, turn, pump, moving, logo=None):
     d.line((x + 12, 27, x + 37, 27), fill=(170, 170, 180))          # side rod
 
 
-def _car(d, x, width, edge, turn):
-    d.rectangle((x, 5, x + width, 25), fill=(22, 26, 40), outline=edge)
+def _car(d, x, width, edge, turn, top=5):
+    d.rectangle((x, top, x + width, 25), fill=(22, 26, 40), outline=edge)
     for wx in (x + 7, x + width - 7):
         _wheel(d, wx, 27, 3, turn)
 
@@ -750,8 +750,10 @@ def anim_score(w, text):
     word = {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
     # cars: the play, then each team's logo + score
     f_big = R.F_FLASH if R.text_w(R.F_FLASH, '88') < 30 else R.F_BIG
-    play_txt = R.ascii_safe(R._ab(me)) + ' ' + word
-    c1 = R.text_w(R.F_BIG, play_txt) + 12
+    LOGO = 24                                     # the scoring team's logo, big, on the first car
+    big_logo = logos.get(me, sport, LOGO) if logos else None
+    play_txt = word if big_logo is not None else R.ascii_safe(R._ab(me)) + ' ' + word
+    c1 = (4 + LOGO + 5 if big_logo is not None else 6) + R.text_w(R.F_BIG, play_txt) + 6
     team_cars = []
     for t, sc, mine in ((away, as_, side == 'a'), (home, hs, side == 'h')):
         team_cars.append((t, sc, mine, 4 + 20 + 4 + R.text_w(f_big, sc) + 6))
@@ -779,8 +781,13 @@ def anim_score(w, text):
         pump = abs(math.sin(i * 0.55))
         # cars, drawn behind the engine's couplers
         cx = x + 46 + gap
-        _car(d, cx, c1, col, turn)
-        d.text((cx + 6, 15 - (R.caps(R.F_BIG)[0] + R.caps(R.F_BIG)[1]) // 2), play_txt, font=R.F_BIG, fill=col)
+        _car(d, cx, c1, col, turn, top=1)
+        tx = cx + 6
+        big_logo = logos.get(me, sport, LOGO) if logos else None
+        if big_logo is not None:
+            R._paste_logo(img, big_logo, cx + 4, 2, LOGO)
+            tx = cx + 4 + LOGO + 5
+        d.text((tx, 14 - (R.caps(R.F_BIG)[0] + R.caps(R.F_BIG)[1]) // 2), play_txt, font=R.F_BIG, fill=col)
         cx += c1
         flash = not moving and (i // 5) % 2 == 0
         for t, sc, mine, cw in team_cars:
@@ -797,7 +804,7 @@ def anim_score(w, text):
                    fill=(GOLD if flash else WHITE) if mine else R.DIM)
             cx += cw
         d.line((x + 46, 22, x + 46 + gap, 22), fill=(120, 120, 130))
-        _engine(img, d, x, col, alt, turn, pump, moving, logos.get(me, sport, 12) if logos else None)
+        _engine(img, d, x, col, alt, turn, pump, moving)
         if i % (3 if moving else 6) == 0 and -10 < x + 12 < w:   # smoke from the stack
             smoke.p.append([x + 12, 5, random.uniform(0.3, 1.2), -random.uniform(0.4, 0.9), (170, 170, 180), 20])
             smoke.p.append([x + 13, 5, random.uniform(0.3, 1.2), -random.uniform(0.2, 0.7), (130, 130, 140), 16])
