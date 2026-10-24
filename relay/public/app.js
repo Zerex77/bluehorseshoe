@@ -37,6 +37,7 @@
     $('eBar').hidden = v !== 'vEdit';
     $('backBtn').hidden = !(v === 'vEdit' || v === 'vSet' || (v === 'vPair' && S.tickers.length));
     $('setBtn').hidden = v !== 'vHome';
+    $('pwrBtn').hidden = v !== 'vHome';
     window.scrollTo(0, 0);
     setTitle();
   }
@@ -45,12 +46,16 @@
     var titles = { vPair: 'Pair a ticker', vEdit: editing ? 'Edit ticket' : 'Add a ticket', vSet: 'Settings' };
     var name = titles[view] || (t && (data.label || t.label)) || 'Horseshoe Ticker';
     var sub = '', on = false;
+    var asleep = false;
     if (view === 'vHome' && t) {
       var age = data.seen ? (Date.now() - data.seen) / 1000 : Infinity;
       on = age < 90;
-      sub = on ? 'Ticker online' : data.seen ? 'Ticker offline · last seen ' + ago(age) : 'Waiting for the ticker to connect';
+      asleep = on && powerOff();
+      sub = asleep ? 'Ticker off · tap power to turn it on' : on ? 'Ticker online' : data.seen ? 'Ticker offline · last seen ' + ago(age) : 'Waiting for the ticker to connect';
     }
-    $('title').innerHTML = esc(name) + '<small class="' + (on ? 'on' : '') + '" id="sub">' + (sub ? '<span class="dot"></span>' + esc(sub) : '') + '</small>';
+    $('title').innerHTML = esc(name) + '<small class="' + (asleep ? 'asleep' : on ? 'on' : '') + '" id="sub">' + (sub ? '<span class="dot"></span>' + esc(sub) : '') + '</small>';
+    $('pwrBtn').classList.toggle('off', powerOff());
+    $('pwrBtn').setAttribute('aria-label', powerOff() ? 'Turn the ticker on' : 'Turn the ticker off');
   }
   function ago(s) {
     if (s < 3600) return Math.max(1, Math.round(s / 60)) + ' min ago';
@@ -58,6 +63,20 @@
     return Math.round(s / 86400) + ' days ago';
   }
   $('backBtn').onclick = function () { goHome(); };
+  // ---- power: the ticker goes dark (asleep) or wakes up; it picks this up within ~12 seconds
+  function powerOff() { return !!(data.settings && data.settings.on === false); }
+  $('pwrBtn').onclick = function () {
+    var t = cur(), btn = this, want = powerOff();   // off -> turn on, on -> turn off
+    btn.disabled = true;
+    data.settings = Object.assign({}, data.settings, { on: want });
+    setTitle();
+    api('POST', '/t/' + t.id + '/settings', { on: want }, t).then(function (r) {
+      data.settings = r.settings;
+    }).catch(function (e) {
+      data.settings = Object.assign({}, data.settings, { on: !want });
+      alert(e.message || "Couldn't reach the ticker's server. Try again.");
+    }).finally(function () { btn.disabled = false; setTitle(); });
+  };
   $('setBtn').onclick = function () { openSettings(); };
 
   // ---------------------------------------------------------------- pairing

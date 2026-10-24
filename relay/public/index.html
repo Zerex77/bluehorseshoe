@@ -39,6 +39,10 @@
   header h1 small.on .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
   .iconbtn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; cursor: pointer; flex: none; }
   .iconbtn svg { width: 20px; height: 20px; }
+  .iconbtn.pwr { color: var(--green); border-color: rgba(43, 214, 123, .5); }
+  .iconbtn.pwr.off { color: var(--mut); border-color: var(--line); }
+  .iconbtn:disabled { opacity: .5; }
+  header h1 small.asleep .dot { background: var(--amber); }
 
   main { padding: 14px 16px; max-width: 640px; margin: 0 auto; }
   h2 { font-size: 22px; margin: 6px 0 6px; }
@@ -151,6 +155,7 @@
   <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1D5FD6"/><path d="M18 12 v16 a14 14 0 0 0 28 0 v-16" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round"/></svg>
   <h1 id="title">Horseshoe Ticker<small id="sub"></small></h1>
   <button class="iconbtn" id="backBtn" type="button" aria-label="Back" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button class="iconbtn pwr" id="pwrBtn" type="button" aria-label="Turn the ticker off" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
   <button class="iconbtn" id="setBtn" type="button" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </header>
 

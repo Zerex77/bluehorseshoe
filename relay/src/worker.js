@@ -85,7 +85,12 @@ function cleanSlip(s, by) {
 
 let schemaReady = null;
 function ensureSchema(db) {
-  if (!schemaReady) schemaReady = db.batch(SCHEMA.map((q) => db.prepare(q))).catch((e) => { schemaReady = null; throw e; });
+  if (!schemaReady) {
+    schemaReady = db.batch(SCHEMA.map((q) => db.prepare(q)))
+      // added after launch: per-ticker settings such as on/off (fails harmlessly once the column exists)
+      .then(() => db.prepare("ALTER TABLE tickers ADD COLUMN settings TEXT NOT NULL DEFAULT '{}'").run().catch(() => {}))
+      .catch((e) => { schemaReady = null; throw e; });
+  }
   return schemaReady;
 }
 
@@ -129,13 +134,13 @@ async function route(req, db, url) {
   if (parts[1] === 'ticker' && parts[2]) {
     const id = parts[2], sub = parts[3] || '';
     const hash = await sha256(req.headers.get('x-ticker-secret') || '');
-    const t = await db.prepare('SELECT id, v, code, label, seen FROM tickers WHERE id = ? AND secret_hash = ?').bind(id, hash).first();
+    const t = await db.prepare('SELECT id, v, code, label, seen, settings FROM tickers WHERE id = ? AND secret_hash = ?').bind(id, hash).first();
     if (!t) return err(401, 'unknown ticker');
 
     if (sub === 'sync' && req.method === 'GET') {
       const v = Number(url.searchParams.get('v'));
       const phones = await db.prepare('SELECT count(*) AS n FROM phones WHERE ticker = ?').bind(id).first();
-      const out = { v: t.v, code: t.code, label: t.label, phones: phones.n };
+      const out = { v: t.v, code: t.code, label: t.label, phones: phones.n, settings: JSON.parse(t.settings || '{}') };
       if (v !== t.v) out.slips = JSON.parse((await db.prepare('SELECT slips FROM tickers WHERE id = ?').bind(id).first()).slips);
       if (now - t.seen > SEEN_EVERY) await db.prepare('UPDATE tickers SET seen = ? WHERE id = ?').bind(now, id).run();
       return json(out);
@@ -188,11 +193,11 @@ async function route(req, db, url) {
     if (!phone) return err(401, 'This phone is no longer paired with that ticker.');
 
     if (sub === '' && req.method === 'GET') {
-      const t = await db.prepare('SELECT v, slips, snap, status, seen, label FROM tickers WHERE id = ?').bind(id).first();
+      const t = await db.prepare('SELECT v, slips, snap, status, seen, label, settings FROM tickers WHERE id = ?').bind(id).first();
       if (!t) return err(404, 'That ticker is gone.');
       const phones = await db.prepare('SELECT name FROM phones WHERE ticker = ? ORDER BY added').bind(id).all();
       return json({ v: t.v, slips: JSON.parse(t.slips), snap: JSON.parse(t.snap), status: t.status, seen: t.seen, label: t.label,
-        phones: phones.results.map((p) => p.name) });
+        settings: JSON.parse(t.settings || '{}'), phones: phones.results.map((p) => p.name) });
     }
     if (sub === 'slips' && req.method === 'POST') {
       const body = await readJSON(req);
@@ -225,6 +230,15 @@ async function route(req, db, url) {
         if (r.meta.changes) return json({ v: t.v + 1 });
       }
       return err(409, 'Someone else changed the ticker at the same time. Try again.');
+    }
+    if (sub === 'settings' && req.method === 'POST') {
+      // turn the ticker on or off (more settings can be added here later)
+      const body = await readJSON(req);
+      const t = await db.prepare('SELECT settings FROM tickers WHERE id = ?').bind(id).first();
+      const cur = JSON.parse((t && t.settings) || '{}');
+      if (typeof body.on === 'boolean') cur.on = body.on;
+      await db.prepare('UPDATE tickers SET settings = ? WHERE id = ?').bind(JSON.stringify(cur), id).run();
+      return json({ ok: true, settings: cur });
     }
     if (sub === 'label' && req.method === 'POST') {
       const body = await readJSON(req);

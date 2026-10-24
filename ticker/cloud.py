@@ -96,6 +96,10 @@ class Cloud:
                 if out.get('code') and out['code'] != self.code:
                     self.code = out['code']
                     self._save()
+                on = (out.get('settings') or {}).get('on')
+                if on is not None and on != getattr(self, '_on', None):   # power button in the app
+                    self._on = on
+                    self.app.set_power(on)
                 if 'slips' in out:
                     self.v = out['v']
                     self.app.set_slips(out['slips'], 'replace', from_cloud=True)

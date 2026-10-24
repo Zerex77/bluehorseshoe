@@ -37,6 +37,7 @@ DEFAULTS = {
     'alerts': True,                              # flash when a leg hits / busts / the slip cashes
     'animations': True,                          # play a celebration animation before each flash
     'port': 8080,
+    'on': True,                                  # False = asleep: panels dark (set from the app's power button)
     'cloud_url': '',                             # address of the app relay; turns on the phone app
 }
 
@@ -199,9 +200,17 @@ class Ticker:
             threading.Thread(target=self.cloud.push_slips, args=(mine,), daemon=True).start()
         threading.Thread(target=self.update, daemon=True).start()
 
+    def set_power(self, on):
+        """Asleep = panels dark, no alerts; scores keep updating so waking up is instant."""
+        on = bool(on)
+        if on == bool(self.cfg.get('on', True)):
+            return
+        self.set_config({'on': on})
+        print('Ticker turned %s' % ('on' if on else 'off'), flush=True)
+
     def set_config(self, patch):
         with self.lock:
-            for k in ('brightness', 'speed', 'alerts', 'animations'):
+            for k in ('brightness', 'speed', 'alerts', 'animations', 'on'):
                 if k in patch:
                     self.cfg[k] = patch[k]
             save_json('config.json', {k: self.cfg[k] for k in self.cfg if self.cfg[k] != DEFAULTS.get(k)})
@@ -370,10 +379,17 @@ class Ticker:
         idx = 0
         x_off = 0.0
         last = time.time()
+        dark = Image.new('RGB', (W, H))
         while True:
             now = time.time()
             dt = min(0.1, now - last)
             last = now
+            if not self.cfg.get('on', True):   # asleep: dark panels, drop any alerts
+                self.alerts.clear()
+                self.panel.show(dark)
+                time.sleep(0.25)
+                last = time.time()
+                continue
             if self.alerts:
                 self.flash(*self.alerts.pop(0))
                 last = time.time()
