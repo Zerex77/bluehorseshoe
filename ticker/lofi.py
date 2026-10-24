@@ -12,10 +12,10 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 
 H = 32
-FPS = 30
+FPS = 24
 DT = 1.0 / FPS
 # Smooth motion: each layer moves one whole pixel every N frames (fractions make LEDs stutter).
-NEAR_N, FAR_N = 2, 8   # boardwalk 15 px/s, skyline ~4 px/s
+NEAR_N, FAR_N = 1, 6   # boardwalk 24 px/s, skyline 4 px/s
 SPEED = FPS / NEAR_N
 SKY_LOOP = 7 * 160
 
@@ -53,6 +53,7 @@ def _mix(a, b, t):
 
 
 _BG = {}
+_clock = [time.time()]
 
 
 def _background(w, P):
@@ -90,6 +91,7 @@ def frames(w):
     sparkles = [(random.randrange(w * 3), random.randint(HORIZON, SAND - 1), random.randint(3, 6),
                  random.randint(1, 3), i) for i in range(70)]
     f = 0
+    _clock[0] = time.time()
     while True:
         f += 1
         now = f * DT
@@ -147,6 +149,9 @@ def frames(w):
             else:
                 _lamp(d, x, WALK, P['night'])
         _walker(d, int(w * 0.38), WALK, now)
+        if f % (60 * FPS) == 0:
+            print('scene: %.1f fps (target %d)' % (60 * FPS / max(0.001, time.time() - _clock[0]), FPS), flush=True)
+            _clock[0] = time.time()
         yield img
 
 

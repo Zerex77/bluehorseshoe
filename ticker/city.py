@@ -17,11 +17,11 @@ import lofi
 import render as R
 
 H = 32
-FPS = 30
+FPS = 24
 DT = 1.0 / FPS
 # Smooth motion on LEDs: every layer moves exactly one whole pixel every N frames (never fractions,
 # which make things stutter), counted in frames rather than wall-clock time.
-NEAR_N, MID_N, FAR_N = 2, 3, 8   # street 15 px/s, neighborhoods 10 px/s, far skyline ~4 px/s
+NEAR_N, MID_N, FAR_N = 1, 2, 6   # street 24 px/s, neighborhoods 12 px/s, far skyline 4 px/s
 SPEED = FPS / NEAR_N
 SKY_LOOP = 7 * 160     # the far skyline repeats every 160 buildings
 GROUND = 25            # where buildings stand; the street is below
@@ -335,6 +335,7 @@ class Traffic:
 
 
 _BG = {}
+_clock = [time.time()]
 
 
 def _background(w, P):
@@ -398,6 +399,7 @@ def frames(w, logos=None):
     stars = [(random.randrange(w), random.randrange(0, 12), random.random() * 6.28) for _ in range(35)]
     birds = []
     f = 0
+    _clock[0] = time.time()
     while True:
         f += 1
         t = f * DT
@@ -453,4 +455,7 @@ def frames(w, logos=None):
             d.line((x, 28, x + 4, 28), fill=(200, 180, 80))
         traffic.step(d, f, P['night'])
         _train(d, w, f, near, P)
+        if f % (60 * FPS) == 0:
+            print('scene: %.1f fps (target %d)' % (60 * FPS / max(0.001, time.time() - _clock[0]), FPS), flush=True)
+            _clock[0] = time.time()
         yield img
