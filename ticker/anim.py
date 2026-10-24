@@ -665,10 +665,58 @@ def anim_short(w, text):
         yield img, DT
 
 
+# ---------------------------------------------------------------- scoring update
+def _hex(c, default):
+    try:
+        c = str(c).lstrip('#')
+        return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4))
+    except (ValueError, IndexError):
+        return default
+
+
+def anim_score(w, text):
+    """A game on a ticket scored: a banner in the scoring team's color slides in with the play and
+    the new score (the scoring side's number flashes), holds, and slides back out.
+    text: 'TEAM|PLAY|AWAY|as|HOME|hs|side|color|altColor'."""
+    try:
+        team, play, aw, as_, hm, hs, side, col, alt = text.split('|')
+    except ValueError:
+        return
+    col = _hex(col, BLUE)
+    if sum(col) < 120:                      # near-black team colors vanish on LEDs: use the alternate
+        col = _hex(alt, WHITE)
+    fg = (0, 0, 0) if sum(col) > 450 else WHITE
+    font = R.F_FLASH
+    left = team + ' ' + play
+    lw = R.text_w(font, left) + 16
+    if lw > w * 0.6:                        # long play names on narrow strips: shorter word
+        left = team + ' ' + {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
+        lw = R.text_w(font, left) + 16
+    slide, hold = int(0.25 * FPS), int(1.9 * FPS)
+    for i in range(slide * 2 + hold):
+        if i < slide:
+            off = int(w * (1 - ease_out(i / slide)))
+        elif i >= slide + hold:
+            off = -int(w * ease_out((i - slide - hold) / slide))
+        else:
+            off = 0
+        img, d = canvas(w)
+        d.rectangle((off, 0, off + lw, H), fill=col)
+        d.text((off + 8, (H - sum(font.getmetrics())) // 2 + 1), left, font=font, fill=fg)
+        flash = slide <= i < slide + hold and ((i - slide) // 5) % 2 == 0
+        x = off + lw + 10
+        for k, (ab, sc, me) in enumerate(((aw, as_, side == 'a'), (hm, hs, side == 'h'))):
+            if k:
+                d.text((x, 5), '-', font=font, fill=R.DIM); x += R.text_w(font, '-') + 6
+            d.text((x, 9), ab, font=R.F_SCORE, fill=WHITE if me else R.DIM); x += R.text_w(R.F_SCORE, ab) + 4
+            d.text((x, 5), sc, font=font, fill=(GOLD if flash else WHITE) if me else R.DIM); x += R.text_w(font, sc) + 6
+        yield img, DT
+
+
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
-    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury,
+    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury, 'score': anim_score,
 }
 
 

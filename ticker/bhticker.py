@@ -218,12 +218,39 @@ class Ticker:
             self.status = 'Error: %s' % e
             return
         self.lock_games(slips, snap)
+        self.score_alerts(snap)
         self.queue_alerts(snap)
         with self.lock:
             self.snap = snap
             self.items = self.build_items(snap)
         if self.cloud:
             self.cloud.push_status(self.status, snap)
+
+    def score_alerts(self, snap):
+        """Quick banner when a game on a ticket scores (TD / FG / safety + the new score)."""
+        if not self.cfg.get('alerts'):
+            return
+        seen = getattr(self, 'scores', None)
+        first = seen is None
+        self.scores = seen = seen or {}
+        gids = {r['g'] for s in snap for r in s['legs'] if r.get('g')}
+        for gid in gids:
+            g = self.board.games.get(gid)
+            if not g:
+                continue
+            now = (g['as'], g['hs'])
+            old = seen.get(gid)
+            seen[gid] = now
+            if first or old is None or g['state'] != 'in' or now == old:
+                continue
+            for side, pts in (('a', now[0] - old[0]), ('h', now[1] - old[1])):
+                if pts <= 0 or pts == 1:   # a lone extra point isn't worth interrupting for
+                    continue
+                play = 'TOUCHDOWN' if pts >= 6 else 'FIELD GOAL' if pts == 3 else 'SAFETY' if pts == 2 else 'SCORE'
+                t = g[side]
+                info = '|'.join([R.ascii_safe(L.abbr(t)), play, R.ascii_safe(L.abbr(g['a'])), str(now[0]),
+                                 R.ascii_safe(L.abbr(g['h'])), str(now[1]), side, (t.get('color') or '3B82F6'), (t.get('alternateColor') or 'FFFFFF')])
+                self.alerts.append(('%s %s' % (L.abbr(t), play), 'score', 'score:' + info))
 
     def lock_games(self, slips, snap):
         """Once a leg's game has kicked off, save that game on the leg, so the leg can't drift to a
@@ -400,8 +427,8 @@ class Ticker:
                     played = True
             except Exception as e:  # never let an animation stop the ticker
                 print('animation %s failed: %s' % (anim, e), flush=True)
-        if played and kind == 'cashed':
-            return  # the field goal animation already shows the payout
+        if played and kind in ('cashed', 'score'):
+            return  # the animation already showed it all
         end = time.time() + (2.5 if played else 5)
         on = True
         while time.time() < end:
