@@ -1686,10 +1686,10 @@ button{font:inherit}
 
 </div>
 </script>
-<script>window.BH_VERSION='20261025163500';</script>
-<script src="runtime.js?v=20261025163500"></script>
-<script src="fantasy.js?v=20261025163500"></script>
-<script src="lines.js?v=20261025163500"></script>
+<script>window.BH_VERSION='20261025165000';</script>
+<script src="runtime.js?v=20261025165000"></script>
+<script src="fantasy.js?v=20261025165000"></script>
+<script src="lines.js?v=20261025165000"></script>
 <script>
 class Component extends DCLogic {
   constructor(props) {
@@ -2440,41 +2440,67 @@ class Component extends DCLogic {
     var targetDec = 0;
     var N = st.legs === 'auto' ? 0 : st.legs;
     var prodDec = function (arr) { var d = 1; arr.forEach(function (l) { d *= self.dec(l.odds); }); return d; };
+    // ---- Leg-by-leg builder: every leg is chosen with the ticket so far in view.
+    // Each candidate's hit chance is marked down for what it would stack on: another leg from the same game (one bad
+    // game script sinks both), the same player, or one more of the same kind of bet (TDs most of all). The leg with the
+    // best marked-down chance that still keeps the ticket on pace for its price goes on, then everything is re-rated.
+    var chanceOf = function (l) { return l.p != null ? l.p : noVig(l.odds); };
+    var playerOf = function (l) { return l.k === 'prop' && l.pk ? l.pk.split('|')[1] : null; };
+    var kindOf = function (l) { return l.k === 'prop' ? 'p:' + (l.c || 'prop') : 'l:' + l.mk; };
+    var mixChance = function (l, tk) {
+      var p = chanceOf(l), pl = playerOf(l), kd = kindOf(l);
+      tk.forEach(function (t) {
+        if (t.g === l.g) p *= 0.96;
+        if (pl && playerOf(t) === pl) p *= 0.85;
+        if (kindOf(t) === kd) p *= kd === 'p:td' ? 0.93 : 0.98;
+      });
+      return p;
+    };
+    var candAll = inPlay.filter(function (l) { return !l.alt; });
+    var usable = function (l, tk, used) { return !used[conflictKey(l)] && tk.indexOf(l) === -1; };
+    // Build n legs toward a price (decTarget 0 = no price, just the likeliest legs).
+    var buildLegs = function (src, n, decTarget) {
+      var tk = [], used = {}, cur = 1;
+      for (var step = 0; step < n; step++) {
+        var left = n - step;
+        var need = decTarget ? Math.max(0, Math.log(decTarget / cur)) : 0;
+        var share = need / left; // the price each remaining leg has to carry to stay on pace
+        var best = null, bestP = -1, fallback = null;
+        src.forEach(function (l) {
+          if (!usable(l, tk, used)) return;
+          var mp = mixChance(l, tk) * (meetsBar(l) ? 1.02 : 1); // a Horseshoe pick wins a near tie
+          var g = Math.log(self.dec(l.odds));
+          if (!fallback || g > Math.log(self.dec(fallback.odds))) fallback = l;
+          if (decTarget && g < share - 1e-9) return;
+          if (mp > bestP) { bestP = mp; best = l; }
+        });
+        var pickL = best || (decTarget ? fallback : null);
+        if (!pickL) break;
+        tk.push(pickL); used[conflictKey(pickL)] = 1; cur *= self.dec(pickL.odds);
+      }
+      var hitP = 1, sub = [];
+      tk.forEach(function (l) { hitP *= mixChance(l, sub); sub.push(l); });
+      return { tk: tk, dec: cur, hit: hitP };
+    };
     if (st.target === 'fav') {
-      if (N) ticket = pool.slice(0, N);
-      else {
-        // Auto: every 5-horseshoe pick (rating 85+), at least the top 3 picks, at most 6.
-        ticket = picksPool.filter(function (l) { return l.conf >= 85; }).slice(0, 6);
-        if (ticket.length < 3) ticket = pool.slice(0, 3);
-      }
+      // Horseshoe faves: the likeliest legs, Horseshoe picks first; filled out from every leg only when the picks run short.
+      var nFav = N || Math.min(6, Math.max(3, picksPool.filter(function (l) { return l.conf >= 85; }).length));
+      var favSrc = (!st.games.length && !N) ? picksPool : candAll;
+      var fb = buildLegs(favSrc, nFav, 0);
+      if (fb.tk.length < nFav && favSrc !== candAll) fb = buildLegs(candAll, nFav, 0);
+      ticket = fb.tk;
       decTotal = prodDec(ticket);
-    } else if (N) {
-      targetDec = this.dec(st.target);
-      ticket = pool.slice(0, N);
-      var benchPool = pool.slice(N);
-      for (var guard = 0; guard < 40; guard++) {
-        if (prodDec(ticket) >= targetDec || !ticket.length) break;
-        var minIx = 0;
-        ticket.forEach(function (l, ix) { if (self.dec(l.odds) < self.dec(ticket[minIx].odds)) minIx = ix; });
-        var minDec = self.dec(ticket[minIx].odds);
-        var swapIx = -1;
-        for (var b = 0; b < benchPool.length; b++) { if (self.dec(benchPool[b].odds) > minDec) { swapIx = b; break; } }
-        if (swapIx === -1) break;
-        var out = ticket[minIx];
-        ticket[minIx] = benchPool[swapIx];
-        benchPool.splice(swapIx, 1);
-        benchPool.push(out);
-      }
-      ticket.sort(function (a, b2) { return b2.conf - a.conf; });
-      decTotal = prodDec(ticket);
-      reached = decTotal >= targetDec;
     } else {
       targetDec = this.dec(st.target);
-      for (var i = 0; i < pool.length && i < 20; i++) {
-        if (decTotal >= targetDec) break;
-        ticket.push(pool[i]);
-        decTotal *= this.dec(pool[i].odds);
-      }
+      var bestB = null;
+      // A set leg count builds exactly that many; Auto tries 2 to 12 legs and keeps whichever cashes most often.
+      (N ? [N] : [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]).forEach(function (n) {
+        var r = buildLegs(candAll, n, targetDec);
+        var ok = r.dec >= targetDec;
+        if (!bestB || (ok && !bestB.ok) || (ok === bestB.ok && (ok ? r.hit > bestB.hit : r.dec > bestB.dec))) bestB = { tk: r.tk, dec: r.dec, hit: r.hit, ok: ok };
+      });
+      ticket = bestB ? bestB.tk : [];
+      decTotal = prodDec(ticket);
       reached = decTotal >= targetDec;
     }
     var featherOn = st.feather !== false, featherN = 0, hitBefore = 1;
