@@ -156,7 +156,10 @@
       var kind = nfl ? (l.k === 'prop' ? 'prop' : l.mk) : l.k;
       var need = nfl ? 2 : (kind === 'ml' ? 2 : 1);
       var ev = l.p * decOf(l.odds) - 1;
-      var base = ev * 3 + (l.p - 0.5) * 0.6 + sig * 0.02 + (l.fade ? 0.02 : 0);
+      // Player props: judge value on a -110 scale. Raw EV grows with the payout, so on a +1700 anytime TD a 1-point
+      // edge in the consensus price looked like a huge edge and long-shot TDs crowded every other prop off the ticket.
+      var evS = kind === 'prop' ? (l.p - 1 / decOf(l.odds)) * 1.91 : ev;
+      var base = evS * 3 + (l.p - 0.5) * 0.6 + sig * 0.02 + (l.fade ? 0.02 : 0);
       l.ev = Math.round(ev * 10000) / 10000;
       l.bar = !l.held && !l.alt && (sig >= need || !!l.fade);
       l.score = Math.round((base - (l.bar ? 0 : 1)) * 10000) / 10000;
@@ -478,6 +481,7 @@
         if (pr.odds < -400 || pr.odds > 2500) return;
         if (pr.side === 'under') return; // player props: overs (and yes props like anytime TD) only
         if (pr.c === 'kick' || pr.c === 'def') return; // no kicking or defense props (field goals, sacks, tackles)
+        if (pr.book === 'consensus') return; // no sportsbook actually posts it (a feed placeholder like a QB's longest reception at even money)
         // Line check works on yardage and count props priced near even money; TD props and long prices don't compare cleanly.
         if (pr.books && !pr.alt && !/TD|interception/i.test(pr.what)) {
           var pb = {}, lines = [];
