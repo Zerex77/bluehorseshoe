@@ -160,6 +160,9 @@
       // edge in the consensus price looked like a huge edge and long-shot TDs crowded every other prop off the ticket.
       var evS = kind === 'prop' ? (l.p - 1 / decOf(l.odds)) * 1.91 : ev;
       var base = evS * 3 + (l.p - 0.5) * 0.6 + sig * 0.02 + (l.fade ? 0.02 : 0);
+      // A prop with no Horseshoe lean (fewer than 2 signals) has no real edge, only the gap between one book and the
+      // consensus, which is mostly noise. Rank those by how likely they are to hit, so the rating reads as the hit chance.
+      if (kind === 'prop' && sig < 2 && !l.alt) base = (l.p - 0.5) + sig * 0.02 + evS * 0.25;
       l.ev = Math.round(ev * 10000) / 10000;
       l.bar = !l.held && !l.alt && (sig >= need || !!l.fade);
       l.score = Math.round((base - (l.bar ? 0 : 1)) * 10000) / 10000;
