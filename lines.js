@@ -151,6 +151,17 @@
     return l.g + '|' + (kind === 'total' ? 'total' : 'side');
   }
   function rateLegs(legs, nfl) {
+    // Oct 30 lesson: when the models and the line are 4+ pts apart on a spread or total, the market has usually priced in
+    // something the models miss (injuries, weather, motivation). Siding with the models there went 6-18, against them 0-4.
+    legs.forEach(function (l) {
+      var kind = nfl ? (l.k === 'prop' ? 'prop' : l.mk) : l.k;
+      if (l.held || l.alt || (kind !== 'spread' && kind !== 'total') || typeof l.model !== 'number' || Math.abs(l.model) < 4) return;
+      var sig0 = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
+      if (!sig0) return;
+      l.held = 'models and the line are ' + Math.abs(l.model) + ' pts apart, the market usually knows why';
+      l.sOrig = l.s; l.s = [0, 0, 0];
+      l.note = (l.note ? l.note + '; ' : '') + 'held: ' + l.held;
+    });
     legs.forEach(function (l) {
       var sig = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
       var kind = nfl ? (l.k === 'prop' ? 'prop' : l.mk) : l.k;
@@ -193,6 +204,11 @@
   //  - college moneyline favorites: -2%
   //  - college totals on movement alone (no book shading, no wind): held, no longer Horseshoe picks
   //  - college totals the books are shading: +1%
+  // Oct 30 update, from 214 graded picks (Oct 16-29; 102-111 overall). Replayed on those picks these rules go 57-43:
+  //  - any spread, total or moneyline whose line already moved 3+ pts (either way): held (were 29-45)
+  //  - spreads and totals where the models and the line are 4+ pts apart: held (were 5-9), see rateLegs
+  //  - totals on movement alone, NFL now too: held (were 11-14)
+  //  - road dogs on a steady line: +1%; road favorites outside the sweet spot: -1%
   function tiltLegs(legs, evById, wx, nfl) {
     var W = (wx && wx.games) || {};
     var sideOf = function (e, label) {
@@ -222,7 +238,12 @@
           var sweet = toward && am >= 1 && am < 3;
           // Wk 1 (Oct 16-18): spreads after a 1-2.5 pt move went 17-7; after 3-4.5 pts, 6-9.
           if (sweet) { adj += 0.025; why.push('sweet-spot move'); }
-          if (toward && am >= 3 && am < 5 && sig) hold(l, 'line already moved ' + am + ' pts, mostly priced in');
+          // Through Oct 29: 3+ pt moves toward the pick went 27-34 even outside the old 3-4.5 window; 3+ against went 2-11.
+          if (toward && am >= 3 && sig) hold(l, 'line already moved ' + am + ' pts, mostly priced in');
+          else if (!toward && m !== 0 && am >= 3 && sig) hold(l, 'line moved ' + am + ' pts against it');
+          // Through Oct 29: spread dogs on a steady line (under 3 pts) went 21-10; favorites 14-18.
+          if (sd === 'a' && line > 0 && am < 3) { adj += 0.01; why.push('road dog, steady line'); }
+          if (sd === 'a' && line < 0 && !sweet) { adj -= 0.01; why.push('road favorite'); }
           // Home underdogs 9-4, home favorites 6-7. Through Oct 20: college home dogs 8-3, so the nudge goes up a notch.
           if (sd === 'h' && line > 0) { adj += 0.015; why.push('home dog'); }
           if (sd === 'h' && line < 0 && !sweet) { adj -= 0.015; why.push('home favorite tax'); }
@@ -234,16 +255,22 @@
       // Through Oct 20: college moneyline favorites hit 59% when the Horseshoe expected 71% (10-7, -$35 at $10),
       // while college dogs on the moneyline went 7-7 for a profit. Favorites pay heavy juice, so they get marked down.
       if (kind === 'ml' && !nfl && l.odds < 0) { adj -= 0.02; why.push('college ML favorite tax'); }
+      // Through Oct 29: moneylines after the spread moved 3+ pts toward the team went 4-9 (-$63 at $10).
+      if (kind === 'ml' && sig && o.aOpen != null && o.aNow != null) {
+        var sdM = sideOf(e, l.label), mM = o.aOpen - o.aNow, amM = Math.abs(mM);
+        if (sdM && amM >= 3 && (mM > 0) === (sdM === 'a')) hold(l, 'line already moved ' + amM + ' pts, priced in');
+      }
       if (kind === 'total') {
         hasTotal[l.g] = 1;
         var under = /^under/i.test(l.label), tm = o.tot != null && o.tOpen != null ? o.tot - o.tOpen : 0;
         var shaded = l.s && l.s[1] === 1, atm = Math.abs(tm);
         var w = W[l.g], windy = w && !w.indoor && w.wind >= 15;
         // Unders after a 3-4.5 pt drop went 4-8: the move is priced in.
-        if (under && tm <= -3 && tm > -5 && !windy && sig) hold(l, 'total already dropped ' + atm);
-        // College totals backed only by line movement (no book shading, move under 5, no wind) went 16-20 through Oct 20,
-        // even after a markdown; with book shading, 6-3. Movement-only college totals are now held: shown, not Horseshoe picks.
-        else if (!shaded && atm < 5 && !windy && !nfl) { if (sig) hold(l, 'movement only, no book shading'); else { adj -= 0.015; why.push('movement only, no book shading'); } }
+        // Through Oct 29: totals after a 3+ pt move either way went 16-23. The move is priced in.
+        if (atm >= 3 && !windy && sig) hold(l, 'total already moved ' + atm + ' (' + o.tOpen + ' → ' + o.tot + ')');
+        // Totals backed only by line movement (no book shading, no wind) went 27-38 through Oct 29 (college and NFL);
+        // with book shading, 15-14. Movement-only totals are held: shown, not Horseshoe picks.
+        else if (!shaded && !windy) { if (sig) hold(l, 'movement only, no book shading'); else { adj -= 0.015; why.push('movement only, no book shading'); } }
         if (shaded && !nfl && !l.held) { adj += 0.01; why.push('books shading it'); }
         if (!under && tm >= 1 && tm < 3 && !shaded) { adj -= 0.01; why.push('small rise, no shading'); }
         if (windy) {
