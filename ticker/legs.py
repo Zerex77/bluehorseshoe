@@ -472,31 +472,49 @@ def _plays(summ):
     return out
 
 
+# The player has to be the one the injury note is about: his name, then straight into the injury words.
+# A play recap names the passer, the receiver and the tacklers, so 'X was injured' later in the same play
+# says nothing about everyone else in it.
+_INJ_AFTER_NAME = re.compile(
+    r"^(?:,?\s+(?:jr|sr|ii|iii|iv|v)\b\.?)?(?:'s?)?\s*(?:\([^)]{0,20}\)\s*)?(?:was|is|has been|has)?\s*"
+    r"(?:injured|ruled out|out for the game|will not return|questionable to return|doubtful to return|"
+    r"(?:an?|his)\s+[\w\- ]{0,25}injury|left the game)", re.I)
+_BACK_AFTER_NAME = re.compile(r"^(?:,?\s+(?:jr|sr|ii|iii|iv|v)\b\.?)?\s*(?:has\s+)?(?:returned|is back|re-?entered)", re.I)
+_RETURN = re.compile(r"\breturn(?: to the game)? is (questionable|probable|doubtful|out|unlikely)\b|"
+                     r"\b(questionable|doubtful) to return\b|\b(ruled out|out for the game|will not return)\b", re.I)
+
+
 def game_injury(summ, player):
     """In-game injury from the play-by-play -> {'tag', 'rank', 'text'} or None.
-    Looks for lines like 'J.Gibbs was injured during the play. His return is Questionable.'"""
+    Only for the player the injury line is about ('J.Gibbs was injured during the play. His return is
+    Questionable.'), and only once there's a return status: questionable, doubtful or out."""
     if not summ or not player:
         return None
     name = _play_name_re(player)
-    hit = None
-    for text in _plays(summ):
+    plays = _plays(summ)
+    status = None
+    for k, text in enumerate(plays):
         for m in name.finditer(text):
-            # from his name to the next player's name (or 140 chars): covers 'His return is ...'
-            low = text[m.start():m.start() + 140].lower()
-            nxt = re.search(r'\.\s+[A-Z]\.\s?[A-Z][a-z]', text[m.end():m.start() + 140])
-            if nxt:
-                low = text[m.start():m.end() + nxt.start() + 1].lower()
-            if re.search(r'injur|ruled out|will not return', low):
-                hit = low
-            elif re.search(r'returned to the game|has returned|is back in', low) and hit:
-                hit = None  # back in the game
-    if not hit:
+            after = text[m.end():]
+            if _BACK_AFTER_NAME.match(after):
+                status = None  # back in the game
+                continue
+            if not _INJ_AFTER_NAME.match(after):
+                continue
+            # the return status: in the rest of this play (up to the next injury note), or the play right after
+            rest = re.split(r"(?<=\.)\s+(?=[A-Z][\w.'\- ]{1,30}\s+(?:was|is)\s+injured)", after, maxsplit=1)[0]
+            r = _RETURN.search(rest[:220])
+            if not r and k + 1 < len(plays) and re.match(r"\s*(?:his|[A-Z][\w.'\- ]{1,30}'s?)\s+return\b", plays[k + 1], re.I):
+                r = _RETURN.search(plays[k + 1][:160])
+            if r:
+                status = (r.group(1) or r.group(2) or r.group(3)).lower()
+    if not status:
         return None
-    if 'ruled out' in hit or 'will not return' in hit or re.search(r'return is (out|unlikely)', hit):
+    if status in ('out', 'unlikely', 'ruled out', 'out for the game', 'will not return'):
         return {'tag': 'OUT', 'rank': 4, 'text': 'OUT FOR GAME'}
-    m = re.search(r'return is (questionable|probable|doubtful)', hit)
-    ret = m.group(1).upper() if m else ''
-    return {'tag': 'INJ', 'rank': 4 if ret == 'DOUBTFUL' else 3, 'text': 'INJURED' + (' - RETURN ' + ret if ret else '')}
+    if status == 'probable':
+        return None  # expected back: not worth an injury alert
+    return {'tag': 'INJ', 'rank': 4 if status == 'doubtful' else 3, 'text': 'INJURED - RETURN ' + status.upper()}
 
 
 # ---------------------------------------------------------------- grading
