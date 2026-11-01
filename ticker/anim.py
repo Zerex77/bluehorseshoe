@@ -562,7 +562,7 @@ def _money_rain(w, text):
     bills = [[random.uniform(0, w), random.uniform(-40, 0), random.uniform(0.5, 1.4)] for _ in range(26)]
     msg = R.ascii_safe(text or 'CASHED').upper()
     font = R.F_FLASH
-    font = R.smaller(font, msg, w - 50)
+    font = R.smaller(font, msg, w - 56)   # clear of both horseshoes, even on a 3-panel strip
     for i in range(int(2.4 * FPS)):
         img, d = canvas(w, (0, 18, 6))
         for b in bills:
@@ -571,9 +571,10 @@ def _money_rain(w, text):
                 b[1] = -8
                 b[0] = random.uniform(0, w)
             d.text((b[0], b[1]), '$', font=R.F_SMALL, fill=dim(GREEN, 0.6 + 0.4 * (b[2] > 1)))
-        horseshoe(d, 4, 4, GOLD, 0.95)
-        horseshoe(d, w - 22, 4, GOLD, 0.95)
         tw = R.text_w(font, msg)
+        if tw <= w - 56:   # a long leg name on a short strip gets the room instead of the horseshoes
+            horseshoe(d, 4, 4, GOLD, 0.95)
+            horseshoe(d, w - 22, 4, GOLD, 0.95)
         asc, desc = font.getmetrics()
         x, y = (w - tw) // 2, (H - asc - desc) // 2 + 1
         for ox, oy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
@@ -626,7 +627,13 @@ def anim_short(w, text):
         cur, line = [float(v) for v in (text or '').split(':')[:2]]
     except ValueError:
         cur, line = 0.0, 0.0
-    marker_x = int(w * 0.62)
+    # Keep 'JUST SHORT' on the panels: on a narrow strip (3 panels) the marker moves left to make room,
+    # and if it still won't fit the smaller font is used.
+    f_short = R.F_SCORE
+    room = lambda f: w - 10 - max(R.text_w(f, 'JUST SHORT'), R.text_w(R.F_SMALL, '%g / %g' % (cur, line)) if line else 0)
+    if room(f_short) < 80:
+        f_short = R.F_SMALL
+    marker_x = max(76, min(int(w * 0.62), room(f_short)))
     spot_x = marker_x - 4                       # the ball's nose stops just shy of the line
     dash, dive = int(0.8 * FPS), int(0.5 * FPS)
     for i in range(dash + dive + int(1.6 * FPS)):
@@ -660,7 +667,7 @@ def anim_short(w, text):
                     if line:
                         stat = '%s / %s' % (('%g' % cur), ('%g' % line))
                         d.text((marker_x + 8, 1), stat, font=R.F_SMALL, fill=WHITE)
-                    d.text((marker_x + 8, 13), 'JUST SHORT', font=R.F_SCORE, fill=[RED, WHITE][(k // 6) % 2])
+                    d.text((marker_x + 8, 13), 'JUST SHORT', font=f_short, fill=[RED, WHITE][(k // 6) % 2])
         yield img, DT
 
 

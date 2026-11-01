@@ -78,6 +78,18 @@ PY
   echo "-- Adapter board pinout: $MAP"
 fi
 
+# How many 64x32 panels are chained (default 4). Everything scales to the width:  curl ... | sudo PANELS=3 bash
+if [ -n "$PANELS" ]; then
+  python3 - "$DATA/config.json" "$PANELS" <<'PY'
+import json, sys, os
+p, n = sys.argv[1], int(sys.argv[2])
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['panels'] = max(1, min(8, n))
+json.dump(c, open(p, 'w'))
+PY
+  echo "-- Panels: $PANELS ($((PANELS * 64))x32)"
+fi
+
 # The phone app: the address of your relay (see relay/README.md).  curl ... | sudo CLOUD=https://... bash
 if [ -n "$CLOUD" ]; then
   python3 - "$DATA/config.json" "$CLOUD" <<'PY'
