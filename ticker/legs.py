@@ -725,14 +725,29 @@ class Board:
                                 'type': ((i.get('details') or {}).get('type') or ''), 'team': t.get('displayName') or ''})
         self.injuries = out
 
-    def report_injury(self, player):
-        """Injury-report entry for a player on a slip -> {'tag', 'rank', 'text'} or None."""
-        is_him = _matcher(player)
-        for e in self.injuries:
-            if is_him(e['name']):
-                tag, rank = inj_tag(e['status'])
-                if tag and rank > 0:
-                    return {'tag': tag, 'rank': rank, 'text': (e['status'] + (' - ' + e['type'] if e['type'] else '')).upper()}
+    def report_injury(self, player, team=None):
+        """Injury-report entry for a player on a slip -> {'tag', 'rank', 'text'} or None.
+        The whole name has to match (suffixes and punctuation aside): last name + first initial let
+        Cameron Williams (ATL, IR) tag Caleb Williams. Only a slip written with just an initial
+        ('C. Williams') falls back to initial + last name, and only if that finds exactly one player.
+        When the player's team is known, the entry has to be on that team."""
+        want = norm_name(player)
+        if not want:
+            return None
+        wp = want.split(' ')
+        tname = (team or {}).get('displayName') if isinstance(team, dict) else team
+        found = [e for e in self.injuries if norm_name(e['name']) == want]
+        if not found and len(wp) >= 2 and len(wp[0]) == 1 and tname:
+            found = [e for e in self.injuries if norm_name(e['name']).split(' ')[-1] == wp[-1]
+                     and norm_name(e['name'])[:1] == wp[0] and e.get('team') == tname]
+            if len(found) != 1:
+                found = []
+        if tname:
+            found = [e for e in found if not e.get('team') or e['team'] == tname]
+        for e in found:
+            tag, rank = inj_tag(e['status'])
+            if tag and rank > 0:
+                return {'tag': tag, 'rank': rank, 'text': (e['status'] + (' - ' + e['type'] if e['type'] else '')).upper()}
         return None
 
     def legs_of(self, slip):
@@ -821,7 +836,7 @@ class Board:
                     if g and g['state'] != 'pre' and sm:
                         inj = game_injury(sm['json'], l['player'])
                     elif not g or g['state'] == 'pre':
-                        inj = self.report_injury(l['player'])
+                        inj = self.report_injury(l['player'], team)
                 rows.append({'label': l['label'], 'market': l.get('market'), 'g': l.get('g') if g else None,
                              'team': team, 'odds': l.get('odds'), 'player': l.get('player'), 'inj': inj, **e})
             won = sum(1 for e in evs if e['cls'] in ('win', 'push'))
