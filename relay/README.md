@@ -45,7 +45,7 @@ To update later (new app features): download the code again, put your `database_
 
 On the Pi, run the installer with your relay address (one line):
 ```
-curl -sSL https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker/install.sh | sed 's#https://bluehorseshoebet.com/ticker#https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker#' | sudo BOARD=regular CLOUD=https://bluehorseshoe-relay.yourname.workers.dev bash
+curl -sSL https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker/install.sh | sudo BOARD=regular CLOUD=https://bluehorseshoe-relay.yourname.workers.dev bash
 ```
 With no tickets on it, the ticker scrolls **PAIR THE APP · CODE XXXXXX**. The code is also on
 the ticker's own page (http://bhticker.local:8080), with a link that fills it in for you.

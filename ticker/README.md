@@ -14,12 +14,15 @@ Scrolls your bet slips across a row of LED panels on a Raspberry Pi, graded live
 3. Power: 5V 10A supply into the bonnet's barrel jack. Run the panels' power cables from the bonnet's screw terminal to each panel.
 4. SSH in (`ssh you@raspberrypi.local`) and run:
    ```
-   curl -sSL https://bluehorseshoebet.com/ticker/install.sh | sudo bash
+   curl -sSL https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker/install.sh | sudo bash
    ```
    It installs everything, names the Pi `bhticker`, starts the ticker on every boot, and reboots once.
    Using a Seengreat / WatangTech "RGB Matrix Adapter Board" instead of the Adafruit bonnet? Run it as
-   `curl -sSL https://bluehorseshoebet.com/ticker/install.sh | sudo BOARD=regular bash`
+   `curl -sSL https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker/install.sh | sudo BOARD=regular bash`
    Running fewer (or more) than 4 panels? Add `PANELS=3` the same way; everything scales to the width.
+   After that the ticker updates itself: every hour it checks GitHub, and if the code changed it swaps
+   it in and restarts (only if the new code loads). Turn it off with `"auto_update": false` in the config,
+   or update right away with `sudo /opt/bhticker/update.sh`.
 5. Add tickets with the **Horseshoe Ticker app** on your phone (see `relay/README.md` to set it up once). Add `CLOUD=<your relay address>` to the install command and the ticker shows a pairing code for the app. You can also open http://bhticker.local:8080 on any phone or computer on your Wi-Fi.
 
 ## Settings

@@ -1,9 +1,9 @@
 #!/bin/bash
 # Blue Horseshoe LED ticker installer for Raspberry Pi OS (Bookworm or newer).
-#   curl -sSL https://bluehorseshoebet.com/ticker/install.sh | sudo bash
-# Re-run any time to update.
+#   curl -sSL https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker/install.sh | sudo bash
+# Re-run any time to update. After this, the ticker also updates itself hourly over the internet (update.sh).
 set -e
-SRC="https://bluehorseshoebet.com/ticker"
+SRC="https://raw.githubusercontent.com/Zerex77/bluehorseshoe/main/ticker"
 APP=/opt/bhticker
 DATA=/var/lib/bhticker
 
@@ -18,7 +18,7 @@ apt-get install -y git python3-dev python3-pip python3-pil python3-numpy cython3
 
 echo "-- Getting the ticker"
 mkdir -p "$APP" "$DATA"
-for f in bhticker.py legs.py render.py anim.py cloud.py wifisetup.py teamshow.py lofi.py city.py web.html demo.py; do
+for f in bhticker.py legs.py render.py anim.py cloud.py wifisetup.py teamshow.py lofi.py city.py web.html demo.py update.sh; do
   curl -fsSL "$SRC/$f?$(date +%s)" -o "$APP/$f"
 done
 mkdir -p "$APP/fonts"
@@ -26,7 +26,7 @@ for f in ter-u12b ter-u14b ter-u16b ter-u18b ter-u20b; do
   for ext in pil pbm; do curl -fsSL "$SRC/fonts/$f.$ext?$(date +%s)" -o "$APP/fonts/$f.$ext"; done
 done
 curl -fsSL "$SRC/fonts/README.md" -o "$APP/fonts/README.md" || true
-chmod +x "$APP/bhticker.py"
+chmod +x "$APP/bhticker.py" "$APP/update.sh"
 
 CONFIG=/boot/firmware/config.txt; [ -f "$CONFIG" ] || CONFIG=/boot/config.txt
 
@@ -152,6 +152,33 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 systemctl enable bhticker.service
+
+echo "-- Updating itself hourly from GitHub (turn off with \"auto_update\": false in $DATA/config.json)"
+cat > /etc/systemd/system/bhticker-update.service <<UPD
+[Unit]
+Description=Blue Horseshoe ticker self-update
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=$APP/update.sh
+UPD
+cat > /etc/systemd/system/bhticker-update.timer <<UPD
+[Unit]
+Description=Check for Blue Horseshoe ticker updates every hour
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UPD
+systemctl daemon-reload
+systemctl enable --now bhticker-update.timer
 
 IP=$(hostname -I | awk '{print $1}')
 echo
