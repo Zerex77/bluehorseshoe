@@ -19,6 +19,12 @@
 //     DELETE /api/t/:id/slips/:sid                            -> {v}
 //     POST   /api/t/:id/label              {label}            -> {ok}
 //     POST   /api/t/:id/leave                                 -> {ok}
+//     POST   /api/t/:id/sharekey                              -> {url}       (link for the iPhone Share button)
+//   iPhone Share button (Shortcuts app: Extract Text from Image -> POST here)
+//     POST   /api/shot?key=<ticker>.<token>  {text} or plain text  -> a sentence saying what was added
+
+import '../public/slipkit.js';   // the app's Hard Rock slip reader, so shared screenshots read the same way
+const K = globalThis.SlipKit;
 
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O, 1/I/L
 const MAX_SLIPS = 30;
@@ -83,6 +89,53 @@ function cleanSlip(s, by) {
   };
 }
 
+// add or update one slip; read, change, write only if nobody else changed it in between (two phones at once)
+async function saveSlip(db, id, s) {
+  for (let tries = 0; tries < 5; tries++) {
+    const t = await db.prepare('SELECT v, slips FROM tickers WHERE id = ?').bind(id).first();
+    if (!t) return err(404, 'That ticker is gone.');
+    const slips = JSON.parse(t.slips);
+    const ix = slips.findIndex((x) => x.id === s.id);
+    if (ix === -1) {
+      if (slips.length >= MAX_SLIPS) return err(400, 'This ticker is full. Remove a finished ticket first.');
+      slips.push(s);
+    } else {
+      s.by = slips[ix].by || s.by;
+      s.added = slips[ix].added || s.added;
+      slips[ix] = s;
+    }
+    const r = await db.prepare('UPDATE tickers SET slips = ?, v = v + 1 WHERE id = ? AND v = ?').bind(JSON.stringify(slips), id, t.v).run();
+    if (r.meta.changes) return json({ v: t.v + 1, id: s.id, updated: ix !== -1 });
+  }
+  return err(409, 'Someone else changed the ticker at the same time. Try again.');
+}
+
+const say = (text, status = 200) => new Response(text, { status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store', ...CORS } });
+
+// the iPhone Share button: the phone reads the screenshot's text itself, we turn it into a slip
+async function shareShot(req, db, url) {
+  const [id, token] = String(url.searchParams.get('key') || '').split('.');
+  const phone = id && token ? await db.prepare('SELECT name FROM phones WHERE token_hash = ? AND ticker = ?').bind(await sha256(token), id).first() : null;
+  if (!phone) return say('This Share button is no longer linked to your ticker. Make a new link in the app: Settings, Share button.', 401);
+  const raw = await req.text();
+  if (raw.length > MAX_BODY) return say('That picture had too much text.', 400);
+  let text = raw;
+  try { const j = JSON.parse(raw); text = typeof j === 'string' ? j : j.text || j['Extracted Text'] || Object.values(j).join('\n'); } catch (e) { /* plain text */ }
+  const got = K.hardRockText(String(text || ''));
+  if (!got.legs.length) return say("Couldn't find any picks in that screenshot. Try a full screenshot of the Hard Rock slip, or add it in the app.", 400);
+  const n = got.legs.length;
+  const s = cleanSlip({
+    id: 'sh' + (await sha256(id + '|' + got.legs.join('|'))).slice(0, 10),   // sharing the same slip twice updates it
+    name: n === 1 ? 'Straight bet' : n + '-leg parlay', stake: got.stake, odds: got.odds,
+    legs: got.legs.map((t) => ({ text: t })),
+  }, phone.name.replace(/ share button$/i, ''));
+  const res = await saveSlip(db, id, s);
+  if (!res.ok) { const e = await res.json().catch(() => ({})); return say(e.error || 'Something went wrong. Try again.', res.status); }
+  const { updated } = await res.json();
+  const t = await db.prepare('SELECT label FROM tickers WHERE id = ?').bind(id).first();
+  return say((updated ? 'Updated ' : 'Added ') + s.name + ' on ' + ((t && t.label) || 'your ticker') + ':\n' + s.legs.map((l) => '• ' + l.text).join('\n'));
+}
+
 let schemaReady = null;
 function ensureSchema(db) {
   if (!schemaReady) {
@@ -121,6 +174,8 @@ async function newCode(db, tickerId) {
 async function route(req, db, url) {
   const parts = url.pathname.split('/').filter(Boolean);   // ['api', ...]
   const now = Date.now();
+
+  if (req.method === 'POST' && parts[1] === 'shot') return shareShot(req, db, url);
 
   // ---- ticker registers itself
   if (req.method === 'POST' && parts[1] === 'ticker' && parts[2] === 'register') {
@@ -203,23 +258,17 @@ async function route(req, db, url) {
       const body = await readJSON(req);
       const s = cleanSlip(body.slip, phone.name);
       if (!s) return err(400, 'A ticket needs at least one leg.');
-      // read, change, write only if nobody else changed it in between (two phones at once)
-      for (let tries = 0; tries < 5; tries++) {
-        const t = await db.prepare('SELECT v, slips FROM tickers WHERE id = ?').bind(id).first();
-        const slips = JSON.parse(t.slips);
-        const ix = slips.findIndex((x) => x.id === s.id);
-        if (ix === -1) {
-          if (slips.length >= MAX_SLIPS) return err(400, 'This ticker is full. Remove a finished ticket first.');
-          slips.push(s);
-        } else {
-          s.by = slips[ix].by || s.by;
-          s.added = slips[ix].added || s.added;
-          slips[ix] = s;
-        }
-        const r = await db.prepare('UPDATE tickers SET slips = ?, v = v + 1 WHERE id = ? AND v = ?').bind(JSON.stringify(slips), id, t.v).run();
-        if (r.meta.changes) return json({ v: t.v + 1, id: s.id });
-      }
-      return err(409, 'Someone else changed the ticker at the same time. Try again.');
+      return saveSlip(db, id, s);
+    }
+    if (sub === 'sharekey' && req.method === 'POST') {
+      // its own key, so it shows up as its own entry and can be replaced without unpairing the phone
+      const name = (phone.name.replace(/ share button$/i, '').slice(0, 11) + ' Share button').trim();
+      const key = randomString(32);
+      await db.batch([
+        db.prepare('DELETE FROM phones WHERE ticker = ? AND name = ?').bind(id, name),
+        db.prepare('INSERT INTO phones (token_hash, ticker, name, added) VALUES (?, ?, ?, ?)').bind(await sha256(key), id, name, now),
+      ]);
+      return json({ url: url.origin + '/api/shot?key=' + id + '.' + key });
     }
     if (sub.startsWith('slips/') && req.method === 'DELETE') {
       const sid = decodeURIComponent(sub.slice('slips/'.length));

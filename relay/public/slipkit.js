@@ -342,7 +342,8 @@
     });
   }
 
-  window.SlipKit = {
+  // the relay's Share-button endpoint loads this file too, where there is no window
+  (typeof window !== 'undefined' ? window : globalThis).SlipKit = {
     ESPN: ESPN, games: games, getJSON: getJSON, readGame: readGame, fetchBoards: fetchBoards,
     parseLeg: parseLeg, hardRockText: hardRockText, statOf: statOf, findTeams: findTeams,
     teamName: teamName, abbr: abbr, clockStr: clockStr, fmt: fmt, sgn: sgn, esc: esc, uid: uid,

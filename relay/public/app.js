@@ -536,6 +536,19 @@
     if (b) { S.cur = b.dataset.use; saveState(); data = {}; goHome(); }
   });
   $('sPair').onclick = function () { openPair(); };
+  $('sShare').onclick = function () {
+    var t = cur(), b = this;
+    b.disabled = true;
+    api('POST', '/t/' + t.id + '/sharekey', null, t).then(function (r) {
+      $('sShareUrl').value = r.url; $('sShareWrap').hidden = false; b.textContent = 'Make a new link';
+    }).catch(function (e) { alert(e.message || "Couldn't make a link. Try again."); }).finally(function () { b.disabled = false; });
+  };
+  $('sShareCopy').onclick = function () {
+    var u = $('sShareUrl'), b = this;
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy link'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(u.value).then(done, function () { u.select(); document.execCommand('copy'); done(); });
+    else { u.select(); document.execCommand('copy'); done(); }
+  };
   $('sLeave').onclick = function () {
     var t = cur();
     if (!confirm('Remove this ticker from your phone? You can pair again with its code.')) return;

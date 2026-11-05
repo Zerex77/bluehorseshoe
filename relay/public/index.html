@@ -248,6 +248,24 @@
     <button class="btn wide" type="button" id="sPair" style="margin-top:12px">Pair another ticker</button>
   </div>
   <div class="card">
+    <h3>iPhone Share button</h3>
+    <p class="hint">Screenshot a Hard Rock slip, tap Share, then <b>Blue Horseshoe</b>, and it goes straight onto this ticker. Works from anywhere.</p>
+    <button class="btn wide" type="button" id="sShare">Set up the Share button</button>
+    <div id="sShareWrap" hidden>
+      <p class="hint" style="margin-top:12px"><b>1.</b> Copy your link (keep it private: anyone with it can add tickets):</p>
+      <input class="in" id="sShareUrl" readonly onclick="this.select()">
+      <button class="btn primary wide" type="button" id="sShareCopy" style="margin-top:8px">Copy link</button>
+      <ol class="hint" style="padding-left:20px;margin-top:12px">
+        <li>Open the <b>Shortcuts</b> app, tap <b>+</b>, and name it <b>Blue Horseshoe</b>.</li>
+        <li>Tap the <b>ⓘ</b> (or the name at the top) and turn on <b>Show in Share Sheet</b>.</li>
+        <li>Search the actions for <b>Extract Text from Image</b> and add it. It should say <i>from Shortcut Input</i>. If it asks what the shortcut receives, choose <b>Images</b>.</li>
+        <li>Add <b>Get Contents of URL</b>. Paste your link as the URL. Tap the arrow to show more: Method <b>POST</b>, Request Body <b>JSON</b>, add a <b>Text</b> field named <code>text</code>, and set its value to <b>Text from Image</b> (the blue variable).</li>
+        <li>Add <b>Show Result</b> so you see what got added. Tap <b>Done</b>.</li>
+      </ol>
+      <p class="hint">Try it: screenshot a slip, tap Share, scroll the app row to <b>Blue Horseshoe</b>. Sharing the same slip again just updates it. Tapping <i>Set up</i> again makes a new link and turns off the old one.</p>
+    </div>
+  </div>
+  <div class="card">
     <h3>Install the app</h3>
     <p class="hint"><b>iPhone:</b> open this page in Safari, tap the Share button, then <b>Add to Home Screen</b>.<br><b>Android:</b> tap the ⋮ menu in Chrome, then <b>Install app</b> or <b>Add to Home screen</b>.</p>
   </div>
