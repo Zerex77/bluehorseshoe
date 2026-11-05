@@ -13,8 +13,8 @@
 // Plus CFBD advanced team stats, turned into 0-100 percentiles for the matchup chart on the site.
 //
 //  - Sam's Models (samthemodelman.smmodel.workers.dev): projected scores, model line, and each game's
-//    "where the margin comes from" breakdown. Sam's own testing says it tracks the market rather than beating it,
-//    so it gets a smaller share of the blend. His NFL board is saved too (data/nfl-sources.json).
+//    "where the margin comes from" breakdown. Since Nov 5 it gets the biggest share of the blend: it had the best
+//    record against closing spreads of our sources (still only about 50%). His NFL board is saved too (data/nfl-sources.json).
 //
 // Runs every 2 hours from the refresh loop (scripts/refresh.mjs), plus .github/workflows/model.yml once a day.
 // Outside sources are re-read every run. CFBD (free key in the repo secret CFBD_API_KEY) is re-read at most every
@@ -34,7 +34,9 @@ export const SD = 15.5;
 const WEIGHTS = { sp: 0.35, fpi: 0.35, elo: 0.15, srs: 0.15 };
 const ELO_PER_PT = 25; // Elo points per point of margin
 // Final projected margin: our ratings blend, Connelly's SP+ game projection, Sasser's model and Sam's model, weighted.
-export const BLEND = { own: 0.29, spx: 0.29, ds: 0.29, sam: 0.13 };
+// Nov 5 reweight, from each source's record against closing spreads Oct 23-Nov 4: Sam 40-41, SP+ 37-44, our CFBD
+// ratings blend 33-49 (4-13 at 4+ pts of edge). Sasser's board stopped matching games on Oct 24 (weights renormalize).
+export const BLEND = { own: 0.1, spx: 0.3, ds: 0.2, sam: 0.4 };
 const CACHE = process.env.CFBD_CACHE || 'data/cfbd-cache.json';
 const NFL_OUT = process.env.NFL_SOURCES_OUT || 'data/nfl-sources.json';
 const CFBD_EVERY_H = 12;
@@ -316,7 +318,8 @@ export async function main() {
     if (!ks.length) continue;
     const den = ks.reduce((a, k) => a + BLEND[k], 0);
     const m = ks.reduce((a, k) => a + parts[k] * BLEND[k], 0) / den;
-    const totals = [x && x.total, d && d.total, sm && sm.as != null && sm.hs != null ? round(sm.as + sm.hs) : null].filter((v) => v != null);
+    // Sam's totals ran 4.2 pts high on average through Nov 4 (SP+ 1.0), so the shown model total leaves Sam out.
+    const totals = [x && x.total, d && d.total].filter((v) => v != null);
     out[g.id] = {
       h: g.homeTeam, a: g.awayTeam, n: !!g.neutralSite, kick: g.startDate,
       m: round(m), pH: round(phi(m / SD), 3), t: totals.length ? round(totals.reduce((a, b) => a + b, 0) / totals.length) : null,

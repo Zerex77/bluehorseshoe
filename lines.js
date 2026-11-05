@@ -271,6 +271,9 @@
         // Totals backed only by line movement (no book shading, no wind) went 27-38 through Oct 29 (college and NFL);
         // with book shading, 15-14. Movement-only totals are held: shown, not Horseshoe picks.
         else if (!shaded && !windy) { if (sig) hold(l, 'movement only, no book shading'); else { adj -= 0.015; why.push('movement only, no book shading'); } }
+        // Nov 5: college Overs went 38-53 (-18 units) through Nov 4, and 7-10 even with book shading. The Over is the
+        // public side and books price it that way. College Overs stay on the board but aren't Horseshoe picks.
+        if (!nfl && !under && !windy && sig && !l.held) hold(l, 'college Overs have been the public side (38-53 this year)');
         if (shaded && !nfl && !l.held) { adj += 0.01; why.push('books shading it'); }
         if (!under && tm >= 1 && tm < 3 && !shaded) { adj -= 0.01; why.push('small rise, no shading'); }
         if (windy) {
@@ -319,7 +322,8 @@
       var mE = tA && tH && tA.rating != null && tH.rating != null ? Math.round((tH.rating - tA.rating + (sl.n ? 0 : (nm.hfa || NFL_HFA))) * 10) / 10 : null;
       var sm = sl.sam && sl.sam.m != null ? sl.sam : null;
       if (mE == null && !sm) return;
-      var m = mE != null && sm ? Math.round((0.4 * mE + 0.6 * sm.m) * 10) / 10 : mE != null ? mE : sm.m;
+      // Nov 5: EPA ratings went 9-13 against closing spreads, Sam 12-10, so Sam's share goes from 60% to 75%.
+      var m = mE != null && sm ? Math.round((0.25 * mE + 0.75 * sm.m) * 10) / 10 : mE != null ? mE : sm.m;
       var pH = phi(m / NFL_SD);
       sl.mx = { m: m, pH: pH, t: sm ? sm.total : null, sam: sl.sam, epa: mE };
       sl.mxSrcs = modelView(sl, { sam: sm, epa: mE != null ? { m: mE } : null });
@@ -677,11 +681,11 @@
   // projected margin (and a projected total from SP+ and Sasser). The top CFBD Pick'em models hit about 75% straight up
   // but only about 52-56% against the spread, so the model gets a real say on moneylines and a small one elsewhere:
   //  - moneylines: the Horseshoe chance becomes 70% market, 30% model
-  //  - spreads: a "Model edge" leg needs 3+ pts of edge AND most of the models on that side; spreads that 4+ pts and most
-  //    models disagree with are held (shown, not a Horseshoe pick); smaller agreements and disagreements are small nudges
-  //  - totals: same idea against the projected total, 3+ pts to nudge, 4+ pts with both models agreeing for a leg or a hold
+  //  - spreads: the models confirm or veto, they don't make picks (since Nov 5). Agreement is a small nudge; spreads that
+  //    4+ pts and most models disagree with are held (shown, not a Horseshoe pick)
+  //  - totals: shown on the matchup page only (since Nov 5, model totals were 34-52 against the closing number)
   // Every touched leg logs l.model (edge in points, or model win chance on MLs) so the tracker can show whether it helps.
-  var MODEL_EDGE = 3, MODEL_HOLD = 4, MODEL_ML_W = 0.3, MODEL_T_EDGE = 3, MODEL_T_HOLD = 4;
+  var MODEL_EDGE = 3, MODEL_HOLD = 4, MODEL_ML_W = 0.3, MODEL_T_EDGE = 3, MODEL_T_HOLD = 4, MODEL_MAKES_PICKS = false;
   var MODEL_NAMES = { own: 'Horseshoe ratings', spx: 'SP+', ds: 'Sasser', sam: 'Sam’s Models', epa: 'Horseshoe EPA ratings' };
   function modelView(s, mp) {
     // Each model's projected margin (home minus away) and its side against the current spread and total.
@@ -748,20 +752,17 @@
           else if (!agree && edge >= MODEL_HOLD && most) hold(l, proj + ', disagrees by ' + edge + ' pts' + (agreeTxt ? ' (' + agreeTxt + ' on the other side)' : ''));
           else if (!agree && edge >= 2) { bump(l, -0.01); add(l, proj + ', leans the other way'); }
         } else if (l.k === 'total' && tSide) {
+          // Nov 5: model totals are shown, never used. Through Nov 4 they went 34-52 against the closing total (8-24 at
+          // 4+ pts) and model-made total picks went 7-22; Sam's totals ran 4 pts high. No bumps, no picks, no holds.
           var dir = /^over/i.test(l.label) ? 'Over' : 'Under', te = Math.abs(tEdge), tAgree = dir === tSide;
           l.model = tAgree ? te : -te;
-          var tTxt = 'Model total ' + tProj.toFixed(1);
-          if (tAgree && te >= MODEL_T_EDGE) {
-            bump(l, Math.min(0.025, (te - 2) * 0.008) * (tAll ? 1 : 0.5));
-            var sig0 = l.s ? l.s[0] + l.s[1] + l.s[2] : 0;
-            if (!sig0 && !l.held && tAll && te >= MODEL_T_HOLD) { l.s = [1, 0, te >= 6 ? 1 : 0]; l.modelPick = true; if (/no Horseshoe signal/.test(l.note || '')) l.note = ''; }
-            add(l, tTxt + ', ' + te + ' pts ' + (dir === 'Over' ? 'over' : 'under') + ' the number');
-          } else if (!tAgree && te >= MODEL_T_HOLD && tAll) hold(l, tTxt + ', ' + te + ' pts the other way');
-          else if (!tAgree && te >= 2) { bump(l, -0.01); add(l, tTxt + ', leans the other way'); }
+          if (te >= 2) add(l, 'Model total ' + tProj.toFixed(1) + ' (shown only, model totals don’t move picks)');
         }
       });
-      // A spread most models like by 3+ pts: upgrade the plain board leg if there is one, or add it.
-      if (mSide && edge >= MODEL_EDGE && most && o) {
+      // Nov 5: models no longer create spread picks. Model-made spread picks went 15-16 and the blend went 35-47 against
+      // closing spreads (Oct 23-Nov 4). When the models and the market disagree, the market has been right, so the
+      // models only confirm (small bump) or veto (hold) picks that already have their own signals.
+      if (MODEL_MAKES_PICKS && mSide && edge >= MODEL_EDGE && most && o) {
         var line = mSide === 'a' ? o.aNow : -o.aNow;
         var label = nmOf(s, mSide) + ' ' + signed(line);
         var odds = mSide === 'a' ? o.aSpOdds : o.hSpOdds;
@@ -779,8 +780,8 @@
             model: edge, modelPick: true, note: why });
         }
       }
-      // A total both models put 4+ pts past the number, with no leg on that side yet.
-      if (tSide && tAll && tSrcs.length > 1 && Math.abs(tEdge) >= MODEL_T_HOLD && o && o.tot != null) {
+      // A total both models put 4+ pts past the number, with no leg on that side yet (off since Nov 5, see above).
+      if (MODEL_MAKES_PICKS && tSide && tAll && tSrcs.length > 1 && Math.abs(tEdge) >= MODEL_T_HOLD && o && o.tot != null) {
         var tl = tSide + ' ' + o.tot;
         if (!mine.some(function (l) { return l.k === 'total' && l.label === tl; })) {
           var iO = imp(o.oOdds), iU = imp(o.uOdds), base = (tSide === 'Over' ? iO : iU) / (iO + iU);
