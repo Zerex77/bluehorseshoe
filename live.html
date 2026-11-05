@@ -380,7 +380,12 @@
 
   function hardRockText(raw) {
     var DATE = /^.*?\b(today|tomorrow|tonight|mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s*\d{1,2}[:.]\d{2}\s*[ap]\.?m\.?\s*(e[sd]t|c[sd]t|m[sd]t|p[sd]t)?\s*/i;
-    var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').trim(); }).filter(Boolean);
+    // the slip's background is giant "HARD ROCK BET SPORTSBOOK" lettering: OCR turns it into stray lines
+    var WATERMARK = /hard ?rock|rock ?bet|bet ?sports|sportsbook|^[a-z]?ports|^[^a-z0-9]*(bet|sgp)[^a-z0-9]*$/i;
+    var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').trim(); })
+      .filter(function (x) { return x && x.replace(/[^A-Za-z0-9]/g, '').length > 2 && !WATERMARK.test(x); });
+    // OCR noise that can land between a pick and its market line: a short lowercase scrap like "dopil"
+    var scrap = function (x) { return /^[a-z]{1,7}$/.test(x); };
     var out = { legs: [], stake: null, odds: null };
     var groups = [], cur = null;
     var isMarket = function (x) { return /^[A-Z][A-Z0-9 +&.'\-\/]{3,}$/.test(x) && /[A-Z]{2,}/.test(x) && !/^(BET|HARD ROCK|SGP|SGPMAX|PARLAY)$/.test(x) && !/(^|\s)[+-]\d/.test(x); };
@@ -401,8 +406,10 @@
         cur = { header: h, items: [] }; groups.push(cur); return;
       }
       if (isMarket(x) && i > 0) {
-        var sel = lines[i - 1].replace(DATE, '').trim();   // a date line can get glued onto the pick
-        if (!sel || junk(sel) || knownMarket(sel) || isDate(lines[i - 1])) return;
+        var si = i - 1;
+        while (si > 0 && scrap(lines[si])) si--;
+        var sel = lines[si].replace(DATE, '').trim();   // a date line can get glued onto the pick
+        if (!sel || junk(sel) || knownMarket(sel) || isDate(lines[si])) return;
         if (!cur) { cur = { header: '', items: [] }; groups.push(cur); }
         var om = /\s+([+-]\d{3,6})$/.exec(sel);
         var mu = matchup(lines[i + 1] || '') || matchup(lines[i + 2] || '');
@@ -420,7 +427,7 @@
         if (/TO WIN|MONEYLINE/.test(mk)) t = sel + ' ML';
         else if (/SPREAD|HANDICAP|RUN LINE|PUCK LINE/.test(mk)) t = sel;
         else if (/^TOTAL( POINTS)?$|GAME TOTAL/.test(mk)) t = (ctx ? ctx + ' ' : '') + sel;
-        else if (/ANYTIME|TOUCHDOWN SCORER|TD SCORER/.test(mk)) t = sel + ' anytime TD';
+        else if (/ANYTIME|TOUCHDOWN SCORER|TD SCORER/.test(mk)) t = (/^(over|under|yes)\b|^[\d.]+$/i.test(sel) ? cleanPlayer(mk) : sel) + ' anytime TD';
         else t = propText(sel, mk) || (sel + ' ' + mk.toLowerCase());
         out.legs.push((t + (it.odds ? ' ' + it.odds : '')).replace(/\s+/g, ' ').trim());
       });
