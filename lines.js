@@ -209,6 +209,10 @@
   //  - spreads and totals where the models and the line are 4+ pts apart: held (were 5-9), see rateLegs
   //  - totals on movement alone, NFL now too: held (were 11-14)
   //  - road dogs on a steady line: +1%; road favorites outside the sweet spot: -1%
+  // NFL divisions, for the divisional road dog angle
+  var NFL_DIV = { BUF: 1, MIA: 1, NE: 1, NYJ: 1, BAL: 2, CIN: 2, CLE: 2, PIT: 2, HOU: 3, IND: 3, JAX: 3, TEN: 3, DEN: 4, KC: 4, LV: 4, LAC: 4,
+    DAL: 5, NYG: 5, PHI: 5, WSH: 5, WAS: 5, CHI: 6, DET: 6, GB: 6, MIN: 6, ATL: 7, CAR: 7, NO: 7, TB: 7, ARI: 8, LAR: 8, LA: 8, SF: 8, SEA: 8 };
+  function sameDiv(e) { var a = NFL_DIV[e.a && e.a.abbreviation], h = NFL_DIV[e.h && e.h.abbreviation]; return !!(a && a === h); }
   function tiltLegs(legs, evById, wx, nfl) {
     var W = (wx && wx.games) || {};
     var sideOf = function (e, label) {
@@ -244,12 +248,16 @@
           // Through Oct 29: spread dogs on a steady line (under 3 pts) went 21-10; favorites 14-18.
           if (sd === 'a' && line > 0 && am < 3) { adj += 0.01; why.push('road dog, steady line'); }
           if (sd === 'a' && line < 0 && !sweet) { adj -= 0.01; why.push('road favorite'); }
-          // Home underdogs 9-4, home favorites 6-7. Through Oct 20: college home dogs 8-3, so the nudge goes up a notch.
-          if (sd === 'h' && line > 0) { adj += 0.015; why.push('home dog'); }
+          // Nov 5, from closing lines and results (NFL 1999-2025, 7,000 games; college 2006-2020, 10,000 games):
+          //  - home dogs: NFL 50.1%, college 48.3% (late season 45.9%). The old +1.5% came from an 11-game sample.
+          //    This season's college home dogs are 22-7 on our board, but 29 games can't outweigh 3,000+, so home dogs
+          //    get no bump either way: they have to win on their own signals.
+          //  - divisional road dogs (NFL): 53.7% over 1,654 games, above 52% in 3 of 4 eras. A real nudge.
+          //  - college dogs of 28+: 54.1% 2014-20 (51.5% 2006-13); dogs of 14-27.5 were 48-50%, so only 28+ counts.
           if (sd === 'h' && line < 0 && !sweet) { adj -= 0.015; why.push('home favorite tax'); }
-          // Through Oct 20: college dogs getting 14+ went 4-0, college favorites laying 14+ went 4-5.
-          if (!nfl && line >= 14) { adj += 0.01; why.push('big college dog'); }
-          if (!nfl && line <= -14) { adj -= 0.015; why.push('laying 14+ in college'); }
+          if (nfl && sd === 'a' && line > 0 && sameDiv(e)) { adj += 0.015; why.push('divisional road dog (54% since 1999)'); }
+          if (!nfl && line >= 28) { adj += 0.01; why.push('big college dog'); }
+          if (!nfl && line <= -28) { adj -= 0.01; why.push('laying 28+ in college'); }
         }
       }
       // Through Oct 20: college moneyline favorites hit 59% when the Horseshoe expected 71% (10-7, -$35 at $10),
