@@ -258,7 +258,7 @@
     var ok = p.market && (g || p.market === 'prop');
     var where = g ? ' · ' + K.abbr(g.a) + ' @ ' + K.abbr(g.h) : '';
     var what = !p.market ? "Can't read this leg. Check the spelling." :
-      p.market === 'prop' ? p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : 'over ' + p.line + ' ' + p.what) + (g ? where : ' · game found at kickoff') :
+      p.market === 'prop' ? p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : p.side + ' ' + p.line + ' ' + p.what) + (g ? where : ' · game found at kickoff') :
       !g ? 'No game found for this team this week' :
       (p.market === 'total' ? p.dir + ' ' + p.line : p.market === 'ml' ? K.teamName(g[p.side]) + ' moneyline' : K.teamName(g[p.side]) + ' ' + K.sgn(p.line)) + where;
     return { ok: !!ok, what: what };
@@ -389,7 +389,7 @@
     chips($('bTypes'), TYPES, B.type, 'type');
     $('bTeamWrap').hidden = !g || B.type === 'total';
     $('bPropWrap').hidden = !g || B.type !== 'prop';
-    $('bTotWrap').hidden = !g || B.type !== 'total';
+    $('bTotWrap').hidden = !g || !(B.type === 'total' || (B.type === 'prop' && B.stat && STATS[B.stat][2] !== false));
     if (g) chips($('bTeams'), [['a', K.teamName(g.a)], ['h', K.teamName(g.h)]], B.side, 'side');
     chips($('bOU'), [['over', 'Over'], ['under', 'Under']], B.ou, 'ou');
     var stat = STATS[B.stat];
@@ -408,7 +408,7 @@
   function lineVal() {
     var v = $('bLine').value.trim();
     var plus = /^(\d+(?:\.\d+)?)\s*\+$/.exec(v);
-    if (plus) return Number(plus[1]) - 0.5;            // Hard Rock "70+" = over 69.5
+    if (plus) { B.ou = 'over'; return Number(plus[1]) - 0.5; }   // Hard Rock "70+" = over 69.5
     var n = Number(v.replace(/[^\d.+-]/g, ''));
     return v && isFinite(n) ? n : null;
   }
@@ -424,7 +424,7 @@
     if (!B.player || !B.stat) return '';
     var st = STATS[B.stat];
     if (st[2] === false) return B.player.name + ' ' + st[1];
-    return line ? B.player.name + ' over ' + line + ' ' + st[1] : '';
+    return line ? B.player.name + ' ' + B.ou + ' ' + line + ' ' + st[1] : '';
   }
   $('buildCard').addEventListener('click', function (e) {
     var c = e.target.closest('button');

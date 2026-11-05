@@ -38,7 +38,7 @@ def pick_loss(row):
     m_cur = re.search(r'(\d+(?:\.\d+)?)', row.get('right') or '')
     m_line = re.search(r'(\d+(?:\.\d+)?)', lab)
     if (row.get('market') in ('prop', 'total') and m_cur and m_line
-            and not re.search(r'\bunder\b', lab, re.I)):
+            and row.get('side') != 'under' and not re.search(r'\bunder\b', lab, re.I)):
         cur, line = float(m_cur.group(1)), float(m_line.group(1))
         if line > 0 and 0.85 <= cur / line < 1.0:
             return 'short:%g:%g' % (cur, line)
@@ -54,7 +54,9 @@ def pick(row):
     if m == 'spread':
         return 'covered'
     if m == 'total':
-        return 'under' if ' under' in lab or re.search(r'\bu\s*\d', lab) else 'over'
+        return 'under' if row.get('side') == 'under' or ' under' in lab or re.search(r'\bu\s*\d', lab) else 'over'
+    if row.get('side') == 'under':   # an under prop held: the scoreboard stops under the line
+        return 'under'
     if re.search(r'\btds?\b|touchdown', lab):
         return 'touchdown'
     if re.search(r'pass|comp\.|completion', lab):

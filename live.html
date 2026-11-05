@@ -371,11 +371,11 @@
     var all = sel + ' ' + mk, what = statOf(all), m;
     if (!what) return null;
     var name = /^(over|under)\b/i.test(sel) ? cleanPlayer(mk) : cleanPlayer(sel) || cleanPlayer(mk);
-    var line = null;
-    if ((m = /\b(?:over|o)\s*([\d.]+)/i.exec(all))) line = Number(m[1]);
+    var line = null, side = 'over';
+    if ((m = /\b(over|under|o|u)\s*([\d.]+)/i.exec(sel)) || (m = /\b(over|under)\s*([\d.]+)/i.exec(all))) { line = Number(m[2]); side = /^u/i.test(m[1]) ? 'under' : 'over'; }
     else if ((m = /(\d+(?:\.\d+)?)\s*\+/.exec(all))) line = Number(m[1]) - 0.5;
     if (!name || line == null) return null;
-    return name + ' over ' + line + ' ' + what;
+    return name + ' ' + side + ' ' + line + ' ' + what;
   }
 
   function hardRockText(raw) {
@@ -495,11 +495,11 @@
     // player props
     var yes = /^(.*?)\s+(anytime\s*(td|touchdown)|atd|to score( a)?( td| touchdown)?|any time td|td scorer)$/i.exec(text);
     var thr = /^(.*?)\s+(to throw( a)? (td|touchdown)|1\+ pass(ing)? td)$/i.exec(text);
-    var over = /^(.*?)\s+(?:over|o)\s*([\d.]+)\s+(.+)$/i.exec(text);
+    var over = /^(.*?)\s+(over|under|o|u)\s*([\d.]+)\s+(.+)$/i.exec(text);
     var plus = /^(.*?)\s+(\d+(?:\.\d+)?)\+\s*(.+)$/i.exec(text);
     if (thr) { leg.market = 'prop'; leg.player = thr[1]; leg.what = 'pass TDs'; leg.line = 0.5; leg.side = 'yes'; }
     else if (yes) { leg.market = 'prop'; leg.player = yes[1]; leg.what = 'TDs'; leg.line = 0.5; leg.side = 'yes'; }
-    else if (over && statOf(over[3])) { leg.market = 'prop'; leg.player = over[1]; leg.line = Number(over[2]); leg.what = statOf(over[3]); leg.side = 'over'; }
+    else if (over && statOf(over[4])) { leg.market = 'prop'; leg.player = over[1]; leg.line = Number(over[3]); leg.what = statOf(over[4]); leg.side = /^u/i.test(over[2]) ? 'under' : 'over'; }
     else if (plus && statOf(plus[3])) { leg.market = 'prop'; leg.player = plus[1]; leg.line = Number(plus[2]) - 0.5; leg.what = statOf(plus[3]); leg.side = 'over'; }
     if (leg.market === 'prop') {
       leg.player = leg.player.replace(/\s*[\(\[].*?[\)\]]\s*/g, ' ').replace(/^.*?:\s*/, '').trim();
@@ -741,9 +741,16 @@
       var cur = sum ? playerStat(sum, leg.player, leg.what) : undefined;
       if (cur === undefined || cur === null) {
         if (done) return { cls: 's-unk', right: 'No stats', sub: leg.player + ' not in the box score · ' + base };
-        return { cls: 's-close', right: '0 / ' + fmt(leg.line + 0.5), sub: leg.what + ' · no stats yet · ' + base, prog: 0 };
+        return { cls: 's-close', right: '0 / ' + (leg.side === 'under' ? 'U' + fmt(leg.line) : fmt(leg.line + 0.5)), sub: leg.what + ' · no stats yet · ' + base, prog: 0 };
       }
       var need = leg.line;
+      if (leg.side === 'under') {
+        if (cur > need) return { cls: 's-lost', right: 'LOST ' + cur, sub: leg.what + ' · ' + base, prog: 1 };
+        if (done) return { cls: 's-win', right: 'WON ' + cur, sub: leg.what + ' · ' + base, prog: cur / need };
+        var pu = proj(cur, need, f), room = need - pu;
+        return { cls: room > need * 0.12 ? 's-good' : room > -need * 0.12 ? 's-close' : 's-bad', right: cur + ' / U' + fmt(need),
+          sub: leg.what + ' · pace ' + Math.round(pu) + ' · ' + base, prog: cur / need };
+      }
       if (cur > need) return { cls: 's-win', right: 'HIT ' + cur, sub: leg.what + ' · ' + base, prog: 1 };
       if (done) return { cls: 's-lost', right: 'LOST ' + cur, sub: leg.what + ' · ' + base, prog: cur / (need + 0.5) };
       var pj2 = proj(cur, need, f);
@@ -766,7 +773,7 @@
     if (g && p.market === 'total' && p.dir) return teamName(g.a) + '/' + teamName(g.h) + ' ' + (p.dir === 'over' ? 'Over' : 'Under') + ' ' + fmt(p.line);
     if (p.market !== 'prop') return p.text;
     if (p.side === 'yes') return p.player + (p.what === 'pass TDs' ? ' to throw a TD' : ' anytime TD');
-    return p.player + ' ' + fmt(p.line) + ' ' + (SHORT[p.what] || p.what);
+    return p.player + ' ' + (p.side === 'under' ? 'U' : '') + fmt(p.line) + ' ' + (SHORT[p.what] || p.what);
   }
   // legs grouped by game, games in kickoff order, unmatched legs last
   function byGame(legs) {
@@ -996,7 +1003,7 @@
       var g = p.g && games[p.g];
       var ok = p.market && (g || p.market === 'prop');
       var what = !p.market ? "can't read this one" :
-        p.market === 'prop' ? 'prop · ' + p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : 'over ' + p.line + ' ' + p.what) + (g ? ' · ' + abbr(g.a) + ' @ ' + abbr(g.h) : ' · game found at kickoff') :
+        p.market === 'prop' ? 'prop · ' + p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : p.side + ' ' + p.line + ' ' + p.what) + (g ? ' · ' + abbr(g.a) + ' @ ' + abbr(g.h) : ' · game found at kickoff') :
         !g ? 'no game found today' :
         (p.market === 'total' ? p.dir + ' ' + p.line : p.market === 'ml' ? teamName(g[p.side]) + ' ML' : teamName(g[p.side]) + ' ' + sgn(p.line)) + ' · ' + abbr(g.a) + ' @ ' + abbr(g.h);
       return '<span class="' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓ ' : '! ') + esc(t) + ' → ' + esc(what) + '</span>';

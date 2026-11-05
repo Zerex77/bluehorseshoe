@@ -138,11 +138,11 @@
     var all = sel + ' ' + mk, what = statOf(all), m;
     if (!what) return null;
     var name = /^(over|under)\b/i.test(sel) ? cleanPlayer(mk) : cleanPlayer(sel) || cleanPlayer(mk);
-    var line = null;
-    if ((m = /\b(?:over|o)\s*([\d.]+)/i.exec(all))) line = Number(m[1]);
+    var line = null, side = 'over';
+    if ((m = /\b(over|under|o|u)\s*([\d.]+)/i.exec(sel)) || (m = /\b(over|under)\s*([\d.]+)/i.exec(all))) { line = Number(m[2]); side = /^u/i.test(m[1]) ? 'under' : 'over'; }
     else if ((m = /(\d+(?:\.\d+)?)\s*\+/.exec(all))) line = Number(m[1]) - 0.5;
     if (!name || line == null) return null;
-    return name + ' over ' + line + ' ' + what;
+    return name + ' ' + side + ' ' + line + ' ' + what;
   }
 
   function hardRockText(raw) {
@@ -262,11 +262,11 @@
     // player props
     var yes = /^(.*?)\s+(anytime\s*(td|touchdown)|atd|to score( a)?( td| touchdown)?|any time td|td scorer)$/i.exec(text);
     var thr = /^(.*?)\s+(to throw( a)? (td|touchdown)|1\+ pass(ing)? td)$/i.exec(text);
-    var over = /^(.*?)\s+(?:over|o)\s*([\d.]+)\s+(.+)$/i.exec(text);
+    var over = /^(.*?)\s+(over|under|o|u)\s*([\d.]+)\s+(.+)$/i.exec(text);
     var plus = /^(.*?)\s+(\d+(?:\.\d+)?)\+\s*(.+)$/i.exec(text);
     if (thr) { leg.market = 'prop'; leg.player = thr[1]; leg.what = 'pass TDs'; leg.line = 0.5; leg.side = 'yes'; }
     else if (yes) { leg.market = 'prop'; leg.player = yes[1]; leg.what = 'TDs'; leg.line = 0.5; leg.side = 'yes'; }
-    else if (over && statOf(over[3])) { leg.market = 'prop'; leg.player = over[1]; leg.line = Number(over[2]); leg.what = statOf(over[3]); leg.side = 'over'; }
+    else if (over && statOf(over[4])) { leg.market = 'prop'; leg.player = over[1]; leg.line = Number(over[3]); leg.what = statOf(over[4]); leg.side = /^u/i.test(over[2]) ? 'under' : 'over'; }
     else if (plus && statOf(plus[3])) { leg.market = 'prop'; leg.player = plus[1]; leg.line = Number(plus[2]) - 0.5; leg.what = statOf(plus[3]); leg.side = 'over'; }
     if (leg.market === 'prop') {
       leg.player = leg.player.replace(/\s*[\(\[].*?[\)\]]\s*/g, ' ').replace(/^.*?:\s*/, '').trim();

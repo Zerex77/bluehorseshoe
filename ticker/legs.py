@@ -264,14 +264,15 @@ def parse_leg(raw, games, hint=None, player_game=None):
 
     thr = re.match(r'^(.*?)\s+(to throw( a)? (td|touchdown)|1\+ pass(ing)? td)$', text, re.I)
     yes = re.match(r'^(.*?)\s+(anytime\s*(td|touchdown)|atd|to score( a)?( td| touchdown)?|any time td|td scorer)$', text, re.I)
-    over = re.match(r'^(.*?)\s+(?:over|o)\s*([\d.]+)\s+(.+)$', text, re.I)
+    over = re.match(r'^(.*?)\s+(over|under|o|u)\s*([\d.]+)\s+(.+)$', text, re.I)
     plus = re.match(r'^(.*?)\s+(\d+(?:\.\d+)?)\+\s*(.+)$', text, re.I)
     if thr:
         leg.update(market='prop', player=thr.group(1), what='pass TDs', line=0.5, side='yes')
     elif yes:
         leg.update(market='prop', player=yes.group(1), what='TDs', line=0.5, side='yes')
-    elif over and stat_of(over.group(3)):
-        leg.update(market='prop', player=over.group(1), line=float(over.group(2)), what=stat_of(over.group(3)), side='over')
+    elif over and stat_of(over.group(4)):
+        leg.update(market='prop', player=over.group(1), line=float(over.group(3)), what=stat_of(over.group(4)),
+                   side='under' if over.group(2).lower().startswith('u') else 'over')
     elif plus and stat_of(plus.group(3)):
         leg.update(market='prop', player=plus.group(1), line=float(plus.group(2)) - 0.5, what=stat_of(plus.group(3)), side='over')
     if leg['market'] == 'prop':
@@ -328,7 +329,7 @@ def short_label(p, games=None):
         return p['text']
     if p.get('side') == 'yes':
         return p['player'] + (' to throw a TD' if p['what'] == 'pass TDs' else ' anytime TD')
-    return '%s %s %s' % (p['player'], fmt(p['line']), SHORT.get(p['what'], p['what']))
+    return '%s %s%s %s' % (p['player'], 'U' if p.get('side') == 'under' else '', fmt(p['line']), SHORT.get(p['what'], p['what']))
 
 
 # ---------------------------------------------------------------- box scores
@@ -614,11 +615,21 @@ def eval_leg(leg, games, summaries):
             return dict(cls='pre', right=clock_str(g), sub='%s @ %s' % (abbr(g['a']), abbr(g['h'])))
         summ = (summaries.get(g['id']) or {}).get('json')
         cur = player_stat(summ, leg['player'], leg['what']) if summ else None
-        tgt = '1' if leg['side'] == 'yes' else fmt(leg['line'] + 0.5)
+        tgt = '1' if leg['side'] == 'yes' else 'U' + fmt(leg['line']) if leg['side'] == 'under' else fmt(leg['line'] + 0.5)
         if cur is None:
             if done:
                 return dict(cls='unk', right='No stats', sub='not in box score')
             return dict(cls='close', right='0/' + tgt, sub='no stats yet', prog=0)
+        if leg['side'] == 'under':
+            line = leg['line']
+            if cur > line:
+                return dict(cls='lost', right='LOST %s' % fmt(cur), sub='', prog=1)
+            if done:
+                return dict(cls='win', right='WON %s' % fmt(cur), sub='', prog=cur / line if line else 0)
+            pj = proj(cur, line, f)
+            room = line - pj
+            cls = 'good' if room > line * 0.12 else 'close' if room > -line * 0.12 else 'bad'
+            return dict(cls=cls, right='%s/%s' % (fmt(cur), tgt), sub='pace %d' % round(pj), prog=cur / line if line else 0)
         if cur > leg['line']:
             return dict(cls='win', right='HIT %s' % fmt(cur), sub='', prog=1)
         if done:
@@ -838,7 +849,8 @@ class Board:
                     elif not g or g['state'] == 'pre':
                         inj = self.report_injury(l['player'], team)
                 rows.append({'label': l['label'], 'market': l.get('market'), 'g': l.get('g') if g else None,
-                             'team': team, 'odds': l.get('odds'), 'player': l.get('player'), 'inj': inj, **e})
+                             'team': team, 'odds': l.get('odds'), 'player': l.get('player'), 'side': l.get('side') or l.get('dir'),
+                             'inj': inj, **e})
             won = sum(1 for e in evs if e['cls'] in ('win', 'push'))
             out.append({'id': s.get('id'), 'name': s.get('name') or 'Slip', 'status': st, 'won': won, 'n': len(legs),
                         'pay': po['pay'], 'price': amer(po['d']) if po['d'] else None, 'stake': po['stake'], 'legs': rows})
