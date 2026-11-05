@@ -509,6 +509,9 @@
     $('sMode').value = st.mode || 'tickets';
     $('sTeam').value = st.team || 'JAX';
     $('sTeamWrap').hidden = $('sMode').value !== 'team';
+    var ls = (data.settings || {}).lastShot;
+    $('sShotWrap').hidden = !ls;
+    if (ls) $('sShotText').value = ls.text;
     $('sPhones').textContent = (data.phones || []).join(', ') || 'Just you so far. Give friends the pairing code on the ticker so they can add tickets too.';
     $('sTickers').innerHTML = S.tickers.map(function (x) {
       return '<div class="item"><span>' + esc(x.label || 'Ticker') + '<small>' + (x.id === t.id ? 'Showing now' : '') + '</small></span>' +
@@ -542,6 +545,12 @@
     api('POST', '/t/' + t.id + '/sharekey', null, t).then(function (r) {
       $('sShareUrl').value = r.url; $('sShareWrap').hidden = false; b.textContent = 'Make a new link';
     }).catch(function (e) { alert(e.message || "Couldn't make a link. Try again."); }).finally(function () { b.disabled = false; });
+  };
+  $('sShotCopy').onclick = function () {
+    var u = $('sShotText'), b = this;
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy what it read'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(u.value).then(done, function () { u.select(); document.execCommand('copy'); done(); });
+    else { u.select(); document.execCommand('copy'); done(); }
   };
   $('sShareCopy').onclick = function () {
     var u = $('sShareUrl'), b = this;

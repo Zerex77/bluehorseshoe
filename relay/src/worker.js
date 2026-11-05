@@ -121,7 +121,13 @@ async function shareShot(req, db, url) {
   if (raw.length > MAX_BODY) return say('That picture had too much text.', 400);
   let text = raw;
   try { const j = JSON.parse(raw); text = typeof j === 'string' ? j : j.text || j['Extracted Text'] || Object.values(j).join('\n'); } catch (e) { /* plain text */ }
-  const got = K.hardRockText(String(text || ''));
+  text = String(text || '');
+  const got = K.hardRockText(text);
+  // keep what the phone read, so a misread slip can be checked later (Settings, Share button)
+  const st = await db.prepare('SELECT settings FROM tickers WHERE id = ?').bind(id).first();
+  const settings = JSON.parse((st && st.settings) || '{}');
+  settings.lastShot = { text: text.slice(0, 4000), legs: got.legs, at: Date.now() };
+  await db.prepare('UPDATE tickers SET settings = ? WHERE id = ?').bind(JSON.stringify(settings), id).run();
   if (!got.legs.length) return say("Couldn't find any picks in that screenshot. Try a full screenshot of the Hard Rock slip, or add it in the app.", 400);
   const n = got.legs.length;
   const s = cleanSlip({
@@ -133,7 +139,9 @@ async function shareShot(req, db, url) {
   if (!res.ok) { const e = await res.json().catch(() => ({})); return say(e.error || 'Something went wrong. Try again.', res.status); }
   const { updated } = await res.json();
   const t = await db.prepare('SELECT label FROM tickers WHERE id = ?').bind(id).first();
-  return say((updated ? 'Updated ' : 'Added ') + s.name + ' on ' + ((t && t.label) || 'your ticker') + ':\n' + s.legs.map((l) => '• ' + l.text).join('\n'));
+  const want = /(\d+)\s*-?\s*(?:bet|leg|pick)\s+parlay/i.exec(text);
+  const short = want && Number(want[1]) > n ? 'Only read ' + n + ' of ' + want[1] + ' legs. Add the rest in the app.\n' : '';
+  return say(short + (updated ? 'Updated ' : 'Added ') + s.name + ' on ' + ((t && t.label) || 'your ticker') + ':\n' + s.legs.map((l) => '• ' + l.text).join('\n'));
 }
 
 let schemaReady = null;
