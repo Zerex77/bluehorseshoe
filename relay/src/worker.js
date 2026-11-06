@@ -22,6 +22,7 @@
 //     POST   /api/t/:id/sharekey                              -> {url}       (link for the iPhone Share button)
 //   iPhone Share button (Shortcuts app: Extract Text from Image -> POST here)
 //     POST   /api/shot?key=<ticker>.<token>  {text} or plain text  -> a sentence saying what was added
+//            optional slip name: header X-Slip-Name or &name=
 
 import '../public/slipkit.js';   // the app's Hard Rock slip reader, so shared screenshots read the same way
 const K = globalThis.SlipKit;
@@ -130,9 +131,17 @@ async function shareShot(req, db, url) {
   await db.prepare('UPDATE tickers SET settings = ? WHERE id = ?').bind(JSON.stringify(settings), id).run();
   if (!got.legs.length) return say("Couldn't find any picks in that screenshot. Try a full screenshot of the Hard Rock slip, or add it in the app.", 400);
   const n = got.legs.length;
+  // a name typed in the Shortcut ("Ask for Input" -> header X-Slip-Name, or &name= on the link)
+  const given = String(req.headers.get('x-slip-name') || url.searchParams.get('name') || '').replace(/\s+/g, ' ').trim();
+  const sid = 'sh' + (await sha256(id + '|' + got.legs.join('|'))).slice(0, 10);   // sharing the same slip twice updates it
+  let name = given;
+  if (!name) {   // no name typed: keep the one it already has, or make one
+    const cur = await db.prepare('SELECT slips FROM tickers WHERE id = ?').bind(id).first();
+    const old = cur && JSON.parse(cur.slips).find((x) => x.id === sid);
+    name = old ? old.name : n === 1 ? 'Straight bet' : n + '-leg parlay';
+  }
   const s = cleanSlip({
-    id: 'sh' + (await sha256(id + '|' + got.legs.join('|'))).slice(0, 10),   // sharing the same slip twice updates it
-    name: n === 1 ? 'Straight bet' : n + '-leg parlay', stake: got.stake, odds: got.odds,
+    id: sid, name, stake: got.stake, odds: got.odds,
     legs: got.legs.map((t) => ({ text: t })),
   }, phone.name.replace(/ share button$/i, ''));
   const res = await saveSlip(db, id, s);
