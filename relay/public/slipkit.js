@@ -149,7 +149,8 @@
     var DATE = /^.*?\b(today|tomorrow|tonight|mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s*\d{1,2}[:.]\d{2}\s*[ap]\.?m\.?\s*(e[sd]t|c[sd]t|m[sd]t|p[sd]t)?\s*/i;
     // the slip's background is giant "HARD ROCK BET SPORTSBOOK" lettering: OCR turns it into stray lines
     var WATERMARK = /hard ?rock|rock ?bet|bet ?sports|sportsbook|^[a-z]?ports|^[^a-z0-9]*(bet|sgp)[^a-z0-9]*$/i;
-    var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').trim(); })
+    // the slip's status circles can read as bullets ("• Over 224.5")
+    var lines = raw.split(/\n/).map(function (x) { return x.replace(/[|©®@]+\s*$/, '').replace(/^\s*[•●○◦·▪■□◯✓✔○⚪]+\s*/, '').trim(); })
       .filter(function (x) { return x && x.replace(/[^A-Za-z0-9]/g, '').length > 2 && !WATERMARK.test(x); });
     // OCR noise that can land between a pick and its market line: a short lowercase scrap like "dopil"
     var scrap = function (x) { return /^[a-z]{1,7}$/.test(x); };
@@ -162,7 +163,7 @@
     var matchup = function (x) { var m = /^(.+?)\s+(?:vs\.?|v\.?|@|at)\s+(.+)$/i.exec(x.replace(/^[^A-Za-z]+/, '')); return m && !isMarket(x) && !/[+-]\d/.test(x) ? m[1] + ' ' + m[2] : null; };
     lines.forEach(function (x, i) {
       var m;
-      if (out.odds == null && /parlay/i.test(x) && (m = /([+-]\d{3,6})\b/.exec(x))) out.odds = Number(m[1]);
+      if (out.odds == null && /parlay/i.test(x) && ((m = /([+-]\d{3,6})\b/.exec(x)) || (m = /^([+-]\d{3,6})$/.exec(lines[i + 1] || '')))) out.odds = Number(m[1]);
       if (out.stake == null && /wager/i.test(x)) {
         // "$20  $6,989.30" sits on the next line: the wager is the first amount ($ often reads as S)
         var nx = x.replace(/.*wager/i, '') + ' ' + (lines[i + 1] || '');
