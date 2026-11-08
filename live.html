@@ -547,7 +547,8 @@
       if (sq === wantSq || sq.indexOf(wantSq) === 0 || wantSq.indexOf(sq) === 0) return true;
       var parts = n.split(' '), last = parts[parts.length - 1];
       if (last !== wantLast) return false;
-      return want.split(' ').length === 1 || parts[0][0] === wantFirst[0];
+      // last name + first initial only when the slip gave just an initial ("K. Williams")
+      return want.split(' ').length === 1 || (wantFirst.length === 1 && parts[0][0] === wantFirst[0]);
     }
     var seen = false;
     function get(cat, keysWanted) {
@@ -909,7 +910,7 @@
         // player we haven't placed yet: look through started games, each at most every 2 minutes
         Object.keys(games).forEach(function (id) {
           var g = games[id];
-          if (g.state === 'pre' || want[id]) return;
+          if (g.state === 'pre' || want[id] || !canPlace(g, l.sport || s.sport, now)) return;
           if (lastScan[id] && now - lastScan[id] < 120000) return;
           want[id] = g; lastScan[id] = now;
         });
@@ -923,13 +924,25 @@
     }).slice(0, 40);
   }
   function guessSport(s, l) { return (l && l.sport) || s.sport || 'nfl'; }
+  // may a prop leg with no team named be matched to a player in this game's box score? Not another
+  // sport's game, and not one that kicked off 15+ hours ago (yesterday's games stay loaded, and a
+  // different player with the same name there would bust the leg)
+  function canPlace(g, sport, now) {
+    if (!g) return false;
+    if (sport && g.sport && g.sport !== sport) return false;
+    var k = new Date(g.date).getTime();
+    return isNaN(k) || (now || Date.now()) - k < 15 * 3600000;
+  }
   function resolvePlayers() {
     slips.forEach(function (s) {
       slipLegs(s).forEach(function (l) {
         if (l.market !== 'prop' || l.g) return;
         var key = squash(l.player);
         if (playerGame[key]) return;
-        Object.keys(summaries).some(function (id) {
+        var now = Date.now();
+        Object.keys(summaries).filter(function (id) { return canPlace(games[id], l.sport || s.sport, now); })
+          .sort(function (x, y) { return (games[x].state === 'in' ? 0 : 1) - (games[y].state === 'in' ? 0 : 1); })
+          .some(function (id) {
           if (anyPlayerIn(summaries[id].json, l.player)) { playerGame[key] = id; return true; }
           return false;
         });

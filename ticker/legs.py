@@ -348,7 +348,9 @@ def _matcher(player):
         parts = n.split(' ')
         if parts[-1] != parts_w[-1]:
             return False
-        return len(parts_w) == 1 or parts[0][0] == parts_w[0][0]
+        # last name + first initial only when the slip itself gave just an initial ("K. Williams");
+        # otherwise Kendrick Williams in some other game would count as Kyren Williams
+        return len(parts_w) == 1 or (len(parts_w[0]) == 1 and parts[0][0] == parts_w[0][0])
     return is_him
 
 
@@ -427,6 +429,25 @@ def player_team(summ, player):
                 if is_him((a.get('athlete') or {}).get('displayName')):
                     return team.get('team')
     return None
+
+
+def game_age_h(g, now=None):
+    """Hours since kickoff (None if unknown)."""
+    try:
+        k = datetime.fromisoformat(str(g.get('date')).replace('Z', '+00:00')).timestamp()
+    except (TypeError, ValueError):
+        return None
+    return ((now or time.time()) - k) / 3600
+
+
+def can_place(g, sport, now=None):
+    """May a prop leg with no team named be matched to a player found in this game's box score?
+    Not a game from another sport, and not one that kicked off more than 15 hours ago (yesterday's
+    college games stay in memory, and a different player with the same name there would bust the leg)."""
+    if sport and g.get('sport') and g['sport'] != sport:
+        return False
+    age = game_age_h(g, now)
+    return age is None or age < 15
 
 
 def in_box(summ, player):
@@ -790,7 +811,7 @@ class Board:
                 if l.get('market') != 'prop':
                     continue
                 for gid, g in self.games.items():
-                    if g['state'] == 'pre' or gid in want:
+                    if g['state'] == 'pre' or gid in want or not can_place(g, l.get('sport'), now):
                         continue
                     if now - self.last_scan.get(gid, 0) < 120:
                         continue
@@ -817,8 +838,11 @@ class Board:
                 key = squash(l['player'])
                 if key in self.player_game:
                     continue
-                for gid, sm in self.summaries.items():
-                    if in_box(sm['json'], l['player']):
+                # games being played now first, then the rest of today's
+                cands = [gid for gid in self.summaries if gid in self.games and can_place(self.games[gid], l.get('sport'), now)]
+                cands.sort(key=lambda gid: 0 if self.games[gid]['state'] == 'in' else 1)
+                for gid in cands:
+                    if in_box(self.summaries[gid]['json'], l['player']):
                         self.player_game[key] = gid
                         break
 
