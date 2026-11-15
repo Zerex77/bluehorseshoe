@@ -856,10 +856,160 @@ def anim_score(w, text):
         smoke.step(d, gravity=-0.01, drag=0.97)
         yield img, DT
 
+STEEL = (230, 170, 20)       # crane yellow
+HAZARD = ((240, 190, 0), (25, 25, 25))
+
+
+def _hazard_bar(d, x0, y, x1, h=2):
+    """Yellow and black construction stripes."""
+    for k in range(x0, x1 + 1):
+        d.line((k, y, k, y + h - 1), fill=HAZARD[((k - x0) // 3) % 2])
+
+
+def anim_score_crane(w, text):
+    """A game on a ticket scored, construction style: a tower crane swings in a steel sign with the play
+    and the score, sets it down, the crew welds it in place (sparks, flashing beacon), then lifts it away.
+    text: 'GAMEID|side|PLAY|away score|home score'."""
+    try:
+        gid, side, play, as_, hs = text.split('|')
+    except ValueError:
+        return
+    teams = CONTEXT['teams'].get(gid)
+    if not teams:
+        return
+    away, home, sport = teams
+    logos = CONTEXT.get('logos')
+    me = away if side == 'a' else home
+    col = _team_col(me)
+    word = {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
+    F = R.F_BIG
+    top_c, bot_c = R.caps(F)
+    LG = 16
+
+    def mark_w(t):
+        lg = logos.get(t, sport, LG) if logos else None
+        return LG if lg is not None else R.text_w(R.F_SMALL, R.ascii_safe(R._ab(t))[:3])
+
+    show_me = True
+    sw = 4 + mark_w(me) + 3 + R.text_w(F, word) + 11 + mark_w(away) + 3 + R.text_w(F, as_) + 7 + R.text_w(F, hs) + 3 + mark_w(home) + 4
+    if sw > w - 22:                       # long play name on a narrow ticker: drop the first logo
+        show_me = False
+        sw -= mark_w(me) + 3
+    SH = 21                               # sign height
+    MAST = 12                             # the crane's tower takes the left edge
+    sx_stop = MAST + max(2, (w - MAST - sw) // 2)
+    y_fly, y_land = 6, 10                 # sign top while flying / set down (bottom on the ground at 30)
+    t_in, t_drop, t_hold, t_out = int(1.6 * FPS), int(0.5 * FPS), int(2.6 * FPS), int(1.2 * FPS)
+    sparks, dust = Particles(), Particles()
+
+    def mark(img, d, t, x, cy):
+        lg = logos.get(t, sport, LG) if logos else None
+        if lg is not None:
+            R._paste_logo(img, lg, x, cy - LG // 2, LG)
+            return LG
+        ab = R.ascii_safe(R._ab(t))[:3]
+        d.text((x, cy - 5), ab, font=R.F_SMALL, fill=WHITE)
+        return R.text_w(R.F_SMALL, ab)
+
+    for i in range(t_in + t_drop + t_hold + t_out):
+        sway = 0.0
+        if i < t_in:
+            p = ease_out(i / t_in)
+            sx = int(w + 4 + (sx_stop - w - 4) * p)
+            sy = y_fly
+            sway = math.sin(i * 0.3) * 2.5 * (1 - p)          # swings as it travels, settles at the stop
+            phase = 'in'
+        elif i < t_in + t_drop:
+            q = (i - t_in) / t_drop
+            sx = sx_stop
+            sy = y_fly + (y_land - y_fly) * min(1.0, q * 1.4) - (1 if 0.7 < q < 0.85 else 0)   # little bounce
+            phase = 'drop'
+            if i == t_in + t_drop - 1:
+                dust.burst(sx + 2, 30, 10, speed=(0.3, 1.2), cols=[(140, 110, 70), (110, 90, 60)], up=0.4, life=(8, 16))
+                dust.burst(sx + sw - 2, 30, 10, speed=(0.3, 1.2), cols=[(140, 110, 70), (110, 90, 60)], up=0.4, life=(8, 16))
+        elif i < t_in + t_drop + t_hold:
+            sx, sy, phase = sx_stop, y_land, 'hold'
+        else:
+            q = ((i - t_in - t_drop - t_hold) / t_out) ** 2
+            sx, sy, phase = sx_stop, y_land + (-SH - 6 - y_land) * q, 'out'
+        sy = int(round(sy))
+        img, d = canvas(w)
+        # ground
+        d.line((0, 31, w, 31), fill=(95, 75, 45))
+        for k in range(3, w, 11):
+            d.point((k, 31), fill=(130, 105, 65))
+        # tower crane: lattice mast on the left, jib across the top
+        for yy in range(3, 31, 4):
+            d.line((3, yy, 8, yy + 4), fill=STEEL)
+            d.line((8, yy, 3, yy + 4), fill=STEEL)
+        d.line((3, 3, 3, 31), fill=STEEL)
+        d.line((8, 3, 8, 31), fill=STEEL)
+        d.line((0, 1, w, 1), fill=STEEL)
+        for k in range(10, w, 6):                             # jib lattice
+            d.line((k, 1, k + 3, 3), fill=(170, 125, 15))
+            d.line((k + 3, 3, k + 6, 1), fill=(170, 125, 15))
+        d.line((10, 3, w, 3), fill=(170, 125, 15))
+        d.rectangle((1, 4, 10, 8), fill=(200, 205, 215))     # operator cab
+        d.rectangle((6, 5, 9, 7), fill=(30, 60, 100))
+        beacon_on = phase in ('drop', 'hold') and (i // 4) % 2 == 0
+        d.rectangle((4, 0, 6, 0), fill=(255, 140, 0) if beacon_on else (90, 50, 0))
+        # trolley and cables
+        hx = sx + sw // 2
+        cx = int(hx + sway)
+        d.rectangle((hx - 3, 2, hx + 3, 4), fill=(80, 80, 90))
+        if sy > 4:
+            d.line((hx - 1, 4, cx - sw // 2 + 6, sy), fill=(150, 150, 160))
+            d.line((hx + 1, 4, cx + sw // 2 - 6, sy), fill=(150, 150, 160))
+        # the steel sign
+        x0 = cx - sw // 2
+        d.rectangle((x0, sy, x0 + sw, sy + SH - 1), fill=(22, 26, 40), outline=(120, 125, 140))
+        _hazard_bar(d, x0 + 1, sy + 1, x0 + sw - 1)
+        _hazard_bar(d, x0 + 1, sy + SH - 3, x0 + sw - 1)
+        for bx in (x0 + 2, x0 + sw - 2):                      # rivets
+            d.point((bx, sy + 4), fill=(180, 180, 190))
+            d.point((bx, sy + SH - 5), fill=(180, 180, 190))
+        cy = sy + SH // 2
+        ty = cy - (top_c + bot_c) // 2
+        x = x0 + 4
+        if show_me:
+            x += mark(img, d, me, x, cy) + 3
+        d.text((x, ty), word, font=F, fill=col)
+        x += R.text_w(F, word) + 5
+        d.line((x, sy + 4, x, sy + SH - 5), fill=(70, 75, 95))
+        x += 6
+        flash = phase == 'hold' and (i // 5) % 2 == 0
+        x += mark(img, d, away, x, cy) + 3
+        d.text((x, ty), as_, font=F, fill=(GOLD if flash else WHITE) if side == 'a' else R.DIM)
+        x += R.text_w(F, as_) + 2
+        d.line((x, cy, x + 2, cy), fill=R.DIM)
+        x += 5
+        d.text((x, ty), hs, font=F, fill=(GOLD if flash else WHITE) if side == 'h' else R.DIM)
+        x += R.text_w(F, hs) + 3
+        mark(img, d, home, x, cy)
+        # welding sparks at the corners while it's set
+        if phase == 'hold' and i % 7 == 0:
+            for ex in (x0 + 1, x0 + sw - 1):
+                if random.random() < 0.8:
+                    sparks.burst(ex, sy + SH - 1, 7, speed=(0.6, 1.8), cols=[(255, 230, 120), WHITE, (255, 150, 30)], up=1.0, life=(6, 12))
+        sparks.step(d, gravity=0.15, drag=0.94)
+        dust.step(d, gravity=-0.02, drag=0.93)
+        yield img, DT
+
+
+_score_turn = [0]
+
+
+def anim_score_any(w, text):
+    """Scoring plays take turns: the train, then the crane, then the train..."""
+    _score_turn[0] += 1
+    fn = anim_score if _score_turn[0] % 2 else anim_score_crane
+    return fn(w, text)
+
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
-    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury, 'score': anim_score,
+    'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury, 'score': anim_score_any,
+    'train': anim_score, 'crane': anim_score_crane,
 }
 
 
