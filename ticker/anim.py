@@ -1189,8 +1189,8 @@ _score_turn = [0]
 
 
 def anim_score_any(w, text):
-    """Scoring plays take turns: the train, then the crane, then the rocket, then the train..."""
-    fn = (anim_score, anim_score_crane, anim_score_rocket)[_score_turn[0] % 3]
+    """Scoring plays take turns, newest first: the rocket, then the train, then the crane, then the rocket..."""
+    fn = (anim_score_rocket, anim_score, anim_score_crane)[_score_turn[0] % 3]
     _score_turn[0] += 1
     return fn(w, text)
 
