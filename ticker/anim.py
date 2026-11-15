@@ -757,20 +757,32 @@ def anim_score(w, text):
     col = _team_col(me)
     alt = _hex(me.get('alternateColor'), WHITE)
     word = {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
-    # cars: the play, then each team's logo + score
-    f_big = R.F_FLASH if R.text_w(R.F_FLASH, '88') < 30 else R.F_BIG
-    LOGO = 24                                     # the scoring team's logo, big, on the first car
-    big_logo = logos.get(me, sport, LOGO) if logos else None
-    play_txt = word if big_logo is not None else R.ascii_safe(R._ab(me)) + ' ' + word
-    c1 = (4 + LOGO + 5 if big_logo is not None else 6) + R.text_w(R.F_BIG, play_txt) + 6
-    team_cars = []
-    for t, sc, mine in ((away, as_, side == 'a'), (home, hs, side == 'h')):
-        team_cars.append((t, sc, mine, 4 + 20 + 4 + R.text_w(f_big, sc) + 6))
     gap = 4
-    total = 46 + gap + c1 + sum(gap + tc[3] for tc in team_cars)
+
+    def layout(compact):
+        # compact (3 panels): smaller play logo, both scores on one scoreboard car, so it all fits
+        f_sc = R.F_BIG if compact else (R.F_FLASH if R.text_w(R.F_FLASH, '88') < 30 else R.F_BIG)
+        L = 20 if compact else 24
+        big = logos.get(me, sport, L) if logos else None
+        txt = word if big is not None else R.ascii_safe(R._ab(me)) + ' ' + word
+        pad = 3 if compact else 4
+        c1 = (pad + L + pad + 1 if big is not None else 6) + R.text_w(R.F_BIG, txt) + (4 if compact else 6)
+        if compact:
+            cars = [('board', None, None, None, 3 + 18 + 3 + R.text_w(f_sc, as_) + 5 + R.text_w(f_sc, hs) + 3 + 18 + 3)]
+        else:
+            cars = [('team', t, sc, mine, 4 + 20 + 4 + R.text_w(f_sc, sc) + 6)
+                    for t, sc, mine in ((away, as_, side == 'a'), (home, hs, side == 'h'))]
+        total = 46 + gap + c1 + sum(gap + c[4] for c in cars)
+        return dict(f_sc=f_sc, L=L, big=big, txt=txt, pad=pad, c1=c1, cars=cars, total=total)
+
+    lay = layout(False)
+    if lay['total'] > w - 4:
+        lay = layout(True)
+    f_big, LOGO, big_logo, play_txt, pad, c1, cars, total = (lay[k] for k in ('f_sc', 'L', 'big', 'txt', 'pad', 'c1', 'cars', 'total'))
     stop = max(2, (w - total) // 2)
-    t_in, t_hold, t_out = int(1.0 * FPS), int(2.2 * FPS), int(0.9 * FPS)
+    t_in, t_hold, t_out = int(1.6 * FPS), int(3.0 * FPS), int(1.4 * FPS)   # an unhurried roll in and out
     smoke = Particles()
+    top, bot = R.caps(f_big)
     for i in range(t_in + t_hold + t_out):
         if i < t_in:
             p = ease_out(i / t_in)
@@ -792,25 +804,49 @@ def anim_score(w, text):
         cx = x + 46 + gap
         _car(d, cx, c1, col, turn, top=1)
         tx = cx + 6
-        big_logo = logos.get(me, sport, LOGO) if logos else None
         if big_logo is not None:
-            R._paste_logo(img, big_logo, cx + 4, 2, LOGO)
-            tx = cx + 4 + LOGO + 5
+            R._paste_logo(img, big_logo, cx + pad, 2 + (24 - LOGO) // 2, LOGO)
+            tx = cx + pad + LOGO + pad + 1
         d.text((tx, 14 - (R.caps(R.F_BIG)[0] + R.caps(R.F_BIG)[1]) // 2), play_txt, font=R.F_BIG, fill=col)
         cx += c1
         flash = not moving and (i // 5) % 2 == 0
-        for t, sc, mine, cw in team_cars:
+        for kind, t, sc, mine, cw in cars:
             d.line((cx, 22, cx + gap, 22), fill=(120, 120, 130))     # coupler
             cx += gap
-            _car(d, cx, cw, _team_col(t) if mine else (60, 70, 95), turn)
-            logo = logos.get(t, sport, 18) if logos else None
-            if logo is not None:
-                R._paste_logo(img, logo, cx + 4, 6, 18)
+            if kind == 'board':
+                # away logo, away score - home score, home logo
+                _car(d, cx, cw, col, turn)
+                bx = cx + 3
+                for t2, sc2, mine2, first in ((away, as_, side == 'a', True), (home, hs, side == 'h', False)):
+                    lg = logos.get(t2, sport, 18) if logos else None
+                    sw = R.text_w(f_big, sc2)
+                    fill = (GOLD if flash else WHITE) if mine2 else R.DIM
+                    if first:
+                        if lg is not None:
+                            R._paste_logo(img, lg, bx, 6, 18)
+                        else:
+                            d.text((bx, 9), R.ascii_safe(R._ab(t2))[:3], font=R.F_SMALL, fill=WHITE)
+                        bx += 18 + 3
+                        d.text((bx, 15 - (top + bot) // 2), sc2, font=f_big, fill=fill)
+                        bx += sw + 1
+                        d.line((bx, 15, bx + 2, 15), fill=R.DIM)   # dash between the scores
+                        bx += 4
+                    else:
+                        d.text((bx, 15 - (top + bot) // 2), sc2, font=f_big, fill=fill)
+                        bx += sw + 3
+                        if lg is not None:
+                            R._paste_logo(img, lg, bx, 6, 18)
+                        else:
+                            d.text((bx, 9), R.ascii_safe(R._ab(t2))[:3], font=R.F_SMALL, fill=WHITE)
             else:
-                d.text((cx + 4, 9), R.ascii_safe(R._ab(t))[:3], font=R.F_SMALL, fill=WHITE)
-            top, bot = R.caps(f_big)
-            d.text((cx + 28, 15 - (top + bot) // 2), sc, font=f_big,
-                   fill=(GOLD if flash else WHITE) if mine else R.DIM)
+                _car(d, cx, cw, _team_col(t) if mine else (60, 70, 95), turn)
+                logo = logos.get(t, sport, 18) if logos else None
+                if logo is not None:
+                    R._paste_logo(img, logo, cx + 4, 6, 18)
+                else:
+                    d.text((cx + 4, 9), R.ascii_safe(R._ab(t))[:3], font=R.F_SMALL, fill=WHITE)
+                d.text((cx + 28, 15 - (top + bot) // 2), sc, font=f_big,
+                       fill=(GOLD if flash else WHITE) if mine else R.DIM)
             cx += cw
         d.line((x + 46, 22, x + 46 + gap, 22), fill=(120, 120, 130))
         _engine(img, d, x, col, alt, turn, pump, moving)
@@ -819,7 +855,6 @@ def anim_score(w, text):
             smoke.p.append([x + 13, 5, random.uniform(0.3, 1.2), -random.uniform(0.2, 0.7), (130, 130, 140), 16])
         smoke.step(d, gravity=-0.01, drag=0.97)
         yield img, DT
-
 
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
