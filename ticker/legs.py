@@ -850,12 +850,39 @@ class Board:
                 return {'tag': tag, 'rank': rank, 'text': (e['status'] + (' - ' + e['type'] if e['type'] else '')).upper()}
         return None
 
+    def placed(self, player, sport=None, now=None):
+        """The game a team-less player was found in, if that game still counts (today's, right sport).
+        The remembered spot never expires on its own: without this check, last week's game stuck."""
+        key = squash(player)
+        gid = self.player_game.get(key)
+        g = self.games.get(gid) if gid else None
+        if gid and (not g or not can_place(g, sport, now)):
+            self.player_game.pop(key, None)
+            return None
+        return gid
+
+    def stale_hint(self, leg, slip):
+        """A game saved on a leg that kicked off well before the ticket was even added can't be the bet's
+        game (an old game remembered for the player got locked on). -> True to drop it."""
+        g = self.games.get(str(leg.get('g'))) if leg.get('g') else None
+        added = slip.get('added')
+        if not g or not added:
+            return False
+        try:
+            k = datetime.fromisoformat(str(g.get('date')).replace('Z', '+00:00')).timestamp()
+        except (TypeError, ValueError):
+            return False
+        return k < float(added) / 1000 - 12 * 3600
+
     def legs_of(self, slip):
         out = []
         for l in slip.get('legs') or []:
-            p = parse_leg(l.get('text', ''), self.games, l, self.player_game)
-            if p.get('market') == 'prop' and not p.get('g') and self.player_game.get(squash(p['player'])):
-                p['g'] = self.player_game[squash(p['player'])]
+            hint = l
+            if self.stale_hint(l, slip):
+                hint = {k: v for k, v in l.items() if k not in ('g', 'sport')}
+            p = parse_leg(l.get('text', ''), self.games, hint, None)
+            if p.get('market') == 'prop' and not p.get('g'):
+                p['g'] = self.placed(p['player'], l.get('sport'))
             p['label'] = short_label(p, self.games)
             p['sport'] = l.get('sport')
             out.append(p)
@@ -904,7 +931,7 @@ class Board:
                 if l.get('market') != 'prop' or l.get('g'):
                     continue
                 key = squash(l['player'])
-                if key in self.player_game:
+                if self.placed(l['player'], l.get('sport'), now):
                     continue
                 # games being played now first, then the rest of today's
                 cands = [gid for gid in self.summaries if gid in self.games and can_place(self.games[gid], l.get('sport'), now)]

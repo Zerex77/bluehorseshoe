@@ -286,7 +286,10 @@ class Ticker:
                 continue
             for leg, row in zip(sl['legs'], sn['legs']):
                 g = self.board.games.get(row.get('g')) if row.get('g') else None
-                if leg.get('g') or not g or g.get('state') == 'pre':
+                if not g or g.get('state') == 'pre' or str(leg.get('g')) == str(g['id']):
+                    continue
+                # keep a saved game unless it's an old one that got locked on by mistake
+                if leg.get('g') and not self.board.stale_hint(leg, sl):
                     continue
                 leg['g'], leg['sport'] = g['id'], g['sport']
                 changed = True
