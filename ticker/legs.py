@@ -204,6 +204,10 @@ def find_teams(text, games):
 
 # ---------------------------------------------------------------- leg text
 STATS = [
+    # kicker props ("Cam Little - extra points made"): matched on whole phrases so a player named Pat isn't one
+    (r'\b(extra\s*points?|xps?\s*made|point\s*after)\b', 'extra points'),
+    (r'\b(field\s*goals?|fgs?\s*made)\b', 'field goals'),
+    (r'\b(kicking\s*points?|kicker\s*points?)\b', 'kicking points'),
     (r'\b(pass(ing)?\s*\+\s*rush(ing)?)\b', 'pass + rush yds'),
     (r'\b(rush(ing)?\s*\+\s*rec(eiving)?|scrimmage)\b', 'rush + rec yds'),
     (r'\b(pass(ing)?\s*(td|tds|touchdowns?))\b', 'pass TDs'),
@@ -223,7 +227,8 @@ STATS = [
 SHORT = {'rec yds': 'rec. yds', 'rush yds': 'rush yds', 'pass yds': 'pass yds', 'receptions': 'receptions',
          'rush + rec yds': 'rush+rec yds', 'pass + rush yds': 'pass+rush yds', 'pass TDs': 'pass TDs',
          'completions': 'comp.', 'pass attempts': 'pass att.', 'rush attempts': 'carries', 'longest rush': 'long rush',
-         'longest reception': 'long rec.', 'interceptions thrown': 'INTs', 'TDs': 'TDs'}
+         'longest reception': 'long rec.', 'interceptions thrown': 'INTs', 'TDs': 'TDs',
+         'extra points': 'XP made', 'field goals': 'FG made', 'kicking points': 'kick pts'}
 
 
 def stat_of(s):
@@ -244,7 +249,7 @@ def title_name(x):
 def clean_player(x):
     x = re.sub(r'\s+[-–—]\s+.*$', '', str(x))
     x = re.sub(r"\b(to (record|score|have|throw)|alt(ernate)?|player|over|under|o/u|receptions?|receiving|rushing|passing|pass|rush|"
-               r"yards|yds|touchdowns?|completions?|attempts|carries|longest|interceptions?|anytime)\b.*$", '', x, flags=re.I)
+               r"yards|yds|touchdowns?|completions?|attempts|carries|longest|interceptions?|anytime|extra points?|field goals?|kicking|most)\b.*$", '', x, flags=re.I)
     x = re.sub(r'[\d+]+.*$', '', x)
     return title_name(re.sub(r'\s+', ' ', x).strip())
 
@@ -266,7 +271,19 @@ def parse_leg(raw, games, hint=None, player_game=None):
     yes = re.match(r'^(.*?)\s+(anytime\s*(td|touchdown)|atd|to score( a)?( td| touchdown)?|any time td|td scorer)$', text, re.I)
     over = re.match(r'^(.*?)\s+(over|under|o|u)\s*([\d.]+)\s+(.+)$', text, re.I)
     plus = re.match(r'^(.*?)\s+(\d+(?:\.\d+)?)\+\s*(.+)$', text, re.I)
-    if thr:
+    # Hard Rock's own order: "Over 2.5 Cam Little - Extra Points Made"
+    lead = re.match(r'^(over|under|o|u)\s*([\d.]+)\s+(.+?)\s*[-–—:]\s*(.+)$', text, re.I)
+    # game leader: "Yes Trevor Lawrence - Most Passing Yards", "Trevor Lawrence most pass yds"
+    most = re.match(r'^(?:(yes|no)\s+)?(.+?)\s*(?:[-–—:]\s*)?(?:(not)\s+)?(?:to\s+(?:have|record)\s+)?(?:the\s+)?'
+                    r'(?:most|highest|leader|leading)\s+(.+)$', text, re.I)
+    if most and stat_of(most.group(4)) and not re.match(r'^(over|under)\b', text, re.I):
+        neg = (most.group(1) or '').lower() == 'no' or bool(most.group(3))
+        leg.update(market='prop', player=most.group(2), what=stat_of(most.group(4)), line=0,
+                   side='notmost' if neg else 'most')
+    elif lead and stat_of(lead.group(4)):
+        leg.update(market='prop', player=lead.group(3), line=float(lead.group(2)), what=stat_of(lead.group(4)),
+                   side='under' if lead.group(1).lower().startswith('u') else 'over')
+    elif thr:
         leg.update(market='prop', player=thr.group(1), what='pass TDs', line=0.5, side='yes')
     elif yes:
         leg.update(market='prop', player=yes.group(1), what='TDs', line=0.5, side='yes')
@@ -329,6 +346,8 @@ def short_label(p, games=None):
         return p['text']
     if p.get('side') == 'yes':
         return p['player'] + (' to throw a TD' if p['what'] == 'pass TDs' else ' anytime TD')
+    if p.get('side') in ('most', 'notmost'):
+        return '%s %smost %s' % (p['player'], 'not ' if p['side'] == 'notmost' else '', SHORT.get(p['what'], p['what']))
     return '%s %s%s %s' % (p['player'], 'U' if p.get('side') == 'under' else '', fmt(p['line']), SHORT.get(p['what'], p['what']))
 
 
@@ -409,6 +428,9 @@ def player_stat(summ, player, what):
     elif what == 'TDs':
         r, c = get('rushing', ['rushingtouchdowns', 'td']), get('receiving', ['receivingtouchdowns', 'td'])
         v = None if r is None and c is None else n(r) + n(c)
+    elif what == 'extra points': v = get('kicking', ['extrapointsmade/extrapointattempts', 'extrapointsmade', 'xp'])
+    elif what == 'field goals': v = get('kicking', ['fieldgoalsmade/fieldgoalattempts', 'fieldgoalsmade', 'fg'])
+    elif what == 'kicking points': v = get('kicking', ['totalkickingpoints', 'pts'])
     else:
         v = None
     if v is None and seen[0]:
@@ -416,6 +438,27 @@ def player_stat(summ, player, what):
     if v is not None and v == int(v):
         v = int(v)
     return v
+
+
+def stat_leader(summ, player, what):
+    """Best value of this stat by anyone in the game other than `player` -> (name, value), or (None, None)."""
+    groups = ((summ or {}).get('boxscore') or {}).get('players')
+    if not isinstance(groups, list):
+        return None, None
+    is_him = _matcher(player)
+    best = (None, None)
+    seen = set()
+    for team in groups:
+        for st in team.get('statistics') or []:
+            for a in st.get('athletes') or []:
+                nm = (a.get('athlete') or {}).get('displayName')
+                if not nm or nm in seen or is_him(nm):
+                    continue
+                seen.add(nm)
+                v = player_stat(summ, nm, what)
+                if v is not None and (best[1] is None or v > best[1]):
+                    best = (nm, v)
+    return best
 
 
 def player_team(summ, player):
@@ -451,7 +494,7 @@ def can_place(g, sport, now=None):
 
 
 def in_box(summ, player):
-    return any(player_stat(summ, player, w) is not None for w in ('pass yds', 'rush yds', 'rec yds'))
+    return any(player_stat(summ, player, w) is not None for w in ('pass yds', 'rush yds', 'rec yds', 'extra points'))
 
 
 # ---------------------------------------------------------------- injuries
@@ -637,6 +680,8 @@ def eval_leg(leg, games, summaries):
         summ = (summaries.get(g['id']) or {}).get('json')
         cur = player_stat(summ, leg['player'], leg['what']) if summ else None
         tgt = '1' if leg['side'] == 'yes' else 'U' + fmt(leg['line']) if leg['side'] == 'under' else fmt(leg['line'] + 0.5)
+        if leg['side'] in ('most', 'notmost'):
+            return eval_most(leg, summ, cur, done, f)
         if cur is None:
             if done:
                 return dict(cls='unk', right='No stats', sub='not in box score')
@@ -664,6 +709,29 @@ def eval_leg(leg, games, summaries):
         return dict(cls=cls, right='%s/%s' % (fmt(cur), tgt), sub='' if leg['side'] == 'yes' else 'pace %d' % round(pj),
                     prog=cur / (leg['line'] + 0.5))
     return dict(cls='unk', right='?', sub='')
+
+
+def eval_most(leg, summ, cur, done, f):
+    """'Most passing yards in the game' style legs: compare with the best of everyone else."""
+    other, ov = stat_leader(summ, leg['player'], leg['what']) if summ else (None, None)
+    if cur is None and ov is None:
+        if done:
+            return dict(cls='unk', right='No stats', sub='not in box score')
+        return dict(cls='close', right='0', sub='no stats yet', prog=0)
+    cur, ov = cur or 0, ov or 0
+    lead = cur - ov if leg['side'] == 'most' else ov - cur
+    who = (str(other).split(' ')[-1] + ' ' + fmt(ov)) if other else 'nobody yet'
+    sub = '%s vs %s' % (fmt(cur), who)
+    prog = cur / max(cur, ov) if max(cur, ov) else 0
+    if done:
+        if lead == 0:
+            return dict(cls='push', right='TIED', sub=sub, prog=prog)
+        return dict(cls='win' if lead > 0 else 'lost', right='WON' if lead > 0 else 'LOST', sub=sub, prog=prog)
+    # a lead counts for more as the clock runs down
+    safe = max(1.0, max(cur, ov) * 0.15) * (1.5 - f)
+    cls = 'good' if lead >= safe else 'close' if lead > -safe else 'bad'
+    right = 'Up %s' % fmt(lead) if lead > 0 else 'Down %s' % fmt(-lead) if lead < 0 else 'Tied'
+    return dict(cls=cls, right=right, sub=sub, prog=prog)
 
 
 def slip_status(legs, evs, games):

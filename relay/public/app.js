@@ -258,7 +258,7 @@
     var ok = p.market && (g || p.market === 'prop');
     var where = g ? ' · ' + K.abbr(g.a) + ' @ ' + K.abbr(g.h) : '';
     var what = !p.market ? "Can't read this leg. Check the spelling." :
-      p.market === 'prop' ? p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : p.side + ' ' + p.line + ' ' + p.what) + (g ? where : ' · game found at kickoff') :
+      p.market === 'prop' ? p.player + ' ' + (p.side === 'yes' ? (p.what === 'TDs' ? 'anytime TD' : 'throws a TD') : p.side === 'most' ? 'most ' + p.what + ' in the game' : p.side === 'notmost' ? 'not the most ' + p.what : p.side + ' ' + p.line + ' ' + p.what) + (g ? where : ' · game found at kickoff') :
       !g ? 'No game found for this team this week' :
       (p.market === 'total' ? p.dir + ' ' + p.line : p.market === 'ml' ? K.teamName(g[p.side]) + ' moneyline' : K.teamName(g[p.side]) + ' ' + K.sgn(p.line)) + where;
     return { ok: !!ok, what: what };

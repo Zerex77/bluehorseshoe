@@ -93,6 +93,10 @@
 
   // ---------- parse legs
   var STATS = [
+    // kicker props ("Cam Little - extra points made"): whole phrases, so a player named Pat isn't one
+    [/\b(extra\s*points?|xps?\s*made|point\s*after)\b/, 'extra points'],
+    [/\b(field\s*goals?|fgs?\s*made)\b/, 'field goals'],
+    [/\b(kicking\s*points?|kicker\s*points?)\b/, 'kicking points'],
     [/\b(pass(ing)?\s*\+\s*rush(ing)?)\b/, 'pass + rush yds'],
     [/\b(rush(ing)?\s*\+\s*rec(eiving)?|scrimmage)\b/, 'rush + rec yds'],
     [/\b(pass(ing)?\s*(td|tds|touchdowns?))\b/, 'pass TDs'],
@@ -131,7 +135,7 @@
       .replace(/\b(Ii|Iii|Iv)\b/g, function (m) { return m.toUpperCase(); });
   }
   function cleanPlayer(x) {
-    return titleName(String(x).replace(/\s+[-–—]\s+.*$/, '').replace(/\b(to (record|score|have|throw)|alt(ernate)?|player|over|under|o\/u|receptions?|receiving|rushing|passing|pass|rush|yards|yds|touchdowns?|completions?|attempts|carries|longest|interceptions?|anytime)\b.*$/i, '')
+    return titleName(String(x).replace(/\s+[-–—]\s+.*$/, '').replace(/\b(to (record|score|have|throw)|alt(ernate)?|player|over|under|o\/u|receptions?|receiving|rushing|passing|pass|rush|yards|yds|touchdowns?|completions?|attempts|carries|longest|interceptions?|anytime|extra points?|field goals?|kicking|most)\b.*$/i, '')
       .replace(/[\d+]+.*$/, '').replace(/\s+/g, ' ').trim());
   }
   function propText(sel, mk) {
@@ -196,6 +200,7 @@
         else if (/SPREAD|HANDICAP|RUN LINE|PUCK LINE/.test(mk)) t = sel;
         else if (/^TOTAL( POINTS)?$|GAME TOTAL/.test(mk)) t = (ctx ? ctx + ' ' : '') + sel;
         else if (/ANYTIME|TOUCHDOWN SCORER|TD SCORER/.test(mk)) t = (/^(over|under|yes)\b|^[\d.]+$/i.test(sel) ? cleanPlayer(mk) : sel) + ' anytime TD';
+        else if (/\bMOST\b/.test(mk) && statOf(mk)) t = cleanPlayer(mk) + (/^no\b/i.test(sel) ? ' not' : '') + ' most ' + statOf(mk);
         else t = propText(sel, mk) || (sel + ' ' + mk.toLowerCase());
         out.legs.push((t + (it.odds ? ' ' + it.odds : '')).replace(/\s+/g, ' ').trim());
       });
@@ -272,7 +277,13 @@
     var thr = /^(.*?)\s+(to throw( a)? (td|touchdown)|1\+ pass(ing)? td)$/i.exec(text);
     var over = /^(.*?)\s+(over|under|o|u)\s*([\d.]+)\s+(.+)$/i.exec(text);
     var plus = /^(.*?)\s+(\d+(?:\.\d+)?)\+\s*(.+)$/i.exec(text);
-    if (thr) { leg.market = 'prop'; leg.player = thr[1]; leg.what = 'pass TDs'; leg.line = 0.5; leg.side = 'yes'; }
+    // Hard Rock's own order: "Over 2.5 Cam Little - Extra Points Made"
+    var lead = /^(over|under|o|u)\s*([\d.]+)\s+(.+?)\s*[-–—:]\s*(.+)$/i.exec(text);
+    // game leader: "Yes Trevor Lawrence - Most Passing Yards", "Trevor Lawrence most pass yds"
+    var most = /^(?:(yes|no)\s+)?(.+?)\s*(?:[-–—:]\s*)?(?:(not)\s+)?(?:to\s+(?:have|record)\s+)?(?:the\s+)?(?:most|highest|leader|leading)\s+(.+)$/i.exec(text);
+    if (most && statOf(most[4]) && !/^(over|under)\b/i.test(text)) { leg.market = 'prop'; leg.player = most[2]; leg.what = statOf(most[4]); leg.line = 0; leg.side = (/^no$/i.test(most[1] || '') || most[3]) ? 'notmost' : 'most'; }
+    else if (lead && statOf(lead[4])) { leg.market = 'prop'; leg.player = lead[3]; leg.line = Number(lead[2]); leg.what = statOf(lead[4]); leg.side = /^u/i.test(lead[1]) ? 'under' : 'over'; }
+    else if (thr) { leg.market = 'prop'; leg.player = thr[1]; leg.what = 'pass TDs'; leg.line = 0.5; leg.side = 'yes'; }
     else if (yes) { leg.market = 'prop'; leg.player = yes[1]; leg.what = 'TDs'; leg.line = 0.5; leg.side = 'yes'; }
     else if (over && statOf(over[4])) { leg.market = 'prop'; leg.player = over[1]; leg.line = Number(over[3]); leg.what = statOf(over[4]); leg.side = /^u/i.test(over[2]) ? 'under' : 'over'; }
     else if (plus && statOf(plus[3])) { leg.market = 'prop'; leg.player = plus[1]; leg.line = Number(plus[2]) - 0.5; leg.what = statOf(plus[3]); leg.side = 'over'; }
