@@ -9,7 +9,7 @@ Run on the Pi. It pauses the real ticker while it runs and starts it again when 
     sudo python3 /opt/bhticker/demo.py           (full demo, loops until Ctrl+C)
     sudo python3 /opt/bhticker/demo.py --reel    (just the animations, ~30 seconds)
     sudo python3 /opt/bhticker/demo.py --stage 3 (start the full demo at stage 3)
-    sudo python3 /opt/bhticker/demo.py --play rocket   (one animation now: rocket, crane, train, touchdown...)
+    sudo python3 /opt/bhticker/demo.py --play rocket   (one animation now: bomber, rocket, crane, train...)
 
 Anywhere without panels:  python3 demo.py --preview frames
 """
@@ -193,7 +193,7 @@ def play_one(app, name, loops=1):
     jax = {'abbreviation': 'JAX', 'displayName': 'Jacksonville Jaguars', 'color': '006778', 'alternateColor': 'd7a22a'}
     ten = {'abbreviation': 'TEN', 'displayName': 'Tennessee Titans', 'color': '4b92db', 'alternateColor': '0c2340'}
     A.CONTEXT['teams']['demo'] = (jax, ten, 'nfl')
-    text = 'demo|a|TOUCHDOWN|24|17' if name in ('score', 'rocket', 'crane', 'train') else dict(REEL).get(name, 'Jaguars ML')
+    text = 'demo|a|TOUCHDOWN|24|17' if name in ('score', 'rocket', 'crane', 'train', 'bomber') else dict(REEL).get(name, 'Jaguars ML')
     for _ in range(loops):
         print('Playing', name, flush=True)
         for img, hold in A.play(name, W, text):
@@ -258,7 +258,7 @@ def main():
     ap.add_argument('--reel', action='store_true', help='just play every animation back to back (~30s) and quit')
     ap.add_argument('--loops', type=int, default=1, help='with --reel: how many times to play it')
     ap.add_argument('--stage', type=int, default=1, help='start the full demo at this stage (1-5)')
-    ap.add_argument('--play', help='play one animation now and quit (rocket, crane, train, touchdown, ...)')
+    ap.add_argument('--play', help='play one animation now and quit (bomber, rocket, crane, train, touchdown, ...)')
     args = ap.parse_args()
     was_running = False if args.preview else take_panels()
 

@@ -1185,12 +1185,163 @@ def anim_score_rocket(w, text):
         trail.step(d, gravity=0, drag=0.97)
         yield img, DT
 
+def _glow_sign(me, away, home, sport, word, as_, hs, side, col, flash, w_max):
+    """Play + score on a dark plate with a team-color edge -> RGB image."""
+    logos = CONTEXT.get('logos')
+    F, LG, H = R.F_BIG, 16, 21
+    top_c, bot_c = R.caps(F)
+
+    def mk(t):
+        lg = logos.get(t, sport, LG) if logos else None
+        ab = R.ascii_safe(R._ab(t))[:3]
+        return lg, (LG if lg is not None else R.text_w(R.F_SMALL, ab)), ab
+
+    pm, pa, ph = mk(me), mk(away), mk(home)
+    show_me = True
+    sw = 5 + pm[1] + 3 + R.text_w(F, word) + 11 + pa[1] + 3 + R.text_w(F, as_) + 7 + R.text_w(F, hs) + 3 + ph[1] + 5
+    if sw > w_max:
+        show_me = False
+        sw -= pm[1] + 3
+    img = Image.new('RGB', (sw, H), (8, 10, 22))
+    d = ImageDraw.Draw(img)
+    d.fontmode = '1'
+    d.rectangle((0, 0, sw - 1, H - 1), outline=col)
+    d.rectangle((1, 1, sw - 2, H - 2), outline=dim(col, 0.35))
+    cy, ty = H // 2, H // 2 - (top_c + bot_c) // 2
+
+    def put(pt, x):
+        lg, wd, ab = pt
+        if lg is not None:
+            R._paste_logo(img, lg, x, cy - LG // 2, LG)
+        else:
+            d.text((x, cy - 5), ab, font=R.F_SMALL, fill=WHITE)
+        return wd
+
+    x = 5
+    if show_me:
+        x += put(pm, x) + 3
+    d.text((x, ty), word, font=F, fill=col)
+    x += R.text_w(F, word) + 5
+    d.line((x, 4, x, H - 5), fill=(70, 75, 95))
+    x += 6
+    x += put(pa, x) + 3
+    d.text((x, ty), as_, font=F, fill=(GOLD if flash else WHITE) if side == 'a' else R.DIM)
+    x += R.text_w(F, as_) + 2
+    d.line((x, cy, x + 2, cy), fill=R.DIM)
+    x += 5
+    d.text((x, ty), hs, font=F, fill=(GOLD if flash else WHITE) if side == 'h' else R.DIM)
+    x += R.text_w(F, hs) + 3
+    put(ph, x)
+    return img
+
+
+def _bomber(d, cx, cy, k):
+    """Stealth flying wing seen from above, flying right: nose at cx+9, wingtips at cy-11 / cy+11."""
+    body, edge = (58, 62, 74), (120, 126, 142)
+    pts = [(cx + 9, cy), (cx - 6, cy - 11), (cx - 9, cy - 8), (cx - 5, cy - 4), (cx - 8, cy),
+           (cx - 5, cy + 4), (cx - 9, cy + 8), (cx - 6, cy + 11)]
+    d.polygon(pts, fill=body)
+    d.line((cx + 9, cy, cx - 6, cy - 11), fill=edge)                       # sharp leading edges
+    d.line((cx + 9, cy, cx - 6, cy + 11), fill=edge)
+    d.polygon([(cx + 7, cy), (cx + 1, cy - 2), (cx + 1, cy + 2)], fill=(80, 86, 100))   # raised center body
+    d.line((cx + 4, cy - 1, cx + 5, cy - 1), fill=(40, 70, 120))           # cockpit windows
+    d.line((cx + 4, cy + 1, cx + 5, cy + 1), fill=(40, 70, 120))
+    if (k // 8) % 2 == 0:                                                   # nav lights
+        d.point((cx - 6, cy - 11), fill=(255, 40, 40))
+        d.point((cx - 6, cy + 11), fill=(40, 255, 80))
+
+
+def anim_score_bomber(w, text):
+    """A game on a ticket scored: a stealth bomber glides over the night sky, drops one, a big blast
+    lights up the sky and the play and the score are left glowing in the smoke.
+    text: 'GAMEID|side|PLAY|away score|home score'."""
+    try:
+        gid, side, play, as_, hs = text.split('|')
+    except ValueError:
+        return
+    teams = CONTEXT['teams'].get(gid)
+    if not teams:
+        return
+    away, home, sport = teams
+    me = away if side == 'a' else home
+    col = _team_col(me)
+    word = {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
+    signs = [_glow_sign(me, away, home, sport, word, as_, hs, side, col, f, w - 8) for f in (False, True)]
+    sw, sh = signs[0].size
+    sx, sy = (w - sw) // 2, 15 - sh // 2
+    drop_x = w // 2
+    rng = random.Random(gid + as_ + hs)
+    stars = [(rng.randrange(w), rng.randrange(0, 28), rng.random() * 6) for _ in range(w // 6)]
+    speed = (w + 60) / (2.6 * FPS)                      # crosses the screen in about 2.6s
+    t_drop = int((drop_x + 30) / speed)                 # frame the bomber is over the middle
+    n_fall, n_boom, n_hold, n_fade = int(0.45 * FPS), int(0.7 * FPS), int(2.4 * FPS), int(0.6 * FPS)
+    drift = int(speed * n_fall * 0.6)               # the bomb keeps some of the plane's speed
+    end = t_drop + n_fall + n_boom + n_hold + n_fade
+    fire, smoke, embers = Particles(), Particles(), Particles()
+    black = Image.new('RGB', (sw, sh), (2, 3, 14))
+    for i in range(end):
+        img, d = canvas(w, (2, 3, 14))
+        for px_, py_, ph in stars:
+            d.point((px_, py_), fill=dim(WHITE, 0.3 + 0.6 * abs(math.sin(i * 0.1 + ph))))
+        d.ellipse((w - 16, 2, w - 9, 9), fill=(230, 230, 210))           # moon
+        d.ellipse((w - 14, 1, w - 8, 7), fill=(2, 3, 14))
+        d.line((0, 31, w, 31), fill=(40, 45, 55))
+        boom_at = t_drop + n_fall
+        j = i - boom_at
+        # the bomb
+        if t_drop <= i < boom_at:
+            q = (i - t_drop) / n_fall
+            bx = int(drop_x + drift * q)
+            by = int(12 + 17 * q * q)
+            d.rectangle((bx - 1, by - 2, bx + 1, by + 2), fill=(90, 95, 105))
+            d.line((bx - 2, by - 3, bx + 2, by - 3), fill=(130, 135, 145))
+        # the blast
+        if j == 0:
+            for _ in range(70):
+                a = random.uniform(math.pi, 2 * math.pi)
+                v = random.uniform(1.0, 4.0)
+                fire.p.append([drop_x + drift, 29, math.cos(a) * v, math.sin(a) * v, random.choice([(255, 240, 180), (255, 180, 40), (255, 110, 20), (220, 50, 20)]), random.randint(10, 24)])
+        if 0 <= j < 3:                                    # the flash lights up the whole sky
+            img, d = canvas(w, (255, 230, 170) if j == 0 else (120, 70, 30) if j == 1 else (40, 20, 12))
+            d.line((0, 31, w, 31), fill=(90, 60, 40))
+        if 0 <= j < n_boom:
+            q = j / n_boom
+            r = int(3 + 13 * ease_out(q))
+            cx_, cy_ = drop_x + drift, 31 - r // 2
+            for rr, c in ((r, (200, 50, 20)), (int(r * 0.75), (255, 120, 20)), (int(r * 0.5), (255, 200, 60)), (int(r * 0.25), (255, 245, 210))):
+                c = dim(c, 1 - 0.7 * q)
+                d.ellipse((cx_ - rr, cy_ - rr // 1.3, cx_ + rr, cy_ + rr // 1.3), fill=c)
+            if j % 2 == 0:
+                smoke.burst(cx_, cy_ - r // 2, 5, speed=(0.3, 1.0), cols=[(90, 85, 85), (60, 58, 60), (120, 110, 100)], up=0.6, life=(20, 40))
+        # the score, glowing out of the smoke
+        if j >= n_boom // 2:
+            k = j - n_boom // 2
+            if j < n_boom + n_hold:
+                a = min(1.0, k / (0.4 * FPS))
+            else:
+                a = max(0.0, 1 - (j - n_boom - n_hold) / n_fade)
+            flash = n_boom <= j < n_boom + n_hold and (j // 5) % 2 == 0
+            img.paste(Image.blend(black, signs[1 if flash else 0], a), (sx, sy))
+            d = ImageDraw.Draw(img)
+            d.fontmode = '1'
+            if n_boom <= j < n_boom + n_hold and i % 4 == 0:
+                embers.p.append([random.uniform(sx, sx + sw), sy + sh, random.uniform(-0.2, 0.2), -random.uniform(0.3, 0.8), random.choice([(255, 170, 40), (255, 110, 20), GOLD]), random.randint(10, 22)])
+        # the bomber glides over, drawn above everything
+        bxp = int(-30 + speed * i)
+        if -30 < bxp < w + 30:
+            _bomber(d, bxp, 12, i)
+        fire.step(d, gravity=0.12, drag=0.95)
+        smoke.step(d, gravity=-0.02, drag=0.96)
+        embers.step(d, gravity=-0.01, drag=0.98)
+        yield img, DT
+
 _score_turn = [0]
 
 
 def anim_score_any(w, text):
-    """Scoring plays take turns, newest first: the rocket, then the train, then the crane, then the rocket..."""
-    fn = (anim_score_rocket, anim_score, anim_score_crane)[_score_turn[0] % 3]
+    """Scoring plays take turns, newest first: bomber, rocket, train, crane, then the bomber again..."""
+    order = (anim_score_bomber, anim_score_rocket, anim_score, anim_score_crane)
+    fn = order[_score_turn[0] % len(order)]
     _score_turn[0] += 1
     return fn(w, text)
 
@@ -1198,7 +1349,7 @@ ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
     'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury, 'score': anim_score_any,
-    'train': anim_score, 'crane': anim_score_crane, 'rocket': anim_score_rocket,
+    'train': anim_score, 'crane': anim_score_crane, 'rocket': anim_score_rocket, 'bomber': anim_score_bomber,
 }
 
 
