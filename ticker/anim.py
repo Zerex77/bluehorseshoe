@@ -996,20 +996,209 @@ def anim_score_crane(w, text):
         yield img, DT
 
 
+def _score_sign(w_max, me, away, home, sport, word, as_, hs, side, col, flash, H=19):
+    """The play + score strip used on the rocket's banner -> RGB image (or None if it can't fit)."""
+    logos = CONTEXT.get('logos')
+    F = R.F_BIG
+    LG = 14
+    top_c, bot_c = R.caps(F)
+
+    def mk(t):
+        lg = logos.get(t, sport, LG) if logos else None
+        ab = R.ascii_safe(R._ab(t))[:3]
+        return lg, (LG if lg is not None else R.text_w(R.F_SMALL, ab)), ab
+
+    parts_me, parts_a, parts_h = mk(me), mk(away), mk(home)
+    show_me = True
+    sw = 4 + parts_me[1] + 3 + R.text_w(F, word) + 11 + parts_a[1] + 3 + R.text_w(F, as_) + 7 + R.text_w(F, hs) + 3 + parts_h[1] + 4
+    if sw > w_max:
+        show_me = False
+        sw -= parts_me[1] + 3
+    img = Image.new('RGB', (sw, H), (235, 232, 220))           # a cloth banner
+    d = ImageDraw.Draw(img)
+    d.fontmode = '1'
+    d.rectangle((0, 0, sw - 1, H - 1), outline=col)
+    cy = H // 2
+    ty = cy - (top_c + bot_c) // 2
+
+    def put(pt, x):
+        lg, wd, ab = pt
+        if lg is not None:
+            R._paste_logo(img, lg, x, cy - LG // 2, LG)
+        else:
+            d.text((x, cy - 5), ab, font=R.F_SMALL, fill=(20, 24, 40))
+        return wd
+
+    ink, dimink = (20, 24, 40), (120, 120, 130)
+    x = 4
+    if show_me:
+        x += put(parts_me, x) + 3
+    d.text((x, ty), word, font=F, fill=col if sum(col) < 600 else ink)
+    x += R.text_w(F, word) + 5
+    d.line((x, 3, x, H - 4), fill=dimink)
+    x += 6
+    x += put(parts_a, x) + 3
+    hot = (210, 140, 0) if flash else ink
+    d.text((x, ty), as_, font=F, fill=hot if side == 'a' else dimink)
+    x += R.text_w(F, as_) + 2
+    d.line((x, cy, x + 2, cy), fill=dimink)
+    x += 5
+    d.text((x, ty), hs, font=F, fill=hot if side == 'h' else dimink)
+    x += R.text_w(F, hs) + 3
+    put(parts_h, x)
+    return img
+
+
+def _rocket_up(d, x, y, col):
+    """Standing rocket, 9px wide, nose at y, 25px tall."""
+    d.polygon([(x + 4, y), (x + 8, y + 6), (x, y + 6)], fill=(220, 60, 50))           # nose cone
+    d.rectangle((x, y + 6, x + 8, y + 21), fill=(225, 228, 235))
+    d.rectangle((x, y + 13, x + 8, y + 14), fill=col)                                 # team stripe
+    d.ellipse((x + 2, y + 8, x + 6, y + 12), fill=(40, 90, 160), outline=(120, 125, 140))
+    d.polygon([(x, y + 16), (x - 3, y + 24), (x, y + 21)], fill=(220, 60, 50))         # fins
+    d.polygon([(x + 8, y + 16), (x + 11, y + 24), (x + 8, y + 21)], fill=(220, 60, 50))
+    d.rectangle((x + 2, y + 22, x + 6, y + 24), fill=(90, 90, 100))                   # nozzle
+
+
+def _flame_down(d, x, y, n, k):
+    """Exhaust under a standing rocket; n = length, k = frame for flicker."""
+    for j in range(n):
+        half = max(0, 3 - j // 3) + (1 if (j + k) % 3 == 0 else 0)
+        c = (255, 245, 200) if j < 2 else (255, 190, 40) if j < n * 0.6 else (230, 80, 20)
+        d.line((x + 4 - half, y + j, x + 4 + half, y + j), fill=c)
+
+
+def _rocket_side(d, x, y, col, k, flame=True):
+    """Rocket flying right: tail at x, nose at x+29, centered on y."""
+    d.rectangle((x + 4, y - 4, x + 22, y + 4), fill=(225, 228, 235))
+    d.polygon([(x + 22, y - 4), (x + 29, y), (x + 22, y + 4)], fill=(220, 60, 50))
+    d.rectangle((x + 10, y - 4, x + 11, y + 4), fill=col)
+    d.ellipse((x + 15, y - 2, x + 19, y + 2), fill=(40, 90, 160), outline=(120, 125, 140))
+    d.polygon([(x + 4, y - 4), (x, y - 9), (x + 9, y - 4)], fill=(220, 60, 50))
+    d.polygon([(x + 4, y + 4), (x, y + 9), (x + 9, y + 4)], fill=(220, 60, 50))
+    d.rectangle((x + 1, y - 2, x + 3, y + 2), fill=(90, 90, 100))
+    if flame:
+        n = 5 + (k % 3)
+        for j in range(n):
+            half = max(0, 2 - j // 2)
+            c = (255, 245, 200) if j < 2 else (255, 190, 40) if j < 4 else (230, 80, 20)
+            d.line((x - j, y - half, x - j, y + half), fill=c)
+
+
+def anim_score_rocket(w, text):
+    """A game on a ticket scored, launchpad style: countdown, ignition, liftoff, then the rocket
+    comes back across the night sky towing a banner with the play and the score.
+    text: 'GAMEID|side|PLAY|away score|home score'."""
+    try:
+        gid, side, play, as_, hs = text.split('|')
+    except ValueError:
+        return
+    teams = CONTEXT['teams'].get(gid)
+    if not teams:
+        return
+    away, home, sport = teams
+    me = away if side == 'a' else home
+    col = _team_col(me)
+    word = {'TOUCHDOWN': 'TD', 'FIELD GOAL': 'FG'}.get(play, play)
+    rng = random.Random(gid + play + as_ + hs)
+    stars = [(rng.randrange(w), rng.randrange(0, 27), rng.random() * 6) for _ in range(w // 6)]
+    banner = [_score_sign(w - 44, me, away, home, sport, word, as_, hs, side, col, f) for f in (False, True)]
+    bw, bh = banner[0].size
+    ROPE, RK = 6, 30
+    total = bw + ROPE + RK
+    stop = max(2, (w - total) // 2)
+    pad_x = max(14, w // 5)
+    n_count, n_ign, n_lift, n_gap = int(1.05 * FPS), int(0.5 * FPS), int(0.7 * FPS), int(0.25 * FPS)
+    n_in, n_hold, n_out = int(1.2 * FPS), int(2.3 * FPS), int(0.9 * FPS)
+    smoke, trail = Particles(), Particles()
+    marks = [n_count, n_count + n_ign, n_count + n_ign + n_lift, n_count + n_ign + n_lift + n_gap]
+    end = marks[3] + n_in + n_hold + n_out
+    for i in range(end):
+        img, d = canvas(w, (2, 3, 14))
+        for sxp, syp, ph in stars:                                    # twinkling stars
+            b = 0.35 + 0.65 * abs(math.sin(i * 0.12 + ph))
+            d.point((sxp, syp), fill=dim(WHITE, b))
+        d.line((0, 31, w, 31), fill=(60, 60, 70))
+        if i < marks[2] + n_gap:                                      # the launchpad scene
+            # gantry tower and pad
+            gx = pad_x - 9
+            for yy in range(6, 30, 4):
+                d.line((gx, yy, gx + 4, yy + 4), fill=(150, 150, 160))
+                d.line((gx + 4, yy, gx, yy + 4), fill=(150, 150, 160))
+            d.line((gx, 6, gx, 30), fill=(150, 150, 160))
+            d.line((gx + 4, 6, gx + 4, 30), fill=(150, 150, 160))
+            d.rectangle((pad_x - 12, 30, pad_x + 20, 31), fill=(110, 110, 120))
+            if (i // 6) % 2 == 0:
+                d.point((gx + 2, 5), fill=(255, 40, 40))             # red light on the tower
+            ry, shake = 4, 0
+            if i < marks[0]:
+                num = 3 - i * 3 // n_count
+                t = str(num)
+                tw = R.text_w(R.F_FLASH, t)
+                cx = pad_x + 20 + (w - pad_x - 20 - tw) // 2
+                top, bot = R.caps(R.F_FLASH)
+                d.text((cx, 15 - (top + bot) // 2), t, font=R.F_FLASH, fill=GOLD)
+            elif i < marks[1]:
+                q = (i - marks[0]) / n_ign
+                shake = (i % 2) * 2 - 1
+                lab = 'IGNITION'
+                d.text((pad_x + 20 + (w - pad_x - 20 - R.text_w(R.F_BIG, lab)) // 2, 9), lab, font=R.F_BIG, fill=(255, 150, 30))
+                if i % 2 == 0:
+                    smoke.burst(pad_x + 4, 30, int(3 + 6 * q), speed=(0.4, 1.6), cols=[(170, 170, 180), (120, 120, 130), (210, 210, 215)], up=0.2, life=(18, 34))
+            elif i < marks[2]:
+                q = (i - marks[1]) / n_lift
+                ry = 4 - int(48 * q * q)
+                lab = 'LIFTOFF!'
+                d.text((pad_x + 20 + (w - pad_x - 20 - R.text_w(R.F_BIG, lab)) // 2, 9), lab, font=R.F_BIG, fill=GOLD)
+                if i % 2 == 0:
+                    smoke.burst(pad_x + 4, 30, 4, speed=(0.5, 1.8), cols=[(170, 170, 180), (120, 120, 130)], up=0.2, life=(18, 34))
+            if i < marks[2] and ry > -30:
+                rx = pad_x + shake
+                if i >= marks[0]:
+                    _flame_down(d, rx, ry + 25, 4 if i < marks[1] else 9, i)
+                _rocket_up(d, rx, ry, col)
+        else:                                                         # flying back with the banner
+            j = i - marks[3]
+            if j < n_in:
+                x = int(-total + (stop + total) * ease_out(j / n_in))
+            elif j < n_in + n_hold:
+                x = stop
+            else:
+                q = ((j - n_in - n_hold) / n_out) ** 2
+                x = int(stop + (w + 10 - stop) * q)
+            hold = n_in <= j < n_in + n_hold
+            flash = hold and (j // 5) % 2 == 0
+            bn = banner[1 if flash else 0]
+            by = 15 - bh // 2
+            for c in range(bw):                                       # the banner ripples
+                off = int(round(1.4 * math.sin(i * 0.35 - c * 0.18)))
+                col_img = bn.crop((c, 0, c + 1, bh))
+                if 0 <= x + c < w:
+                    img.paste(col_img, (x + c, by + off))
+            rx = x + bw + ROPE
+            d.line((x + bw, by + 2 + int(round(1.4 * math.sin(i * 0.35 - bw * 0.18))), rx + 1, 15), fill=(160, 160, 170))
+            d.line((x + bw, by + bh - 3 + int(round(1.4 * math.sin(i * 0.35 - bw * 0.18))), rx + 1, 15), fill=(160, 160, 170))
+            _rocket_side(d, rx, 15, col, i)
+            if i % 2 == 0 and -5 < rx < w:
+                trail.p.append([rx - 6, 15 + random.uniform(-1, 1), -random.uniform(0.2, 0.6), random.uniform(-0.15, 0.15), (130, 130, 145), 14])
+        smoke.step(d, gravity=-0.015, drag=0.95)
+        trail.step(d, gravity=0, drag=0.97)
+        yield img, DT
+
 _score_turn = [0]
 
 
 def anim_score_any(w, text):
-    """Scoring plays take turns: the train, then the crane, then the train..."""
+    """Scoring plays take turns: the train, then the crane, then the rocket, then the train..."""
+    fn = (anim_score, anim_score_crane, anim_score_rocket)[_score_turn[0] % 3]
     _score_turn[0] += 1
-    fn = anim_score if _score_turn[0] % 2 else anim_score_crane
     return fn(w, text)
 
 ANIMS = {
     'breakaway': anim_breakaway, 'catch': anim_catch, 'dime': anim_dime, 'touchdown': anim_touchdown,
     'winner': anim_winner, 'covered': anim_covered, 'over': anim_over, 'under': anim_under, 'hit': anim_hit,
     'fieldgoal': anim_fieldgoal, 'nogood': anim_nogood, 'short': anim_short, 'injury': anim_injury, 'score': anim_score_any,
-    'train': anim_score, 'crane': anim_score_crane,
+    'train': anim_score, 'crane': anim_score_crane, 'rocket': anim_score_rocket,
 }
 
 
